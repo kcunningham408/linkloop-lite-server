@@ -1,0 +1,26 @@
+# Deploy LinkLoop Lite Server to Render on push to main
+# Render auto-deploys from GitHub if you connect the repo in the Render dashboard.
+# This workflow is a fallback / explicit deploy trigger via Render Deploy Hook.
+
+name: Deploy Server
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'LinkLoopLiteServer/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy
+        # Set RENDER_DEPLOY_HOOK_URL as a GitHub repo secret
+        # Get the hook URL from Render → your service → Settings → Deploy Hook
+        run: |
+          if [ -n "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            curl -s "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+            echo "Deploy triggered on Render"
+          else
+            echo "RENDER_DEPLOY_HOOK_URL secret not set — skipping deploy"
+          fi

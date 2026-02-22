@@ -1,0 +1,21 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Env files (secrets)
+.env
+.env.example
+
+# Dependencies
+node_modules/
+
+# Expo build artifacts
+LinkLoopLiteApp/dist/
+LinkLoopLiteApp/.expo/
+
+# Build
+*.tgz
