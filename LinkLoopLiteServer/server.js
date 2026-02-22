@@ -31,6 +31,8 @@ app.use('/api/chat', require('./routes/chat'));
 app.use('/api/alerts', require('./routes/alerts'));
 app.use('/api/supplies', require('./routes/supplies'));
 app.use('/api/dexcom', require('./routes/dexcom'));
+app.use('/api/mood', require('./routes/mood'));
+app.use('/api/achievements', require('./routes/achievements'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

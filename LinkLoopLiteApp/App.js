@@ -18,6 +18,8 @@ import ProfileScreen from './screens/ProfileScreen';
 import ChatScreen from './screens/ChatScreen';
 import AlertsScreen from './screens/AlertsScreen';
 import InsightsScreen from './screens/InsightsScreen';
+import MoodScreen from './screens/MoodScreen';
+import AchievementsScreen from './screens/AchievementsScreen';
 import HealthDisclaimer from './components/HealthDisclaimer';
 
 const Tab = createBottomTabNavigator();
@@ -134,6 +136,28 @@ function AppNavigator() {
             options={{
               headerShown: true,
               title: 'AI Insights',
+              headerStyle: { backgroundColor: '#1C1C1E' },
+              headerTintColor: '#fff',
+              headerTitleStyle: { fontWeight: 'bold' },
+            }}
+          />
+          <Stack.Screen
+            name="Mood"
+            component={MoodScreen}
+            options={{
+              headerShown: true,
+              title: 'Mood & Notes',
+              headerStyle: { backgroundColor: '#1C1C1E' },
+              headerTintColor: '#fff',
+              headerTitleStyle: { fontWeight: 'bold' },
+            }}
+          />
+          <Stack.Screen
+            name="Achievements"
+            component={AchievementsScreen}
+            options={{
+              headerShown: true,
+              title: 'Achievements',
               headerStyle: { backgroundColor: '#1C1C1E' },
               headerTintColor: '#fff',
               headerTitleStyle: { fontWeight: 'bold' },

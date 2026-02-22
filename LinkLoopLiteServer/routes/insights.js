@@ -1,6 +1,7 @@
 const express = require('express');
 const auth = require('../middleware/auth');
 const GlucoseReading = require('../models/GlucoseReading');
+const MoodEntry = require('../models/MoodEntry');
 const User = require('../models/User');
 const Groq = require('groq-sdk');
 
@@ -402,9 +403,10 @@ router.get('/ai-summary', auth, async (req, res) => {
     const since = new Date();
     since.setHours(since.getHours() - parseInt(hours));
 
-    const [readings, user] = await Promise.all([
+    const [readings, user, moodEntries] = await Promise.all([
       GlucoseReading.find({ userId: req.user.userId, timestamp: { $gte: since } }).sort({ timestamp: -1 }),
-      User.findById(req.user.userId).select('settings name')
+      User.findById(req.user.userId).select('settings name'),
+      MoodEntry.find({ userId: req.user.userId, timestamp: { $gte: since } }).sort({ timestamp: -1 }).limit(20),
     ]);
 
     if (readings.length === 0) {
@@ -413,12 +415,35 @@ router.get('/ai-summary', auth, async (req, res) => {
 
     const stats = buildGlucoseStats(readings, user, parseInt(hours));
 
+    // Build mood context for AI
+    let moodContext = '';
+    if (moodEntries.length > 0) {
+      const moodLabels = { great: 'Great', good: 'Good', okay: 'Okay', tired: 'Tired', stressed: 'Stressed', sick: 'Sick', low_energy: 'Low Energy', anxious: 'Anxious' };
+      const moodSummary = moodEntries.map(m => {
+        const label = moodLabels[m.label] || m.label;
+        const time = new Date(m.timestamp).toLocaleString();
+        const noteStr = m.note ? ` — "${m.note}"` : '';
+        return `${m.emoji} ${label} (${time})${noteStr}`;
+      }).join('\n  ');
+
+      // Mood frequency
+      const freq = {};
+      moodEntries.forEach(m => { freq[m.label] = (freq[m.label] || 0) + 1; });
+      const topMood = Object.entries(freq).sort((a, b) => b[1] - a[1])[0];
+
+      moodContext = `\n\nMOOD/NOTES DATA (${moodEntries.length} entries in this period):
+  ${moodSummary}
+- Most frequent mood: ${topMood ? topMood[0] : 'N/A'} (${topMood ? topMood[1] : 0} times)
+- IMPORTANT: Look for correlations between mood/notes and glucose patterns. If the user noted something specific (like "pizza", "stress", "bad sleep"), reference it and connect it to any glucose patterns you see around that time. This is how you get to know the user over time.`;
+    }
+
     const prompt = `You are a friendly, supportive wellness companion in LinkLoop — a personal glucose journal app. Analyze this glucose data and give a personalized summary.
 
 RULES:
 - Warm & conversational, like a knowledgeable friend
 - 2-4 short paragraphs max
 - 1-2 observations based on patterns (e.g. timing patterns, consistency, trends)
+- If mood/notes data is available, ALWAYS reference it — connect how they felt or what they noted with glucose patterns nearby. This is a key feature. Example: "I noticed you logged 'stressed' around the same time your glucose spiked — that's a pattern worth watching."
 - Emojis sparingly (1-2 per paragraph)
 - NEVER give medical advice, suggest medication or dosage changes, or recommend any specific actions to manage glucose
 - Do NOT suggest eating, snacking, correcting, or any treatment actions
@@ -437,7 +462,7 @@ DATA (last ${stats.hours}h):
 - Recent trends: ${stats.recentTrends.join(', ') || 'none logged'}
 - Today avg: ${stats.todayAvg ?? 'N/A'} (${stats.todayCount} readings) | Yesterday avg: ${stats.yesterdayAvg ?? 'N/A'} (${stats.yesterdayCount} readings)
 - Current in-range streak: ${stats.inRangeStreak} consecutive readings
-- Rapid changes (>50 mg/dL jump): ${stats.spikes.length > 0 ? stats.spikes.map(s => `${s.direction} ${s.from}→${s.to} at ${new Date(s.time).toLocaleTimeString()}`).join(', ') : 'none'}`;
+- Rapid changes (>50 mg/dL jump): ${stats.spikes.length > 0 ? stats.spikes.map(s => `${s.direction} ${s.from}→${s.to} at ${new Date(s.time).toLocaleTimeString()}`).join(', ') : 'none'}${moodContext}`;
 
     const chatCompletion = await groq.chat.completions.create({
       messages: [
@@ -470,9 +495,10 @@ router.get('/ai-trends', auth, async (req, res) => {
     const since = new Date();
     since.setHours(since.getHours() - parseInt(hours));
 
-    const [readings, user] = await Promise.all([
+    const [readings, user, moodEntries] = await Promise.all([
       GlucoseReading.find({ userId: req.user.userId, timestamp: { $gte: since } }).sort({ timestamp: -1 }),
-      User.findById(req.user.userId).select('settings name')
+      User.findById(req.user.userId).select('settings name'),
+      MoodEntry.find({ userId: req.user.userId, timestamp: { $gte: since } }).sort({ timestamp: -1 }).limit(20),
     ]);
 
     if (readings.length < 3) {
@@ -486,6 +512,19 @@ router.get('/ai-trends', auth, async (req, res) => {
     }
 
     const stats = buildGlucoseStats(readings, user, parseInt(hours));
+
+    // Build mood context for trends
+    let moodContext = '';
+    if (moodEntries.length > 0) {
+      const moodLabels = { great: 'Great', good: 'Good', okay: 'Okay', tired: 'Tired', stressed: 'Stressed', sick: 'Sick', low_energy: 'Low Energy', anxious: 'Anxious' };
+      const moodSummary = moodEntries.slice(0, 10).map(m => {
+        const label = moodLabels[m.label] || m.label;
+        const time = new Date(m.timestamp).toLocaleString();
+        const noteStr = m.note ? ` — "${m.note}"` : '';
+        return `${m.emoji} ${label} (${time})${noteStr}`;
+      }).join('\n  ');
+      moodContext = `\n\nMOOD/NOTES (${moodEntries.length} entries):\n  ${moodSummary}\n- If mood entries or notes correlate with glucose patterns (e.g. "stressed" near a spike, "sick" near erratic readings), create a trend observation about it. This helps the user see mood↔glucose connections.`;
+    }
 
     const prompt = `Analyze this glucose journal data and return a JSON array of trend observations. Each observation should help the user see a pattern or interesting note in the data they've logged.
 
@@ -516,7 +555,7 @@ DATA (last ${stats.hours}h):
 - Trends: ${stats.recentTrends.join(', ') || 'none'}
 - Today: avg ${stats.todayAvg ?? 'N/A'} (${stats.todayCount}) | Yesterday: avg ${stats.yesterdayAvg ?? 'N/A'} (${stats.yesterdayCount})
 - In-range streak: ${stats.inRangeStreak}
-- Rapid changes: ${stats.spikes.length > 0 ? stats.spikes.map(s => `${s.direction} ${s.from}→${s.to}`).join(', ') : 'none'}
+- Rapid changes: ${stats.spikes.length > 0 ? stats.spikes.map(s => `${s.direction} ${s.from}→${s.to}`).join(', ') : 'none'}${moodContext}
 
 Return the JSON array now:`;
 
@@ -603,10 +642,10 @@ router.get('/daily-motivation', auth, async (req, res) => {
     // Get a quick read on their recent data for context (optional personalization)
     const since24h = new Date();
     since24h.setHours(since24h.getHours() - 24);
-    const recentReadings = await GlucoseReading.find({
-      userId: req.user.userId,
-      timestamp: { $gte: since24h }
-    }).sort({ timestamp: -1 }).limit(10);
+    const [recentReadings, recentMoods] = await Promise.all([
+      GlucoseReading.find({ userId: req.user.userId, timestamp: { $gte: since24h } }).sort({ timestamp: -1 }).limit(10),
+      MoodEntry.find({ userId: req.user.userId, timestamp: { $gte: since24h } }).sort({ timestamp: -1 }).limit(5),
+    ]);
 
     let dataContext = '';
     if (recentReadings.length > 0) {
@@ -615,6 +654,11 @@ router.get('/daily-motivation', auth, async (req, res) => {
       const low = 70, high = 180;
       const tir = Math.round((vals.filter(v => v >= low && v <= high).length / vals.length) * 100);
       dataContext = `\nThe user logged ${recentReadings.length} readings in the last 24h (avg ${avg} mg/dL, ${tir}% in range). If their numbers look good, acknowledge it. If they had a tough day, be extra encouraging — remind them one tough day doesn't define their journey.`;
+    }
+    if (recentMoods.length > 0) {
+      const moodLabels = { great: 'Great', good: 'Good', okay: 'Okay', tired: 'Tired', stressed: 'Stressed', sick: 'Sick', low_energy: 'Low Energy', anxious: 'Anxious' };
+      const lastMood = recentMoods[0];
+      dataContext += `\nTheir most recent mood was "${moodLabels[lastMood.label] || lastMood.label}" ${lastMood.emoji}${lastMood.note ? ` with the note: "${lastMood.note}"` : ''}. Tailor the motivation to acknowledge how they're feeling — if they're tired or stressed, be extra compassionate.`;
     }
 
     const prompt = `Generate a single daily motivational message for a person living with Type 1 Diabetes who uses a personal glucose journal app called LinkLoop.

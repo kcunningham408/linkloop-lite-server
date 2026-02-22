@@ -138,6 +138,18 @@ export default function HomeScreen({ navigation }) {
             description="Pattern analysis by AI"
             onPress={() => navigation.navigate('Insights')}
           />
+          <FeatureCard
+            emoji="📝"
+            title="Mood & Notes"
+            description="Track how you're feeling"
+            onPress={() => navigation.navigate('Mood')}
+          />
+          <FeatureCard
+            emoji="🏆"
+            title="Achievements"
+            description="Earn badges & streaks"
+            onPress={() => navigation.navigate('Achievements')}
+          />
         </View>
 
         <View style={styles.quickStats}>

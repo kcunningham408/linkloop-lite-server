@@ -293,3 +293,42 @@ export const dexcomAPI = {
     });
   },
 };
+
+// ============ MOOD API ============
+
+export const moodAPI = {
+  log: async (emoji, label, note = '') => {
+    return apiRequest('/mood', {
+      method: 'POST',
+      body: JSON.stringify({ emoji, label, note }),
+    });
+  },
+
+  getEntries: async (hours = 168) => {
+    return apiRequest(`/mood?hours=${hours}`);
+  },
+
+  getStats: async (hours = 168) => {
+    return apiRequest(`/mood/stats?hours=${hours}`);
+  },
+
+  remove: async (id) => {
+    return apiRequest(`/mood/${id}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+// ============ ACHIEVEMENTS API ============
+
+export const achievementsAPI = {
+  getAll: async () => {
+    return apiRequest('/achievements');
+  },
+
+  check: async () => {
+    return apiRequest('/achievements/check', {
+      method: 'POST',
+    });
+  },
+};
