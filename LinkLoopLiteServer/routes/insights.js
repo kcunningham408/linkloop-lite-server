@@ -629,7 +629,7 @@ router.get('/daily-motivation', auth, async (req, res) => {
     const groq = getGroqClient();
     if (!groq) {
       const fallback = {
-        motivation: "You're showing up for yourself every single day, and that takes real strength. Keep going — you've got this! 💪",
+        motivation: "You didn't choose T1D, but you face it head-on every single day. That takes more courage than most people will ever know. 💪",
         emoji: '💪'
       };
       return res.json(fallback);
@@ -661,24 +661,27 @@ router.get('/daily-motivation', auth, async (req, res) => {
       dataContext += `\nTheir most recent mood was "${moodLabels[lastMood.label] || lastMood.label}" ${lastMood.emoji}${lastMood.note ? ` with the note: "${lastMood.note}"` : ''}. Tailor the motivation to acknowledge how they're feeling — if they're tired or stressed, be extra compassionate.`;
     }
 
-    const prompt = `Generate a single daily motivational message for a person living with Type 1 Diabetes who uses a personal glucose journal app called LinkLoop.
+    const prompt = `Generate a short, inspiring daily quote for ${name}, a person living with Type 1 Diabetes.
 
-RULES:
-- Address them by name: ${name}
-- 1-3 sentences MAX — short, punchy, heartfelt
-- Be specific to the T1D experience (logging readings, staying on top of things, the daily effort, staying strong, self-care)
-- Tone: warm, uplifting, empowering — like a supportive friend who truly gets it
-- Celebrate the everyday wins of living with T1D
-- Vary the theme: sometimes about resilience, sometimes about self-compassion, sometimes about how amazing they are for managing a 24/7 condition
-- Include 1 emoji at the end that matches the vibe
+STYLE:
+- Think motivational quote, NOT a paragraph — 1-2 lines max, like something you'd see on an inspirational poster
+- Examples of the right vibe:
+  • "${name}, life threw you lemons and you turned them into a whole lemonade stand. T1D doesn't slow you down — it proves how strong you are. 💪"
+  • "Some people never have to count a single carb. You do it daily without even thinking about it. That's pretty incredible, ${name}. 🌟"
+  • "T1D picked the wrong person to mess with. You show up every single day and handle it like a champ. 💙"
+- Short. Punchy. Real. Like a friend sending you a text to brighten your day.
+- DO NOT mention "logging readings", "checking your app", "tracking data", or anything about the app itself
+- Focus on the human experience: strength, resilience, humor, self-love, pride, the daily grind of T1D
+- Vary between: humor, warmth, pride, self-compassion, celebrating toughness
+- Include 1 emoji at the end
 - NEVER give medical advice or suggest any health actions
-- Do NOT use clichés like "you've got this" every time — be creative and genuine${dataContext}
+- Do NOT be generic — make it feel personal to T1D life${dataContext}
 
-Return ONLY the motivational message text, nothing else.`;
+Return ONLY the quote text, nothing else.`;
 
     const chatCompletion = await groq.chat.completions.create({
       messages: [
-        { role: 'system', content: 'You generate short, heartfelt daily motivational messages for people living with Type 1 Diabetes. Return ONLY the message text. Never give medical advice or suggest health actions.' },
+        { role: 'system', content: 'You write short, punchy motivational quotes (1-2 lines) for people with Type 1 Diabetes. Think inspirational text message, not essay. Never mention apps, logging, or tracking. Never give medical advice. Just genuine, heartfelt encouragement about living with T1D.' },
         { role: 'user', content: prompt }
       ],
       model: 'llama-3.3-70b-versatile',
@@ -687,7 +690,7 @@ Return ONLY the motivational message text, nothing else.`;
     });
 
     const message = chatCompletion.choices[0]?.message?.content?.trim() || 
-      `${name}, every glucose check is proof that you're taking care of yourself. That's something to be proud of today. 🌟`;
+      `${name}, T1D picked the wrong one. You handle more before breakfast than most people deal with all day. 💙`;
 
     // Pick an emoji from the message or default
     const emojiMatch = message.match(/[\u{1F300}-\u{1FAD6}\u{2600}-\u{27BF}]/u);
@@ -702,7 +705,7 @@ Return ONLY the motivational message text, nothing else.`;
   } catch (err) {
     console.error('Daily motivation error:', err);
     res.json({
-      motivation: "Every finger prick, every carb count, every correction — it all adds up. You're doing an incredible job managing something most people can't even imagine. 💛",
+      motivation: "Some days are harder than others, but not a single one has beaten you yet. That's a pretty amazing track record. 💛",
       emoji: '💛'
     });
   }

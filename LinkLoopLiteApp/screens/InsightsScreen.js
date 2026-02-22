@@ -156,7 +156,7 @@ export default function InsightsScreen() {
           ) : (
             <>
               <Text style={styles.motivationLabel}>✨ Daily Motivation</Text>
-              <Text style={styles.motivationText}>You're showing up for yourself every single day — that takes real strength. Keep going! 💪</Text>
+              <Text style={styles.motivationText}>T1D doesn't define you — but how you handle it sure says a lot about who you are. �</Text>
             </>
           )}
         </View>
