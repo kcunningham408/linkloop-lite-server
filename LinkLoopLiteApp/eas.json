@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 3.0.0"
+    "version": ">= 3.0.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
@@ -31,9 +32,9 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "kcunningham408@gmail.com",
-        "ascAppId": "REPLACE_WITH_APP_STORE_CONNECT_APP_ID",
-        "appleTeamId": "REPLACE_WITH_TEAM_ID"
+        "appleId": "vibetech@vibecmd.net",
+        "ascAppId": "6759566762",
+        "appleTeamId": "CT3KS56744"
       },
       "android": {
         "serviceAccountKeyPath": "./google-service-account.json",
