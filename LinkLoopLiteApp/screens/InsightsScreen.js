@@ -109,6 +109,13 @@ export default function InsightsScreen() {
     loadInsights();
   }, [loadInsights]);
 
+  // Auto-load AI summary once insights are loaded (on the insights tab)
+  useEffect(() => {
+    if (activeTab === 'insights' && !aiSummary && !aiLoading && !loading && insights.length > 0) {
+      loadAISummary();
+    }
+  }, [activeTab, loading, insights]);
+
   // Auto-load AI trends when switching to trends tab
   useEffect(() => {
     if (activeTab === 'trends' && aiTrends.length === 0 && !trendsLoading && !loading) {
@@ -123,6 +130,16 @@ export default function InsightsScreen() {
     setMotivation(null);
     loadMotivation();
     loadInsights();
+  };
+
+  const refreshAISummary = () => {
+    setAiSummary(null);
+    loadAISummary();
+  };
+
+  const refreshAITrends = () => {
+    setAiTrends([]);
+    loadAITrends();
   };
 
   const alertCount = insights.filter(i => i.type === 'alert').length;
@@ -229,7 +246,7 @@ export default function InsightsScreen() {
             )}
 
             {/* AI Summary Card */}
-            {!loading && (
+            {!loading && insights.length > 0 && (
               <View style={styles.aiCard}>
                 <View style={styles.aiCardHeader}>
                   <Text style={styles.aiCardIcon}>🤖</Text>
@@ -239,18 +256,18 @@ export default function InsightsScreen() {
                 {aiSummary ? (
                   <>
                     <Text style={styles.aiCardText}>{aiSummary}</Text>
-                    <TouchableOpacity style={styles.aiRefreshBtn} onPress={loadAISummary}>
-                      <Text style={styles.aiRefreshBtnText}>🔄 Refresh</Text>
+                    <TouchableOpacity style={styles.refreshButton} onPress={refreshAISummary}>
+                      <Text style={styles.refreshButtonText}>🔄 New Insight</Text>
                     </TouchableOpacity>
                   </>
                 ) : aiLoading ? (
                   <View style={styles.aiLoadingRow}>
                     <ActivityIndicator size="small" color="#4A90D9" />
-                    <Text style={styles.aiLoadingText}>Analyzing your patterns with AI...</Text>
+                    <Text style={styles.aiLoadingText}>Analyzing your patterns...</Text>
                   </View>
                 ) : (
-                  <TouchableOpacity style={styles.aiButton} onPress={loadAISummary}>
-                    <Text style={styles.aiButtonText}>✨ Get AI Summary</Text>
+                  <TouchableOpacity style={styles.refreshButton} onPress={refreshAISummary}>
+                    <Text style={styles.refreshButtonText}>✨ Generate AI Insight</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -322,7 +339,7 @@ export default function InsightsScreen() {
                 <Text style={styles.trendsHeaderSub}>Patterns, streaks & alerts spotted by Groq AI</Text>
               </View>
               {aiTrends.length > 0 && (
-                <TouchableOpacity onPress={loadAITrends} style={styles.trendsRefreshBtn}>
+                <TouchableOpacity onPress={refreshAITrends} style={styles.trendsRefreshBtn}>
                   <Text style={styles.trendsRefreshText}>🔄</Text>
                 </TouchableOpacity>
               )}
@@ -366,6 +383,13 @@ export default function InsightsScreen() {
                   </View>
                 );
               })
+            )}
+
+            {/* Refresh Trends Button */}
+            {aiTrends.length > 0 && !trendsLoading && (
+              <TouchableOpacity style={styles.refreshButton} onPress={refreshAITrends}>
+                <Text style={styles.refreshButtonText}>🔄 New Trends</Text>
+              </TouchableOpacity>
             )}
           </>
         )}
@@ -464,8 +488,8 @@ const styles = StyleSheet.create({
   aiLoadingText: { fontSize: 13, color: '#4A90D9', marginLeft: 10 },
   aiButton: { backgroundColor: '#4A90D9', borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
   aiButtonText: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  aiRefreshBtn: { alignSelf: 'flex-end', marginTop: 10, paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, backgroundColor: '#1A2235' },
-  aiRefreshBtnText: { fontSize: 12, color: '#4A90D9', fontWeight: '600' },
+  refreshButton: { alignSelf: 'center', marginTop: 14, paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20, backgroundColor: '#2A3A50', borderWidth: 1, borderColor: '#4A90D9' },
+  refreshButtonText: { fontSize: 14, color: '#4A90D9', fontWeight: '700' },
 
   // Trends tab
   trendsHeader: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1C1C1E', borderRadius: 14, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: '#2C2C2E' },

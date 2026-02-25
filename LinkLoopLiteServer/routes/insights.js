@@ -437,20 +437,20 @@ router.get('/ai-summary', auth, async (req, res) => {
 - IMPORTANT: Look for correlations between mood/notes and glucose patterns. If the user noted something specific (like "pizza", "stress", "bad sleep"), reference it and connect it to any glucose patterns you see around that time. This is how you get to know the user over time.`;
     }
 
-    const prompt = `You are a friendly, supportive wellness companion in LinkLoop — a personal glucose journal app. Analyze this glucose data and give a personalized summary.
+    const prompt = `You are a friendly wellness companion in LinkLoop — a personal glucose journal app. Analyze this glucose data and give a brief, personalized summary.
 
 RULES:
 - Warm & conversational, like a knowledgeable friend
-- 2-4 short paragraphs max
-- 1-2 observations based on patterns (e.g. timing patterns, consistency, trends)
-- If mood/notes data is available, ALWAYS reference it — connect how they felt or what they noted with glucose patterns nearby. This is a key feature. Example: "I noticed you logged 'stressed' around the same time your glucose spiked — that's a pattern worth watching."
-- Emojis sparingly (1-2 per paragraph)
-- NEVER give medical advice, suggest medication or dosage changes, or recommend any specific actions to manage glucose
+- KEEP IT SHORT: One paragraph, 3-5 sentences max. Be concise and punchy.
+- Highlight the single most interesting or important pattern you see
+- If mood/notes data is available, reference it — connect how they felt with glucose patterns
+- 1-2 emojis total, not more
+- NEVER give medical advice, suggest medication or dosage changes, or recommend any specific actions
 - Do NOT suggest eating, snacking, correcting, or any treatment actions
-- If you notice trends, simply point them out as observations
-- If data looks good, celebrate it!
+- If data looks good, celebrate it briefly
 - Refer to the app as a "wellness journal" not a "medical tool"
-- End with encouragement, NOT a reminder to see a doctor
+- End with a short encouraging note, NOT a reminder to see a doctor
+- Do NOT use bullet points, numbered lists, or headers — just a flowing paragraph
 
 DATA (last ${stats.hours}h):
 - Name: ${stats.userName}
@@ -466,12 +466,12 @@ DATA (last ${stats.hours}h):
 
     const chatCompletion = await groq.chat.completions.create({
       messages: [
-        { role: 'system', content: 'You are a friendly wellness companion in LinkLoop, a personal glucose journal app. You help users see patterns in the data they log. You NEVER give medical advice, suggest medication changes, or recommend specific health actions. You only observe patterns and celebrate progress.' },
+        { role: 'system', content: 'You are a friendly wellness companion in LinkLoop, a personal glucose journal app. You help users see patterns in the data they log. Keep responses to ONE short paragraph (3-5 sentences). You NEVER give medical advice, suggest medication changes, or recommend specific health actions. You only observe patterns and celebrate progress.' },
         { role: 'user', content: prompt }
       ],
       model: 'llama-3.3-70b-versatile',
       temperature: 0.7,
-      max_tokens: 500,
+      max_tokens: 250,
     });
 
     res.json({ aiSummary: chatCompletion.choices[0]?.message?.content || 'No summary available.' });
@@ -526,25 +526,17 @@ router.get('/ai-trends', auth, async (req, res) => {
       moodContext = `\n\nMOOD/NOTES (${moodEntries.length} entries):\n  ${moodSummary}\n- If mood entries or notes correlate with glucose patterns (e.g. "stressed" near a spike, "sick" near erratic readings), create a trend observation about it. This helps the user see mood↔glucose connections.`;
     }
 
-    const prompt = `Analyze this glucose journal data and return a JSON array of trend observations. Each observation should help the user see a pattern or interesting note in the data they've logged.
+    const prompt = `Analyze this glucose journal data and return a JSON array of trend observations.
 
 RULES:
 - Return ONLY valid JSON — an array of objects, no markdown, no explanation outside the JSON
-- Each object: { "type": "alert|warning|success|info|streak", "icon": "emoji", "title": "short title", "message": "1-2 sentence explanation", "category": "one of: trend, pattern, streak, spike, timing, comparison, stability, milestone" }
-- Identify 3-6 most important/interesting observations
-- Categories to look for:
-  • TREND: Is glucose generally rising, falling, or stable over the period?
-  • PATTERN: Recurring time-of-day patterns (e.g. "post-lunch readings tend higher", "mornings look steady")
-  • STREAK: Consecutive in-range readings, days without lows, improvement streaks
-  • SPIKE: Rapid glucose changes (>50 mg/dL jumps), roller-coaster patterns
-  • TIMING: Best/worst time of day, weekend vs weekday differences
-  • COMPARISON: Today vs yesterday, this period vs previous
-  • STABILITY: Low variability streaks, consistent overnight readings
-  • MILESTONE: First time hitting >70% TIR, longest streak, new personal best
-- Be encouraging and specific. Use the actual numbers.
-- NEVER suggest medication changes, dosing, eating, or any specific health actions
-- Simply observe patterns — do NOT give advice or recommendations
-- Use fun, friendly language — this is a personal wellness journal, not a clinical report
+- Each object: { "type": "alert|warning|success|info|streak", "icon": "emoji", "title": "short title (5 words max)", "message": "ONE concise sentence, max 20 words", "category": "one of: trend, pattern, streak, spike, timing, comparison, stability, milestone" }
+- Identify the 3-4 most important observations only — quality over quantity
+- Keep each message to ONE short, punchy sentence
+- Be specific — use actual numbers from the data
+- NEVER suggest medication changes, dosing, eating, or any health actions
+- Simply observe patterns — do NOT give advice
+- Friendly tone, this is a personal wellness journal
 
 DATA (last ${stats.hours}h):
 - ${stats.readingCount} readings | Avg: ${stats.avg} | Range: ${stats.min}-${stats.max} mg/dL
@@ -566,7 +558,7 @@ Return the JSON array now:`;
       ],
       model: 'llama-3.3-70b-versatile',
       temperature: 0.4,
-      max_tokens: 800,
+      max_tokens: 500,
     });
 
     let raw = chatCompletion.choices[0]?.message?.content || '[]';
