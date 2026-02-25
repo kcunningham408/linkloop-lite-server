@@ -108,6 +108,12 @@ export const userAPI = {
       body: JSON.stringify(updates),
     });
   },
+
+  deleteAccount: async () => {
+    return apiRequest('/users/me', {
+      method: 'DELETE',
+    });
+  },
 };
 
 // ============ GLUCOSE API ============

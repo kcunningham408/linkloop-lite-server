@@ -55,9 +55,16 @@ export function AuthProvider({ children }) {
     return data;
   };
 
+  const deleteAccount = async () => {
+    await userAPI.deleteAccount();
+    await clearToken();
+    setUser(null);
+    setIsAuthenticated(false);
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, isLoading, isAuthenticated, login, register, logout, updateUser, checkAuth }}
+      value={{ user, isLoading, isAuthenticated, login, register, logout, updateUser, deleteAccount, checkAuth }}
     >
       {children}
     </AuthContext.Provider>

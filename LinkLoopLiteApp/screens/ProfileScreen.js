@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { dexcomAPI } from '../services/api';
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, deleteAccount } = useAuth();
   const [notifications, setNotifications] = useState(true);
   const [dexcomStatus, setDexcomStatus] = useState({ connected: false, lastSync: null });
   const [dexcomLoading, setDexcomLoading] = useState(true);
@@ -63,6 +63,40 @@ export default function ProfileScreen() {
       { text: 'Cancel', style: 'cancel' },
       { text: 'Sign Out', style: 'destructive', onPress: logout },
     ]);
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to permanently delete your account? This will remove all your data including glucose readings, care circle, mood entries, and achievements. This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete Account',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Final Confirmation',
+              'This is permanent. All your data will be deleted forever. Are you absolutely sure?',
+              [
+                { text: 'Keep Account', style: 'cancel' },
+                {
+                  text: 'Yes, Delete Everything',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      await deleteAccount();
+                    } catch (err) {
+                      Alert.alert('Error', err.message || 'Could not delete account. Please try again.');
+                    }
+                  },
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -171,7 +205,7 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.settingItem} onPress={() => Linking.openURL('https://linkloop-9l3x.onrender.com/privacy.html')}>
+          <TouchableOpacity style={styles.settingItem} onPress={() => Linking.openURL('https://kcunningham408.github.io/vibecmd-pages/linkloop/privacy.html')}>
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>🔒</Text>
               <View style={{ flex: 1 }}>
@@ -182,7 +216,7 @@ export default function ProfileScreen() {
             <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.settingItem} onPress={() => Linking.openURL('https://linkloop-9l3x.onrender.com/terms.html')}>
+          <TouchableOpacity style={styles.settingItem} onPress={() => Linking.openURL('https://kcunningham408.github.io/vibecmd-pages/linkloop/terms.html')}>
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>📋</Text>
               <View style={{ flex: 1 }}>
@@ -193,7 +227,7 @@ export default function ProfileScreen() {
             <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.settingItem} onPress={() => Linking.openURL('https://linkloop-9l3x.onrender.com/support.html')}>
+          <TouchableOpacity style={styles.settingItem} onPress={() => Linking.openURL('https://kcunningham408.github.io/vibecmd-pages/linkloop/support.html')}>
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>💬</Text>
               <View style={{ flex: 1 }}>
@@ -205,10 +239,16 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Danger Zone */}
+        {/* Sign Out */}
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutIcon}>🚪</Text>
           <Text style={styles.logoutText}>Sign Out</Text>
+        </TouchableOpacity>
+
+        {/* Delete Account */}
+        <TouchableOpacity style={styles.deleteAccountButton} onPress={handleDeleteAccount}>
+          <Text style={styles.deleteAccountIcon}>⚠️</Text>
+          <Text style={styles.deleteAccountText}>Delete Account</Text>
         </TouchableOpacity>
 
         {/* Disclaimer */}
@@ -250,9 +290,12 @@ const styles = StyleSheet.create({
   dexcomDisconnectText: { fontSize: 13, color: '#FF6B6B', fontWeight: '600' },
   dexcomConnectButton: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: '#1A2235', borderWidth: 1, borderColor: '#4A90D9' },
   dexcomConnectText: { fontSize: 13, color: '#4A90D9', fontWeight: '600' },
-  logoutButton: { backgroundColor: '#2A1A1A', borderRadius: 12, padding: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 20, borderWidth: 1, borderColor: '#3A2020' },
+  logoutButton: { backgroundColor: '#2A1A1A', borderRadius: 12, padding: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 12, borderWidth: 1, borderColor: '#3A2020' },
   logoutIcon: { fontSize: 20, marginRight: 10 },
   logoutText: { fontSize: 16, fontWeight: 'bold', color: '#FF6B6B' },
+  deleteAccountButton: { backgroundColor: '#1C1C1E', borderRadius: 12, padding: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 20, borderWidth: 1, borderColor: '#2C2C2E' },
+  deleteAccountIcon: { fontSize: 18, marginRight: 10 },
+  deleteAccountText: { fontSize: 14, fontWeight: '600', color: '#888' },
   disclaimerCard: { backgroundColor: '#1C1C1E', borderRadius: 12, padding: 16, flexDirection: 'row', alignItems: 'flex-start', marginBottom: 30, borderWidth: 1, borderColor: '#2C2C2E' },
   disclaimerIcon: { fontSize: 20, marginRight: 10, marginTop: 2 },
   disclaimerText: { fontSize: 12, color: '#888', flex: 1, lineHeight: 18 },
