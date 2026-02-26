@@ -27,7 +27,7 @@ router.post('/invite', auth, async (req, res) => {
 
     const invitation = new CareCircle({
       ownerId: req.user.userId,
-      memberId: req.user.userId,
+      memberId: null,          // populated when someone joins via the code
       memberName,
       memberEmoji: memberEmoji || '👤',
       relationship,
@@ -61,7 +61,7 @@ router.post('/join', auth, async (req, res) => {
 
     invitation.memberId = req.user.userId;
     invitation.status = 'active';
-    invitation.inviteCode = null;
+    invitation.inviteCode = null; // consumed — clear so it can't be reused
     await invitation.save();
 
     // Tag the joining user as a Loop Member linked to this warrior

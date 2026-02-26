@@ -9,7 +9,7 @@ const careCircleSchema = new mongoose.Schema({
   memberId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    default: null   // null until a real user joins via invite code
   },
   memberName: {
     type: String,
@@ -43,6 +43,7 @@ const careCircleSchema = new mongoose.Schema({
   }
 });
 
-careCircleSchema.index({ ownerId: 1, memberId: 1 }, { unique: true });
+// Only enforce uniqueness once a real member has joined (memberId is not null)
+careCircleSchema.index({ ownerId: 1, memberId: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model('CareCircle', careCircleSchema);
