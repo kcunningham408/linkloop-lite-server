@@ -1,6 +1,7 @@
 const express = require('express');
 const auth = require('../middleware/auth');
 const GlucoseReading = require('../models/GlucoseReading');
+const CareCircle = require('../models/CareCircle');
 
 const router = express.Router();
 
@@ -99,6 +100,66 @@ router.get('/stats', auth, async (req, res) => {
     });
   } catch (err) {
     console.error('Get glucose stats error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// ─── Loop Member View ────────────────────────────────────────────────────────
+// Loop Members can read their linked warrior's glucose data.
+// Verifies the caller has an active CareCircle entry for this owner.
+
+// @route   GET /api/glucose/member-view/:ownerId
+router.get('/member-view/:ownerId', auth, async (req, res) => {
+  try {
+    const { ownerId } = req.params;
+    const { hours = 24, limit = 100 } = req.query;
+
+    // Confirm caller is an active member of this warrior's circle
+    const membership = await CareCircle.findOne({
+      ownerId,
+      memberId: req.user.userId,
+      status: 'active'
+    });
+
+    if (!membership) {
+      return res.status(403).json({ message: 'Not a member of this loop' });
+    }
+
+    // Check the owner's sharing preference
+    if (membership.permissions && membership.permissions.viewGlucose === false) {
+      return res.status(403).json({ message: 'Owner has restricted glucose sharing' });
+    }
+
+    const since = new Date();
+    since.setHours(since.getHours() - parseInt(hours));
+
+    const readings = await GlucoseReading.find({
+      userId: ownerId,
+      timestamp: { $gte: since }
+    })
+      .sort({ timestamp: -1 })
+      .limit(parseInt(limit));
+
+    // Compute stats inline
+    const values = readings.map(r => r.value);
+    const stats = values.length === 0 ? null : {
+      count: values.length,
+      average: Math.round(values.reduce((a, b) => a + b, 0) / values.length),
+      timeInRange: Math.round((values.filter(v => v >= 70 && v <= 180).length / values.length) * 100),
+      high: values.filter(v => v > 180).length,
+      low: values.filter(v => v < 70).length,
+      min: Math.min(...values),
+      max: Math.max(...values),
+    };
+
+    res.json({
+      readings,
+      latest: readings[0] || null,
+      stats,
+      ownerName: membership.memberName, // the name the warrior gave when inviting
+    });
+  } catch (err) {
+    console.error('Member view glucose error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });

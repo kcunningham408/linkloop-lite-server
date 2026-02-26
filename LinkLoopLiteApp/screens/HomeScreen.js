@@ -7,26 +7,36 @@ import { glucoseAPI } from '../services/api';
 
 export default function HomeScreen({ navigation }) {
   const { user } = useAuth();
+  const isMember = user?.role === 'member';
+
   const [stats, setStats] = useState(null);
   const [latestGlucose, setLatestGlucose] = useState(null);
+  const [warriorName, setWarriorName] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
-      const [statsData, latestData] = await Promise.allSettled([
-        glucoseAPI.getStats(24),
-        glucoseAPI.getLatest(),
-      ]);
-      if (statsData.status === 'fulfilled') setStats(statsData.value);
-      if (latestData.status === 'fulfilled') setLatestGlucose(latestData.value);
+      if (isMember && user?.linkedOwnerId) {
+        const data = await glucoseAPI.getMemberView(user.linkedOwnerId, 24);
+        setLatestGlucose(data.latest || null);
+        setStats(data.stats || null);
+        if (data.ownerName) setWarriorName(data.ownerName);
+      } else {
+        const [statsData, latestData] = await Promise.allSettled([
+          glucoseAPI.getStats(24),
+          glucoseAPI.getLatest(),
+        ]);
+        if (statsData.status === 'fulfilled') setStats(statsData.value);
+        if (latestData.status === 'fulfilled') setLatestGlucose(latestData.value);
+      }
     } catch (err) {
       console.log('Home load error:', err);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [isMember, user?.linkedOwnerId]);
 
   useFocusEffect(
     useCallback(() => { loadData(); }, [loadData])
@@ -59,22 +69,31 @@ export default function HomeScreen({ navigation }) {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#4A90D9']} />}
     >
       <LinearGradient
-        colors={['#4A90D9', '#3A7BC8']}
+        colors={isMember ? ['#34C759', '#2A9E47'] : ['#4A90D9', '#3A7BC8']}
         style={styles.heroSection}
       >
         <Text style={styles.heroTitle}>∞ LinkLoop</Text>
-        <Text style={styles.heroSubtitle}>Stay Connected, Stay in Range</Text>
+        <Text style={styles.heroSubtitle}>
+          {isMember ? `You're in the loop` : 'Stay Connected, Stay in Range'}
+        </Text>
         <View style={styles.statsBadge}>
-          <Text style={styles.statsEmoji}>💙</Text>
-          <Text style={styles.statsText}>{user?.name ? `Welcome, ${user.name}!` : 'Your T1D Support Network'}</Text>
+          <Text style={styles.statsEmoji}>{isMember ? '�' : '�💙'}</Text>
+          <Text style={styles.statsText}>
+            {isMember
+              ? `Watching ${warriorName || 'your warrior'}'s loop`
+              : (user?.name ? `Welcome, ${user.name}!` : 'Your T1D Support Network')}
+          </Text>
         </View>
       </LinearGradient>
 
       <View style={styles.content}>
-        <Text style={styles.sectionTitle}>Welcome to LinkLoop</Text>
+        <Text style={styles.sectionTitle}>
+          {isMember ? `${warriorName || 'Warrior'}'s Loop` : 'Welcome to LinkLoop'}
+        </Text>
         <Text style={styles.description}>
-          LinkLoop connects Type 1 Diabetics and their caregivers through real-time CGM sharing,
-          supply tracking, AI insights, and community support.
+          {isMember
+            ? `You have read-only access to ${warriorName || 'your warrior'}'s real-time glucose data. You'll see their live readings, stats, and alerts below.`
+            : 'LinkLoop connects Type 1 Diabetics and their caregivers through real-time CGM sharing, supply tracking, AI insights, and community support.'}
         </Text>
 
         {/* Current Glucose Reading */}
@@ -82,7 +101,9 @@ export default function HomeScreen({ navigation }) {
           {latestGlucose ? (
             <View style={styles.glucoseCardContent}>
               <View style={styles.glucoseLeft}>
-                <Text style={styles.glucoseCardLabel}>Current Glucose</Text>
+                <Text style={styles.glucoseCardLabel}>
+                  {isMember ? `${warriorName || 'Warrior'}'s Glucose` : 'Current Glucose'}
+                </Text>
                 <View style={styles.glucoseReadingRow}>
                   <Text style={[styles.glucoseCardValue, { color: getGlucoseColor(latestGlucose.value) }]}>
                     {latestGlucose.value}
@@ -105,51 +126,36 @@ export default function HomeScreen({ navigation }) {
           ) : (
             <View style={styles.glucoseCardContent}>
               <View>
-                <Text style={styles.glucoseCardLabel}>Current Glucose</Text>
-                <Text style={styles.glucoseCardEmpty}>No readings yet — tap to log</Text>
+                <Text style={styles.glucoseCardLabel}>
+                  {isMember ? `${warriorName || 'Warrior'}'s Glucose` : 'Current Glucose'}
+                </Text>
+                <Text style={styles.glucoseCardEmpty}>
+                  {isMember ? 'No readings from your warrior yet' : 'No readings yet — tap to log'}
+                </Text>
               </View>
               <Text style={styles.glucoseCardArrow}>›</Text>
             </View>
           )}
         </TouchableOpacity>
 
+        {/* Feature grid — warriors get full set, members get their relevant subset */}
         <View style={styles.featuresGrid}>
-          <FeatureCard
-            emoji="📊"
-            title="CGM Sync"
-            description="Share real-time glucose data"
-            onPress={() => navigation.navigate('CGM')}
-          />
-          <FeatureCard
-            emoji="👥"
-            title="Care Circle"
-            description="Connect with caregivers"
-            onPress={() => navigation.navigate('Circle')}
-          />
-          <FeatureCard
-            emoji="📦"
-            title="Supply Tracker"
-            description="Never run out of supplies"
-            onPress={() => navigation.navigate('Supplies')}
-          />
-          <FeatureCard
-            emoji="✨"
-            title="AI Insights"
-            description="Pattern analysis by AI"
-            onPress={() => navigation.navigate('Insights')}
-          />
-          <FeatureCard
-            emoji="📝"
-            title="Mood & Notes"
-            description="Track how you're feeling"
-            onPress={() => navigation.navigate('Mood')}
-          />
-          <FeatureCard
-            emoji="🏆"
-            title="Achievements"
-            description="Earn badges & streaks"
-            onPress={() => navigation.navigate('Achievements')}
-          />
+          <FeatureCard emoji="📊" title="Live Glucose" description={isMember ? "See real-time CGM data" : "Share real-time glucose data"} onPress={() => navigation.navigate('CGM')} />
+          {isMember ? (
+            <>
+              <FeatureCard emoji="💬" title="Message" description="Chat with your warrior" onPress={() => navigation.navigate('Chat')} />
+              <FeatureCard emoji="�" title="Alerts" description="Low & high notifications" onPress={() => navigation.navigate('Alerts')} />
+              <FeatureCard emoji="⚙️" title="Profile" description="Your Loop Member settings" onPress={() => navigation.navigate('Profile')} />
+            </>
+          ) : (
+            <>
+              <FeatureCard emoji="👥" title="Care Circle" description="Connect with caregivers" onPress={() => navigation.navigate('Circle')} />
+              <FeatureCard emoji="📦" title="Supply Tracker" description="Never run out of supplies" onPress={() => navigation.navigate('Supplies')} />
+              <FeatureCard emoji="✨" title="AI Insights" description="Pattern analysis by AI" onPress={() => navigation.navigate('Insights')} />
+              <FeatureCard emoji="📝" title="Mood & Notes" description="Track how you're feeling" onPress={() => navigation.navigate('Mood')} />
+              <FeatureCard emoji="🏆" title="Achievements" description="Earn badges & streaks" onPress={() => navigation.navigate('Achievements')} />
+            </>
+          )}
         </View>
 
         <View style={styles.quickStats}>

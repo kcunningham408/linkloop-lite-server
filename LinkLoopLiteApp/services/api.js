@@ -51,7 +51,7 @@ const apiRequest = async (endpoint, options = {}) => {
 // ============ AUTH API ============
 
 export const authAPI = {
-  register: async (identifier, password, name, role = 't1d') => {
+  register: async (identifier, password, name, role = 'warrior') => {
     // identifier can be email or phone — detect which one
     const isPhone = /^\+?\d[\d\s\-()]{8,}$/.test(identifier.replace(/\s/g, ''));
     const body = { password, name, role };
@@ -136,6 +136,11 @@ export const glucoseAPI = {
       method: 'POST',
       body: JSON.stringify({ value, trend, source, notes }),
     });
+  },
+
+  // Loop Member: fetch the linked warrior's glucose data (readings + stats + latest)
+  getMemberView: async (ownerId, hours = 24) => {
+    return apiRequest(`/glucose/member-view/${ownerId}?hours=${hours}`);
   },
 };
 

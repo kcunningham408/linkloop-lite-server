@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Modal, RefreshControl, ActivityIndicator, Alert, Dimensions, Linking } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAuth } from '../context/AuthContext';
 import { glucoseAPI, dexcomAPI } from '../services/api';
 
 const { width } = Dimensions.get('window');
@@ -14,6 +15,9 @@ const TREND_OPTIONS = [
 ];
 
 export default function CGMScreen() {
+  const { user } = useAuth();
+  const isMember = user?.role === 'member';
+
   const [currentGlucose, setCurrentGlucose] = useState(null);
   const [readings, setReadings] = useState([]);
   const [stats, setStats] = useState(null);
@@ -27,28 +31,39 @@ export default function CGMScreen() {
   const [dexcomStatus, setDexcomStatus] = useState({ connected: false, lastSync: null });
   const [dexcomSyncing, setDexcomSyncing] = useState(false);
   const [dexcomConnecting, setDexcomConnecting] = useState(false);
+  const [warriorName, setWarriorName] = useState('');
 
   const loadData = useCallback(async () => {
     try {
-      const [readingsData, statsData, dexStatus] = await Promise.allSettled([
-        glucoseAPI.getReadings(24),
-        glucoseAPI.getStats(24),
-        dexcomAPI.getStatus(),
-      ]);
-      if (readingsData.status === 'fulfilled') {
-        const r = readingsData.value;
-        setReadings(r);
-        if (r.length > 0) setCurrentGlucose(r[0]);
+      if (isMember && user?.linkedOwnerId) {
+        // Loop Member: fetch the linked warrior's data in one call
+        const data = await glucoseAPI.getMemberView(user.linkedOwnerId, 24);
+        setReadings(data.readings || []);
+        setCurrentGlucose(data.latest || null);
+        setStats(data.stats || null);
+        if (data.ownerName) setWarriorName(data.ownerName);
+      } else {
+        // T1D Warrior: fetch own data
+        const [readingsData, statsData, dexStatus] = await Promise.allSettled([
+          glucoseAPI.getReadings(24),
+          glucoseAPI.getStats(24),
+          dexcomAPI.getStatus(),
+        ]);
+        if (readingsData.status === 'fulfilled') {
+          const r = readingsData.value;
+          setReadings(r);
+          if (r.length > 0) setCurrentGlucose(r[0]);
+        }
+        if (statsData.status === 'fulfilled') setStats(statsData.value);
+        if (dexStatus.status === 'fulfilled') setDexcomStatus(dexStatus.value);
       }
-      if (statsData.status === 'fulfilled') setStats(statsData.value);
-      if (dexStatus.status === 'fulfilled') setDexcomStatus(dexStatus.value);
     } catch (err) {
       console.log('CGM load error:', err);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [isMember, user?.linkedOwnerId]);
 
   useEffect(() => { loadData(); }, [loadData]);
   const onRefresh = () => { setRefreshing(true); loadData(); };
@@ -169,6 +184,11 @@ export default function CGMScreen() {
         style={styles.headerGradient}
         locations={[0, 0.6, 1]}
       >
+        {isMember && (
+          <Text style={styles.memberBanner}>
+            👁 Watching {warriorName || 'your warrior'}'s loop
+          </Text>
+        )}
         <View style={styles.currentReading}>
           <Text style={styles.glucoseValue}>{glucoseValue}</Text>
           <Text style={styles.glucoseUnit}>mg/dL</Text>
@@ -184,15 +204,20 @@ export default function CGMScreen() {
           </>
         )}
         {!currentGlucose && !loading && (
-          <Text style={styles.lastUpdate}>No readings yet — tap + to log one</Text>
+          <Text style={styles.lastUpdate}>
+            {isMember ? 'No readings from your warrior yet' : 'No readings yet — tap + to log one'}
+          </Text>
         )}
       </LinearGradient>
 
       <View style={styles.content}>
-        <TouchableOpacity style={styles.addButton} onPress={() => setShowAddModal(true)}>
-          <Text style={styles.addButtonIcon}>➕</Text>
-          <Text style={styles.addButtonText}>Log Glucose Reading</Text>
-        </TouchableOpacity>
+        {/* Warriors only: log reading button */}
+        {!isMember && (
+          <TouchableOpacity style={styles.addButton} onPress={() => setShowAddModal(true)}>
+            <Text style={styles.addButtonIcon}>➕</Text>
+            <Text style={styles.addButtonText}>Log Glucose Reading</Text>
+          </TouchableOpacity>
+        )}
 
         <View style={styles.chartContainer}>
           <Text style={styles.sectionTitle}>Today's Readings</Text>
@@ -250,70 +275,73 @@ export default function CGMScreen() {
           )}
         </View>
 
-        <View style={styles.infoCard}>
-          <Text style={styles.infoCardTitle}>🔗 Connected Devices</Text>
+        {/* Warriors only: connected devices & Dexcom controls */}
+        {!isMember && (
+          <View style={styles.infoCard}>
+            <Text style={styles.infoCardTitle}>🔗 Connected Devices</Text>
 
-          {/* Manual Entry */}
-          <View style={styles.deviceItem}>
-            <Text style={styles.deviceEmoji}>📱</Text>
-            <View style={styles.deviceInfo}>
-              <Text style={styles.deviceName}>Manual Entry</Text>
-              <Text style={styles.deviceStatus}>
-                {currentGlucose ? 'Last sync: ' + new Date(currentGlucose.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No data yet'}
-              </Text>
+            {/* Manual Entry */}
+            <View style={styles.deviceItem}>
+              <Text style={styles.deviceEmoji}>📱</Text>
+              <View style={styles.deviceInfo}>
+                <Text style={styles.deviceName}>Manual Entry</Text>
+                <Text style={styles.deviceStatus}>
+                  {currentGlucose ? 'Last sync: ' + new Date(currentGlucose.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No data yet'}
+                </Text>
+              </View>
+              <View style={[styles.statusDot, { backgroundColor: currentGlucose ? '#4A90D9' : '#ccc' }]} />
             </View>
-            <View style={[styles.statusDot, { backgroundColor: currentGlucose ? '#4A90D9' : '#ccc' }]} />
-          </View>
 
-          {/* Dexcom */}
-          <View style={styles.deviceDivider} />
-          {dexcomStatus.connected ? (
-            <>
-              <View style={styles.deviceItem}>
-                <Text style={styles.deviceEmoji}>🩸</Text>
-                <View style={styles.deviceInfo}>
-                  <Text style={styles.deviceName}>Dexcom CGM</Text>
-                  <Text style={styles.deviceStatus}>
-                    {dexcomStatus.lastSync
-                      ? 'Last sync: ' + new Date(dexcomStatus.lastSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                      : 'Connected — tap Sync'}
-                  </Text>
-                </View>
-                <View style={[styles.statusDot, { backgroundColor: '#4A90D9' }]} />
-              </View>
-              <View style={styles.dexcomActions}>
-                <TouchableOpacity style={styles.dexcomSyncButton} onPress={handleSyncDexcom} disabled={dexcomSyncing}>
-                  {dexcomSyncing ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                  ) : (
-                    <>
-                      <Text style={styles.dexcomButtonIcon}>🔄</Text>
-                      <Text style={styles.dexcomSyncText}>Sync Now</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.dexcomDisconnectButton} onPress={handleDisconnectDexcom}>
-                  <Text style={styles.dexcomDisconnectText}>Disconnect</Text>
-                </TouchableOpacity>
-              </View>
-            </>
-          ) : (
-            <TouchableOpacity style={styles.connectDexcomButton} onPress={handleConnectDexcom} disabled={dexcomConnecting}>
-              {dexcomConnecting ? (
-                <ActivityIndicator size="small" color="#4A90D9" />
-              ) : (
-                <>
-                  <Text style={styles.connectDexcomIcon}>🩸</Text>
-                  <View style={styles.connectDexcomInfo}>
-                    <Text style={styles.connectDexcomTitle}>Connect Dexcom CGM</Text>
-                    <Text style={styles.connectDexcomSub}>Import glucose readings automatically</Text>
+            {/* Dexcom */}
+            <View style={styles.deviceDivider} />
+            {dexcomStatus.connected ? (
+              <>
+                <View style={styles.deviceItem}>
+                  <Text style={styles.deviceEmoji}>🩸</Text>
+                  <View style={styles.deviceInfo}>
+                    <Text style={styles.deviceName}>Dexcom CGM</Text>
+                    <Text style={styles.deviceStatus}>
+                      {dexcomStatus.lastSync
+                        ? 'Last sync: ' + new Date(dexcomStatus.lastSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        : 'Connected — tap Sync'}
+                    </Text>
                   </View>
-                  <Text style={styles.connectChevron}>›</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          )}
-        </View>
+                  <View style={[styles.statusDot, { backgroundColor: '#4A90D9' }]} />
+                </View>
+                <View style={styles.dexcomActions}>
+                  <TouchableOpacity style={styles.dexcomSyncButton} onPress={handleSyncDexcom} disabled={dexcomSyncing}>
+                    {dexcomSyncing ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <>
+                        <Text style={styles.dexcomButtonIcon}>🔄</Text>
+                        <Text style={styles.dexcomSyncText}>Sync Now</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.dexcomDisconnectButton} onPress={handleDisconnectDexcom}>
+                    <Text style={styles.dexcomDisconnectText}>Disconnect</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : (
+              <TouchableOpacity style={styles.connectDexcomButton} onPress={handleConnectDexcom} disabled={dexcomConnecting}>
+                {dexcomConnecting ? (
+                  <ActivityIndicator size="small" color="#4A90D9" />
+                ) : (
+                  <>
+                    <Text style={styles.connectDexcomIcon}>🩸</Text>
+                    <View style={styles.connectDexcomInfo}>
+                      <Text style={styles.connectDexcomTitle}>Connect Dexcom CGM</Text>
+                      <Text style={styles.connectDexcomSub}>Import glucose readings automatically</Text>
+                    </View>
+                    <Text style={styles.connectChevron}>›</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
 
         <View style={styles.alertsCard}>
           <Text style={styles.alertsTitle}>⚠️ Alerts & Notifications</Text>
@@ -387,6 +415,7 @@ function StatCard({ label, value, color }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#111111' },
   headerGradient: { padding: 30, alignItems: 'center', paddingBottom: 40 },
+  memberBanner: { fontSize: 13, color: '#fff', opacity: 0.85, marginBottom: 10, backgroundColor: 'rgba(0,0,0,0.2)', paddingHorizontal: 14, paddingVertical: 5, borderRadius: 20 },
   currentReading: { flexDirection: 'row', alignItems: 'baseline', marginBottom: 10 },
   glucoseValue: { fontSize: 72, fontWeight: 'bold', color: '#fff' },
   glucoseUnit: { fontSize: 20, color: '#fff', opacity: 0.9, marginLeft: 5 },
