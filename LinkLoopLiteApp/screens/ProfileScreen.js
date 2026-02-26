@@ -5,12 +5,16 @@ import { dexcomAPI } from '../services/api';
 
 export default function ProfileScreen() {
   const { user, logout, deleteAccount } = useAuth();
+  const isMember = user?.role === 'member';
   const [notifications, setNotifications] = useState(true);
   const [dexcomStatus, setDexcomStatus] = useState({ connected: false, lastSync: null });
-  const [dexcomLoading, setDexcomLoading] = useState(true);
+  const [dexcomLoading, setDexcomLoading] = useState(!isMember); // skip loading state for members
 
   useEffect(() => {
-    loadDexcomStatus();
+    // Members cannot connect Dexcom — don't waste a network call
+    if (!isMember) {
+      loadDexcomStatus();
+    }
   }, []);
 
   const loadDexcomStatus = async () => {
@@ -115,8 +119,10 @@ export default function ProfileScreen() {
           <Text style={styles.profileName}>{user?.name || 'LinkLoop User'}</Text>
           <Text style={styles.profileEmail}>{user?.email || ''}</Text>
           <View style={styles.badgeRow}>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>LinkLoop</Text>
+            <View style={[styles.badge, isMember && { borderColor: '#34C759' }]}>
+              <Text style={[styles.badgeText, isMember && { color: '#34C759' }]}>
+                {isMember ? '∞ Loop Member' : '💙 T1D Warrior'}
+              </Text>
             </View>
           </View>
         </View>
@@ -157,39 +163,41 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* Connected Devices */}
-        <View style={styles.settingsCard}>
-          <Text style={styles.sectionTitle}>Connected Devices</Text>
+        {/* Connected Devices — warriors only */}
+        {!isMember && (
+          <View style={styles.settingsCard}>
+            <Text style={styles.sectionTitle}>Connected Devices</Text>
 
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingIcon}>🩸</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.settingTitle}>Dexcom CGM</Text>
-                {dexcomLoading ? (
-                  <ActivityIndicator size="small" color="#4A90D9" style={{ alignSelf: 'flex-start', marginTop: 4 }} />
-                ) : dexcomStatus.connected ? (
-                  <Text style={[styles.settingValue, { color: '#4A90D9' }]}>
-                    Connected{dexcomStatus.lastSync ? ' — Last sync ' + new Date(dexcomStatus.lastSync).toLocaleDateString() : ''}
-                  </Text>
-                ) : (
-                  <Text style={styles.settingDescription}>Not connected</Text>
-                )}
+            <View style={styles.settingItem}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingIcon}>🩸</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.settingTitle}>Dexcom CGM</Text>
+                  {dexcomLoading ? (
+                    <ActivityIndicator size="small" color="#4A90D9" style={{ alignSelf: 'flex-start', marginTop: 4 }} />
+                  ) : dexcomStatus.connected ? (
+                    <Text style={[styles.settingValue, { color: '#4A90D9' }]}>
+                      Connected{dexcomStatus.lastSync ? ' — Last sync ' + new Date(dexcomStatus.lastSync).toLocaleDateString() : ''}
+                    </Text>
+                  ) : (
+                    <Text style={styles.settingDescription}>Not connected</Text>
+                  )}
+                </View>
               </View>
+              {!dexcomLoading && (
+                dexcomStatus.connected ? (
+                  <TouchableOpacity onPress={handleDisconnectDexcom} style={styles.dexcomActionButton}>
+                    <Text style={styles.dexcomDisconnectText}>Disconnect</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity onPress={handleConnectDexcom} style={styles.dexcomConnectButton}>
+                    <Text style={styles.dexcomConnectText}>Connect</Text>
+                  </TouchableOpacity>
+                )
+              )}
             </View>
-            {!dexcomLoading && (
-              dexcomStatus.connected ? (
-                <TouchableOpacity onPress={handleDisconnectDexcom} style={styles.dexcomActionButton}>
-                  <Text style={styles.dexcomDisconnectText}>Disconnect</Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity onPress={handleConnectDexcom} style={styles.dexcomConnectButton}>
-                  <Text style={styles.dexcomConnectText}>Connect</Text>
-                </TouchableOpacity>
-              )
-            )}
           </View>
-        </View>
+        )}
 
         {/* App Info */}
         <View style={styles.settingsCard}>

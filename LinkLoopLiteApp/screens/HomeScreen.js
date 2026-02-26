@@ -8,6 +8,8 @@ import { glucoseAPI } from '../services/api';
 export default function HomeScreen({ navigation }) {
   const { user } = useAuth();
   const isMember = user?.role === 'member';
+  const lowThreshold = user?.settings?.lowThreshold ?? 70;
+  const highThreshold = user?.settings?.highThreshold ?? 180;
 
   const [stats, setStats] = useState(null);
   const [latestGlucose, setLatestGlucose] = useState(null);
@@ -46,15 +48,15 @@ export default function HomeScreen({ navigation }) {
 
   const getGlucoseColor = (value) => {
     if (!value) return '#4A90D9';
-    if (value < 70) return '#FF6B6B';
-    if (value > 180) return '#FFA500';
+    if (value < lowThreshold) return '#FF6B6B';
+    if (value > highThreshold) return '#FFA500';
     return '#4A90D9';
   };
 
   const getGlucoseStatus = (value) => {
     if (!value) return '';
-    if (value < 70) return 'LOW';
-    if (value > 180) return 'HIGH';
+    if (value < lowThreshold) return 'LOW';
+    if (value > highThreshold) return 'HIGH';
     return 'IN RANGE';
   };
 
@@ -99,29 +101,39 @@ export default function HomeScreen({ navigation }) {
         {/* Current Glucose Reading */}
         <TouchableOpacity style={styles.glucoseCard} onPress={() => navigation.navigate('CGM')}>
           {latestGlucose ? (
-            <View style={styles.glucoseCardContent}>
-              <View style={styles.glucoseLeft}>
-                <Text style={styles.glucoseCardLabel}>
-                  {isMember ? `${warriorName || 'Warrior'}'s Glucose` : 'Current Glucose'}
+            <View>
+              {(() => {
+                const minsOld = Math.floor((Date.now() - new Date(latestGlucose.timestamp).getTime()) / 60000);
+                return minsOld > 30 ? (
+                  <View style={styles.staleWarning}>
+                    <Text style={styles.staleWarningText}>⚠️ Data is {minsOld} min old</Text>
+                  </View>
+                ) : null;
+              })()}
+              <View style={styles.glucoseCardContent}>
+                <View style={styles.glucoseLeft}>
+                  <Text style={styles.glucoseCardLabel}>
+                    {isMember ? `${warriorName || 'Warrior'}'s Glucose` : 'Current Glucose'}
+                  </Text>
+                  <View style={styles.glucoseReadingRow}>
+                    <Text style={[styles.glucoseCardValue, { color: getGlucoseColor(latestGlucose.value) }]}>
+                      {latestGlucose.value}
+                    </Text>
+                    <Text style={styles.glucoseCardUnit}>mg/dL</Text>
+                    <Text style={[styles.glucoseCardTrend, { color: getGlucoseColor(latestGlucose.value) }]}>
+                      {getTrendArrow(latestGlucose.trend)}
+                    </Text>
+                  </View>
+                  <View style={[styles.glucoseStatusBadge, { backgroundColor: getGlucoseColor(latestGlucose.value) + '20' }]}>
+                    <Text style={[styles.glucoseStatusText, { color: getGlucoseColor(latestGlucose.value) }]}>
+                      {getGlucoseStatus(latestGlucose.value)}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.glucoseCardTime}>
+                  {new Date(latestGlucose.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </Text>
-                <View style={styles.glucoseReadingRow}>
-                  <Text style={[styles.glucoseCardValue, { color: getGlucoseColor(latestGlucose.value) }]}>
-                    {latestGlucose.value}
-                  </Text>
-                  <Text style={styles.glucoseCardUnit}>mg/dL</Text>
-                  <Text style={[styles.glucoseCardTrend, { color: getGlucoseColor(latestGlucose.value) }]}>
-                    {getTrendArrow(latestGlucose.trend)}
-                  </Text>
-                </View>
-                <View style={[styles.glucoseStatusBadge, { backgroundColor: getGlucoseColor(latestGlucose.value) + '20' }]}>
-                  <Text style={[styles.glucoseStatusText, { color: getGlucoseColor(latestGlucose.value) }]}>
-                    {getGlucoseStatus(latestGlucose.value)}
-                  </Text>
-                </View>
               </View>
-              <Text style={styles.glucoseCardTime}>
-                {new Date(latestGlucose.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </Text>
             </View>
           ) : (
             <View style={styles.glucoseCardContent}>
@@ -267,6 +279,20 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderWidth: 1,
     borderColor: '#2C2C2E',
+  },
+  staleWarning: {
+    backgroundColor: 'rgba(255,165,0,0.15)',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,165,0,0.4)',
+  },
+  staleWarningText: {
+    fontSize: 12,
+    color: '#FFA500',
+    fontWeight: '600',
   },
   glucoseCardContent: {
     flexDirection: 'row',

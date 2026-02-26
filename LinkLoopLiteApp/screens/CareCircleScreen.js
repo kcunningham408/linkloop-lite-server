@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Modal, Switch, RefreshControl, ActivityIndicator, Alert, Share, Linking, Platform } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Modal, Switch, RefreshControl, ActivityIndicator, Alert, Share, Linking, Platform, Clipboard } from 'react-native';
 import { circleAPI, alertsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
@@ -18,7 +18,8 @@ const RELATIONSHIPS = [
 ];
 
 export default function CareCircleScreen() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
+  const isMember = user?.role === 'member';
   const navigation = useNavigation();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,6 +33,22 @@ export default function CareCircleScreen() {
   const [newRelationship, setNewRelationship] = useState('parent');
   const [saving, setSaving] = useState(false);
   const [activeAlertCount, setActiveAlertCount] = useState(0);
+
+  // Real sharing settings — seeded from the server-stored user settings
+  const [shareGlucose, setShareGlucose] = useState(user?.settings?.shareRealTimeGlucose ?? true);
+  const [shareLowAlerts, setShareLowAlerts] = useState(user?.settings?.lowAlerts ?? true);
+  const [shareHighAlerts, setShareHighAlerts] = useState(user?.settings?.highAlerts ?? true);
+
+  const handleToggleSetting = async (key, currentVal, setter) => {
+    const newVal = !currentVal;
+    setter(newVal); // optimistic update
+    try {
+      await updateUser({ settings: { [key]: newVal } });
+    } catch (err) {
+      setter(currentVal); // revert on failure
+      Alert.alert('Error', 'Could not save setting. Please try again.');
+    }
+  };
 
   const loadMembers = useCallback(async () => {
     try {
@@ -185,19 +202,32 @@ export default function CareCircleScreen() {
                 <Text style={styles.memberEmoji}>{member.memberEmoji}</Text>
                 <View style={styles.memberInfo}>
                   <Text style={styles.memberName}>{member.memberName}</Text>
-                  <Text style={styles.memberStatus}>
-                    <View style={[styles.statusDot, { backgroundColor: '#4A90D9' }]} />
-                    Active
+                  <Text style={styles.memberRelationship}>
+                    {RELATIONSHIPS.find(r => r.value === member.relationship)?.label || 'Circle Member'}
                   </Text>
+                  <TouchableOpacity onPress={() => handleRemoveMember(member._id, member.memberName)}>
+                    <Text style={styles.removeText}>Remove</Text>
+                  </TouchableOpacity>
                 </View>
-                <View style={styles.memberActions}>
-                  <Text style={styles.notificationLabel}>Alerts</Text>
-                  <Switch
-                    value={member.permissions?.viewGlucose}
-                    onValueChange={() => handleTogglePermission(member._id, 'viewGlucose', member.permissions?.viewGlucose)}
-                    trackColor={{ false: '#ccc', true: '#4A90D9' }}
-                    thumbColor="#fff"
-                  />
+                <View style={styles.memberToggles}>
+                  <View style={styles.toggleRow}>
+                    <Text style={styles.toggleLabel}>Glucose</Text>
+                    <Switch
+                      value={member.permissions?.viewGlucose ?? true}
+                      onValueChange={() => handleTogglePermission(member._id, 'viewGlucose', member.permissions?.viewGlucose)}
+                      trackColor={{ false: '#ccc', true: '#4A90D9' }}
+                      thumbColor="#fff"
+                    />
+                  </View>
+                  <View style={styles.toggleRow}>
+                    <Text style={styles.toggleLabel}>Low Alert</Text>
+                    <Switch
+                      value={member.permissions?.receiveLowAlerts ?? true}
+                      onValueChange={() => handleTogglePermission(member._id, 'receiveLowAlerts', member.permissions?.receiveLowAlerts)}
+                      trackColor={{ false: '#ccc', true: '#FF6B6B' }}
+                      thumbColor="#fff"
+                    />
+                  </View>
                 </View>
               </View>
             ))
@@ -207,11 +237,22 @@ export default function CareCircleScreen() {
             <>
               <Text style={[styles.sectionTitle, { marginTop: 10 }]}>Pending ({pendingMembers.length})</Text>
               {pendingMembers.map((member) => (
-                <View key={member._id} style={[styles.memberCard, { opacity: 0.7, borderStyle: 'dashed', borderWidth: 1, borderColor: '#3A3A3C' }]}>
+                <View key={member._id} style={styles.pendingCard}>
                   <Text style={styles.memberEmoji}>{member.memberEmoji}</Text>
                   <View style={styles.memberInfo}>
                     <Text style={styles.memberName}>{member.memberName}</Text>
-                    <Text style={{ fontSize: 13, color: '#FFA500', fontStyle: 'italic' }}>Waiting to join...</Text>
+                    <Text style={{ fontSize: 13, color: '#FFA500', fontStyle: 'italic', marginBottom: 6 }}>Waiting to join…</Text>
+                    {member.inviteCode ? (
+                      <TouchableOpacity
+                        style={styles.copyCodeButton}
+                        onPress={() => {
+                          Clipboard.setString(member.inviteCode);
+                          Alert.alert('Copied!', `Code ${member.inviteCode} copied to clipboard.`);
+                        }}
+                      >
+                        <Text style={styles.copyCodeText}>📋 {member.inviteCode}</Text>
+                      </TouchableOpacity>
+                    ) : null}
                   </View>
                 </View>
               ))}
@@ -224,66 +265,61 @@ export default function CareCircleScreen() {
           <Text style={styles.addButtonText}>Add Care Circle Member</Text>
         </TouchableOpacity>
 
-        {/* Sharing Settings */}
-        <View style={styles.sharingSettings}>
-          <Text style={styles.sectionTitle}>Sharing Settings</Text>
+        {/* Sharing Settings — warriors only, real values from DB */}
+        {!isMember && (
+          <View style={styles.sharingSettings}>
+            <Text style={styles.sectionTitle}>Sharing Settings</Text>
 
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Share Real-Time Glucose</Text>
-              <Text style={styles.settingDescription}>Allow circle members to see your current glucose reading</Text>
-            </View>
-            <Switch value={true} trackColor={{ false: '#ccc', true: '#4A90D9' }} thumbColor="#fff" />
-          </View>
-
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Low Glucose Notifications</Text>
-              <Text style={styles.settingDescription}>Notify circle when glucose drops below your set range</Text>
-            </View>
-            <Switch value={true} trackColor={{ false: '#ccc', true: '#4A90D9' }} thumbColor="#fff" />
-          </View>
-
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>High Glucose Notifications</Text>
-              <Text style={styles.settingDescription}>Notify circle when glucose goes above your set range</Text>
-            </View>
-            <Switch value={true} trackColor={{ false: '#ccc', true: '#4A90D9' }} thumbColor="#fff" />
-          </View>
-        </View>
-
-        {/* Recent Activity */}
-        <View style={styles.recentActivity}>
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
-          {activeMembers.length > 0 ? (
-            activeMembers.slice(0, 3).map((member, i) => (
-              <View key={member._id} style={styles.activityItem}>
-                <Text style={styles.activityIcon}>{i === 0 ? '📊' : i === 1 ? '🔔' : '👤'}</Text>
-                <View style={styles.activityContent}>
-                  <Text style={styles.activityText}>{member.memberName} is connected to your circle</Text>
-                  <Text style={styles.activityTime}>Active member</Text>
-                </View>
+            <View style={styles.settingItem}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingTitle}>Share Real-Time Glucose</Text>
+                <Text style={styles.settingDescription}>Allow circle members to see your current glucose reading</Text>
               </View>
-            ))
-          ) : (
-            <View style={styles.activityItem}>
-              <Text style={styles.activityIcon}>💤</Text>
-              <View style={styles.activityContent}>
-                <Text style={styles.activityText}>No recent activity</Text>
-                <Text style={styles.activityTime}>Invite members to get started</Text>
-              </View>
+              <Switch
+                value={shareGlucose}
+                onValueChange={() => handleToggleSetting('shareRealTimeGlucose', shareGlucose, setShareGlucose)}
+                trackColor={{ false: '#ccc', true: '#4A90D9' }}
+                thumbColor="#fff"
+              />
             </View>
-          )}
-        </View>
 
-        {/* Quick Actions */}
-        <View style={styles.quickActions}>
-          <TouchableOpacity style={styles.actionButtonPrimary} onPress={() => setShowJoinModal(true)}>
-            <Text style={styles.actionButtonIcon}>🔗</Text>
-            <Text style={styles.actionButtonPrimaryText}>Join a Circle</Text>
-          </TouchableOpacity>
-        </View>
+            <View style={styles.settingItem}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingTitle}>Low Glucose Alerts</Text>
+                <Text style={styles.settingDescription}>Notify circle when glucose drops below {user?.settings?.lowThreshold ?? 70} mg/dL</Text>
+              </View>
+              <Switch
+                value={shareLowAlerts}
+                onValueChange={() => handleToggleSetting('lowAlerts', shareLowAlerts, setShareLowAlerts)}
+                trackColor={{ false: '#ccc', true: '#FF6B6B' }}
+                thumbColor="#fff"
+              />
+            </View>
+
+            <View style={styles.settingItem}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingTitle}>High Glucose Alerts</Text>
+                <Text style={styles.settingDescription}>Notify circle when glucose goes above {user?.settings?.highThreshold ?? 180} mg/dL</Text>
+              </View>
+              <Switch
+                value={shareHighAlerts}
+                onValueChange={() => handleToggleSetting('highAlerts', shareHighAlerts, setShareHighAlerts)}
+                trackColor={{ false: '#ccc', true: '#FFA500' }}
+                thumbColor="#fff"
+              />
+            </View>
+          </View>
+        )}
+
+        {/* Quick Actions — Join is only for members (or unlinked users) */}
+        {isMember && (
+          <View style={styles.quickActions}>
+            <TouchableOpacity style={styles.actionButtonPrimary} onPress={() => setShowJoinModal(true)}>
+              <Text style={styles.actionButtonIcon}>🔗</Text>
+              <Text style={styles.actionButtonPrimaryText}>Join a Circle</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Info Card */}
         <View style={styles.infoCard}>
@@ -391,14 +427,18 @@ const styles = StyleSheet.create({
   emptyEmoji: { fontSize: 50, marginBottom: 10 },
   emptyTitle: { fontSize: 18, fontWeight: 'bold', color: '#fff', marginBottom: 6 },
   emptyText: { fontSize: 14, color: '#888', textAlign: 'center' },
-  memberCard: { backgroundColor: '#1C1C1E', borderRadius: 12, padding: 15, marginBottom: 12, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#2C2C2E' },
-  memberEmoji: { fontSize: 40, marginRight: 15 },
+  memberCard: { backgroundColor: '#1C1C1E', borderRadius: 12, padding: 15, marginBottom: 12, flexDirection: 'row', alignItems: 'flex-start', borderWidth: 1, borderColor: '#2C2C2E' },
+  memberEmoji: { fontSize: 36, marginRight: 12, marginTop: 2 },
   memberInfo: { flex: 1 },
-  memberName: { fontSize: 18, fontWeight: '600', color: '#fff', marginBottom: 4 },
-  memberStatus: { fontSize: 13, color: '#4A90D9', flexDirection: 'row', alignItems: 'center' },
-  statusDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
-  memberActions: { alignItems: 'center' },
-  notificationLabel: { fontSize: 11, color: '#A0A0A0', marginBottom: 4 },
+  memberName: { fontSize: 17, fontWeight: '600', color: '#fff', marginBottom: 3 },
+  memberRelationship: { fontSize: 13, color: '#A0A0A0', marginBottom: 6 },
+  removeText: { fontSize: 12, color: '#FF6B6B' },
+  memberToggles: { alignItems: 'flex-end', gap: 8 },
+  toggleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  toggleLabel: { fontSize: 11, color: '#A0A0A0' },
+  pendingCard: { backgroundColor: '#1C1C1E', borderRadius: 12, padding: 15, marginBottom: 12, flexDirection: 'row', alignItems: 'flex-start', borderWidth: 1, borderStyle: 'dashed', borderColor: '#FFA500', opacity: 0.85 },
+  copyCodeButton: { backgroundColor: '#2C2C2E', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, alignSelf: 'flex-start', borderWidth: 1, borderColor: '#4A90D9' },
+  copyCodeText: { fontSize: 13, color: '#4A90D9', fontWeight: '600', letterSpacing: 1 },
   addButton: { backgroundColor: '#1C1C1E', borderRadius: 12, padding: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 20, borderWidth: 2, borderColor: '#4A90D9', borderStyle: 'dashed' },
   addButtonIcon: { fontSize: 24, marginRight: 10 },
   addButtonText: { fontSize: 16, fontWeight: '600', color: '#4A90D9' },
@@ -407,12 +447,6 @@ const styles = StyleSheet.create({
   settingInfo: { flex: 1, marginRight: 15 },
   settingTitle: { fontSize: 15, fontWeight: '600', color: '#fff', marginBottom: 4 },
   settingDescription: { fontSize: 12, color: '#A0A0A0', lineHeight: 16 },
-  recentActivity: { backgroundColor: '#1C1C1E', borderRadius: 12, padding: 20, marginBottom: 20, borderWidth: 1, borderColor: '#2C2C2E' },
-  activityItem: { flexDirection: 'row', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#2C2C2E' },
-  activityIcon: { fontSize: 24, marginRight: 15 },
-  activityContent: { flex: 1 },
-  activityText: { fontSize: 14, color: '#E0E0E0', marginBottom: 3 },
-  activityTime: { fontSize: 12, color: '#888' },
   quickActions: { marginBottom: 20 },
   actionButtonPrimary: { backgroundColor: '#1C1C1E', borderRadius: 12, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#4A90D9' },
   actionButtonIcon: { fontSize: 18, marginRight: 8 },

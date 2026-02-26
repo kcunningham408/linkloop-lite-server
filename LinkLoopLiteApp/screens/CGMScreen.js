@@ -18,6 +18,10 @@ export default function CGMScreen() {
   const { user } = useAuth();
   const isMember = user?.role === 'member';
 
+  // Use the warrior's personal thresholds if set, otherwise standard defaults
+  const lowThreshold = user?.settings?.lowThreshold ?? 70;
+  const highThreshold = user?.settings?.highThreshold ?? 180;
+
   const [currentGlucose, setCurrentGlucose] = useState(null);
   const [readings, setReadings] = useState([]);
   const [stats, setStats] = useState(null);
@@ -152,15 +156,15 @@ export default function CGMScreen() {
 
   const getGlucoseColor = (value) => {
     if (!value) return '#4A90D9';
-    if (value < 70) return '#FF6B6B';
-    if (value > 180) return '#FFA500';
+    if (value < lowThreshold) return '#FF6B6B';
+    if (value > highThreshold) return '#FFA500';
     return '#4A90D9';
   };
 
   const getGlucoseStatus = (value) => {
     if (!value) return '';
-    if (value < 70) return 'LOW';
-    if (value > 180) return 'HIGH';
+    if (value < lowThreshold) return 'LOW';
+    if (value > highThreshold) return 'HIGH';
     return 'IN RANGE';
   };
 
@@ -169,6 +173,14 @@ export default function CGMScreen() {
     const t = TREND_OPTIONS.find(o => o.value === currentGlucose.trend);
     return t ? t.arrow : (currentGlucose.trendArrow || '→');
   };
+
+  // Returns minutes since last reading, or null if no reading
+  const minutesSinceReading = () => {
+    if (!currentGlucose?.timestamp) return null;
+    return Math.floor((Date.now() - new Date(currentGlucose.timestamp).getTime()) / 60000);
+  };
+  const minsOld = minutesSinceReading();
+  const isStale = minsOld !== null && minsOld > 30;
 
   const glucoseValue = currentGlucose ? currentGlucose.value : '--';
   const glucoseColor = getGlucoseColor(currentGlucose?.value);
@@ -184,10 +196,17 @@ export default function CGMScreen() {
         style={styles.headerGradient}
         locations={[0, 0.6, 1]}
       >
-        {isMember && (
+      {isMember && (
           <Text style={styles.memberBanner}>
             👁 Watching {warriorName || 'your warrior'}'s loop
           </Text>
+        )}
+        {isStale && (
+          <View style={styles.staleBanner}>
+            <Text style={styles.staleBannerText}>
+              ⚠️ Data is {minsOld} min old — {isMember ? 'warrior may be offline' : 'app may be in background'}
+            </Text>
+          </View>
         )}
         <View style={styles.currentReading}>
           <Text style={styles.glucoseValue}>{glucoseValue}</Text>
@@ -345,13 +364,13 @@ export default function CGMScreen() {
 
         <View style={styles.alertsCard}>
           <Text style={styles.alertsTitle}>⚠️ Alerts & Notifications</Text>
-          {readings.filter(r => r.value < 70 || r.value > 180).slice(0, 3).length > 0 ? (
-            readings.filter(r => r.value < 70 || r.value > 180).slice(0, 3).map((r, i) => (
+          {readings.filter(r => r.value < lowThreshold || r.value > highThreshold).slice(0, 3).length > 0 ? (
+            readings.filter(r => r.value < lowThreshold || r.value > highThreshold).slice(0, 3).map((r, i) => (
               <View key={i} style={styles.alertItem}>
                 <Text style={styles.alertIcon}>{r.value < 70 ? '🔔' : '📊'}</Text>
                 <View style={styles.alertContent}>
                   <Text style={styles.alertText}>
-                    {r.value < 70 ? 'Low glucose alert' : 'High glucose reading'}: {r.value} mg/dL
+                    {r.value < lowThreshold ? 'Low glucose alert' : 'High glucose reading'}: {r.value} mg/dL
                   </Text>
                   <Text style={styles.alertTime}>
                     {new Date(r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -416,6 +435,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#111111' },
   headerGradient: { padding: 30, alignItems: 'center', paddingBottom: 40 },
   memberBanner: { fontSize: 13, color: '#fff', opacity: 0.85, marginBottom: 10, backgroundColor: 'rgba(0,0,0,0.2)', paddingHorizontal: 14, paddingVertical: 5, borderRadius: 20 },
+  staleBanner: { backgroundColor: 'rgba(255,165,0,0.25)', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 7, marginBottom: 8, borderWidth: 1, borderColor: 'rgba(255,165,0,0.5)' },
+  staleBannerText: { fontSize: 13, color: '#FFA500', fontWeight: '600', textAlign: 'center' },
   currentReading: { flexDirection: 'row', alignItems: 'baseline', marginBottom: 10 },
   glucoseValue: { fontSize: 72, fontWeight: 'bold', color: '#fff' },
   glucoseUnit: { fontSize: 20, color: '#fff', opacity: 0.9, marginLeft: 5 },
