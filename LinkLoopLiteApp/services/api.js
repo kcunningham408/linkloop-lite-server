@@ -18,7 +18,31 @@ export const getToken = async () => {
 
 export const clearToken = async () => {
   authToken = null;
-  await AsyncStorage.removeItem('authToken');
+  await AsyncStorage.multiRemove(['authToken', 'cachedUser']);
+};
+
+// Cached user — avoids a network round-trip on every cold start
+export const setCachedUser = async (user) => {
+  await AsyncStorage.setItem('cachedUser', JSON.stringify(user));
+};
+
+export const getCachedUser = async () => {
+  try {
+    const raw = await AsyncStorage.getItem('cachedUser');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+// Wake-up ping — call this as early as possible (e.g. when LoginScreen mounts)
+// so the Render dyno is already warm by the time the user taps "Sign In".
+export const pingServer = async () => {
+  try {
+    await fetch(`${API_URL}/health`, { method: 'GET' });
+  } catch {
+    // Silently ignore — this is a best-effort warm-up
+  }
 };
 
 // API request helper
@@ -68,6 +92,9 @@ export const authAPI = {
     if (data.token) {
       await setToken(data.token);
     }
+    if (data.user) {
+      await setCachedUser(data.user);
+    }
     return data;
   },
 
@@ -87,6 +114,9 @@ export const authAPI = {
     if (data.token) {
       await setToken(data.token);
     }
+    if (data.user) {
+      await setCachedUser(data.user);
+    }
     return data;
   },
 
@@ -103,10 +133,15 @@ export const userAPI = {
   },
 
   updateProfile: async (updates) => {
-    return apiRequest('/users/me', {
+    const data = await apiRequest('/users/me', {
       method: 'PUT',
       body: JSON.stringify(updates),
     });
+    // Keep the local cache in sync so the next cold start reflects any name/emoji changes
+    if (data.user) {
+      await setCachedUser(data.user);
+    }
+    return data;
   },
 
   deleteAccount: async () => {

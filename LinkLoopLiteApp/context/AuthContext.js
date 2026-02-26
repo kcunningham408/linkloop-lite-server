@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { authAPI, clearToken, getToken, userAPI } from '../services/api';
+import { authAPI, clearToken, getCachedUser, getToken, setCachedUser, userAPI } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -15,13 +15,38 @@ export function AuthProvider({ children }) {
   const checkAuth = async () => {
     try {
       const token = await getToken();
-      if (token) {
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
+
+      // 1. Restore from cache immediately — zero network latency
+      const cached = await getCachedUser();
+      if (cached) {
+        setUser(cached);
+        setIsAuthenticated(true);
+        setIsLoading(false); // Show the app now, don't wait for the network
+      }
+
+      // 2. Re-verify in the background and refresh if anything changed
+      try {
         const profile = await userAPI.getProfile();
         setUser(profile);
-        setIsAuthenticated(true);
+        await setCachedUser(profile);
+        if (!cached) {
+          // First time (cache was empty) — mark authenticated now
+          setIsAuthenticated(true);
+        }
+      } catch (networkError) {
+        // Network unavailable but we have a valid cached user — that's fine
+        if (!cached) {
+          // No cache + network failed = force logout
+          await clearToken();
+          setIsAuthenticated(false);
+        }
       }
     } catch (error) {
-      console.log('Not authenticated');
+      console.log('Auth check failed:', error.message);
       await clearToken();
     } finally {
       setIsLoading(false);

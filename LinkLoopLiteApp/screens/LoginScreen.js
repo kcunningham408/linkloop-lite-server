@@ -1,10 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   StyleSheet, Text, View, TextInput, TouchableOpacity, Alert,
   KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
+import { pingServer } from '../services/api';
 
 export default function LoginScreen() {
   const [isLogin, setIsLogin] = useState(true);
@@ -21,6 +22,12 @@ export default function LoginScreen() {
 
   const { login, register } = useAuth();
 
+  // Wake up the Render server as soon as the login screen appears —
+  // by the time the user fills in their details, the dyno should be warm.
+  useEffect(() => {
+    pingServer();
+  }, []);
+
   const handleSubmit = async () => {
     if (!identifier || !password || (!isLogin && !name)) {
       Alert.alert('Error', 'Please fill in all fields');
@@ -32,7 +39,7 @@ export default function LoginScreen() {
       if (isLogin) {
         await login(identifier, password);
       } else {
-        await register(identifier, password, name, 't1d');
+        await register(identifier, password, name, 'warrior');
       }
     } catch (error) {
       Alert.alert('Error', error.message || 'Something went wrong');
