@@ -92,8 +92,59 @@ function MainTabs() {
   );
 }
 
+// Loop Member tab nav — sees the warrior's CGM data, can chat & get alerts
+function LoopMemberTabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        tabBarActiveTintColor: '#34C759',
+        tabBarInactiveTintColor: '#888',
+        tabBarStyle: styles.tabBar,
+        headerStyle: {
+          backgroundColor: '#1C1C1E',
+          shadowColor: '#000',
+          elevation: 0,
+        },
+        headerTintColor: '#fff',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+      }}
+    >
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          title: 'Their Loop',
+          tabBarLabel: 'Loop',
+          tabBarIcon: () => <Text style={{ fontSize: 20 }}>∞</Text>,
+        }}
+      />
+      <Tab.Screen
+        name="CGM"
+        component={CGMScreen}
+        options={{
+          title: 'Live Glucose',
+          tabBarLabel: 'Glucose',
+          tabBarIcon: () => <Text style={{ fontSize: 20 }}>📊</Text>,
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          title: 'My Profile',
+          tabBarLabel: 'Profile',
+          tabBarIcon: () => <Text style={{ fontSize: 20 }}>👤</Text>,
+        }}
+      />
+    </Tab.Navigator>
+  );
+}
+
 function AppNavigator() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const isMember = user?.role === 'member';
 
   if (isLoading) {
     return (
@@ -108,7 +159,10 @@ function AppNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {isAuthenticated ? (
         <>
-          <Stack.Screen name="Main" component={MainTabs} />
+          <Stack.Screen
+            name="Main"
+            component={isMember ? LoopMemberTabs : MainTabs}
+          />
           <Stack.Screen
             name="Chat"
             component={ChatScreen}

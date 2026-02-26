@@ -27,8 +27,14 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['t1d', 'caregiver', 'admin'],
-    default: 't1d'
+    enum: ['warrior', 'member', 'admin'],
+    default: 'warrior'
+  },
+  // For Loop Members: the T1D Warrior whose data they are linked to
+  linkedOwnerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
   },
   profileEmoji: {
     type: String,

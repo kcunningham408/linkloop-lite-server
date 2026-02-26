@@ -20,6 +20,7 @@ const userResponse = (user) => ({
   phone: user.phone || null,
   name: user.name,
   role: user.role,
+  linkedOwnerId: user.linkedOwnerId || null,
   profileEmoji: user.profileEmoji,
   settings: user.settings,
   createdAt: user.createdAt
@@ -66,7 +67,7 @@ router.post('/register', async (req, res) => {
     const userData = {
       password,
       name: name.trim(),
-      role: role || 't1d'
+      role: role || 'warrior'
     };
     if (email) userData.email = email.toLowerCase().trim();
     if (normalizedPhone) userData.phone = normalizedPhone;

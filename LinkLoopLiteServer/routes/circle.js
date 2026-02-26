@@ -64,6 +64,12 @@ router.post('/join', auth, async (req, res) => {
     invitation.inviteCode = null;
     await invitation.save();
 
+    // Tag the joining user as a Loop Member linked to this warrior
+    await User.findByIdAndUpdate(req.user.userId, {
+      role: 'member',
+      linkedOwnerId: invitation.ownerId
+    });
+
     const owner = await User.findById(invitation.ownerId).select('name profileEmoji');
 
     res.json({
