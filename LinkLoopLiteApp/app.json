@@ -41,7 +41,15 @@
       "policy": "appVersion"
     },
     "plugins": [
-      "expo-updates"
+      "expo-updates",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#4A90D9",
+          "defaultChannel": "alerts"
+        }
+      ]
     ],
     "extra": {
       "eas": {

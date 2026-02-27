@@ -5,6 +5,7 @@ const CareCircle = require('../models/CareCircle');
 const GlucoseReading = require('../models/GlucoseReading');
 const Message = require('../models/Message');
 const User = require('../models/User');
+const { sendPushToUsers } = require('../jobs/pushNotifications');
 
 const router = express.Router();
 
@@ -170,6 +171,15 @@ router.post('/check', auth, async (req, res) => {
       await alertMessage.save();
     }
 
+    // Send push notifications to warrior + all notified members
+    const memberUserIds = notifiedMembers.map(m => m.userId.toString());
+    const allNotifyIds = [req.user.userId, ...memberUserIds];
+    sendPushToUsers(allNotifyIds, alertConfig.title, alertConfig.message, {
+      alertId: alert._id.toString(),
+      type: 'alert',
+      severity: alertConfig.severity,
+    }).catch(err => console.error('[Push] Alert notify error:', err));
+
     res.status(201).json({ alert, notifiedCount: notifiedMembers.length });
   } catch (err) {
     console.error('Check alert error:', err);
@@ -324,6 +334,18 @@ router.post('/:id/acknowledge', auth, async (req, res) => {
       });
       await ackMessage.save();
     }
+
+    // Push the acknowledgment to warrior + all other notified members
+    const otherMemberIds = alert.notifiedMembers
+      .map(m => m.userId.toString())
+      .filter(id => id !== userId);
+    const ackNotifyIds = [alert.userId.toString(), ...otherMemberIds].filter(id => id !== userId);
+    const ackPushTitle = `✅ Alert Acknowledged`;
+    const ackPushBody = `${user?.profileEmoji || ''} ${user?.name || 'Someone'}: "${message.slice(0, 80)}"`.trim();
+    sendPushToUsers(ackNotifyIds, ackPushTitle, ackPushBody, {
+      alertId: alert._id.toString(),
+      type: 'acknowledgment',
+    }).catch(err => console.error('[Push] Ack notify error:', err));
 
     res.json({
       message: 'Alert acknowledged — everyone has been notified',

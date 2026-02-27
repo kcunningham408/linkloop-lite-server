@@ -66,6 +66,11 @@ const userSchema = new mongoose.Schema({
     connected: { type: Boolean, default: false },
     lastSync: { type: Date, default: null }
   },
+  // Expo push token for native push notifications
+  pushToken: {
+    type: String,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now

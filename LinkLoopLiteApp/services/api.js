@@ -403,3 +403,14 @@ export const achievementsAPI = {
     });
   },
 };
+
+// ============ USERS API ============
+
+export const usersAPI = {
+  savePushToken: async (token) => {
+    return apiRequest('/users/push-token', {
+      method: 'PUT',
+      body: JSON.stringify({ pushToken: token }),
+    });
+  },
+};

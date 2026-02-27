@@ -70,6 +70,24 @@ router.put('/me', auth, async (req, res) => {
   }
 });
 
+// @route   PUT /api/users/push-token
+// @desc    Save or update the user's Expo push token
+// @access  Private
+router.put('/push-token', auth, async (req, res) => {
+  try {
+    const { pushToken } = req.body;
+    if (!pushToken) {
+      return res.status(400).json({ message: 'pushToken is required' });
+    }
+
+    await User.findByIdAndUpdate(req.user.userId, { pushToken });
+    res.json({ message: 'Push token saved' });
+  } catch (err) {
+    console.error('Save push token error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // @route   DELETE /api/users/me
 // @desc    Permanently delete user account and all associated data
 router.delete('/me', auth, async (req, res) => {
