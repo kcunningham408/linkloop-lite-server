@@ -93,14 +93,14 @@ router.get('/auth', auth, async (req, res) => {
       return res.status(500).json({ message: 'Dexcom integration not configured on server' });
     }
 
-    const state = req.user.userId; // Pass userId as state so callback knows who it is
+    const state = req.user.userId.toString(); // Pass userId as state so callback knows who it is
 
     const authUrl =
       `${DEXCOM_BASE}/v3/oauth2/login` +
       `?client_id=${encodeURIComponent(DEXCOM_CLIENT_ID)}` +
       `&redirect_uri=${encodeURIComponent(DEXCOM_REDIRECT_URI)}` +
       `&response_type=code` +
-      `&scope=${encodeURIComponent('offline_access egvs')}` +
+      `&scope=${encodeURIComponent('offline_access')}` +
       `&state=${encodeURIComponent(state)}`;
 
     res.json({ authUrl });
