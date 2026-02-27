@@ -100,7 +100,7 @@ router.get('/auth', auth, async (req, res) => {
       `?client_id=${encodeURIComponent(DEXCOM_CLIENT_ID)}` +
       `&redirect_uri=${encodeURIComponent(DEXCOM_REDIRECT_URI)}` +
       `&response_type=code` +
-      `&scope=offline_access` +
+      `&scope=${encodeURIComponent('offline_access egvs')}` +
       `&state=${encodeURIComponent(state)}`;
 
     res.json({ authUrl });
