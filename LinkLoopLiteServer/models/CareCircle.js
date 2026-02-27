@@ -43,7 +43,7 @@ const careCircleSchema = new mongoose.Schema({
   }
 });
 
-// Only enforce uniqueness once a real member has joined (memberId is not null)
-careCircleSchema.index({ ownerId: 1, memberId: 1 }, { unique: true, sparse: true });
+// Only enforce uniqueness on active memberships (not pending invites)
+careCircleSchema.index({ ownerId: 1, memberId: 1 }, { unique: true, sparse: true, partialFilterExpression: { memberId: { $type: 'objectId' } } });
 
 module.exports = mongoose.model('CareCircle', careCircleSchema);

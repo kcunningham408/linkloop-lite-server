@@ -20,8 +20,15 @@ app.get('/support', (req, res) => res.sendFile(path.join(__dirname, 'public', 's
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/linkloop')
-  .then(() => {
+  .then(async () => {
     console.log('✅ Connected to MongoDB');
+    // Drop the old bad unique index on CareCircle that blocked multiple pending invites
+    try {
+      await mongoose.connection.collection('carecircles').dropIndex('ownerId_1_memberId_1');
+      console.log('✅ Dropped old CareCircle unique index');
+    } catch (e) {
+      // Index may not exist or already dropped — that's fine
+    }
     startDexcomSyncJob();
   })
   .catch(err => console.error('❌ MongoDB connection error:', err));
