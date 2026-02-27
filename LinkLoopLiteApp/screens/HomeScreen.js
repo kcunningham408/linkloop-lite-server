@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, AppState, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { glucoseAPI } from '../services/api';
+
+const AUTO_REFRESH_MS = 5 * 60 * 1000; // 5 minutes
 
 export default function HomeScreen({ navigation }) {
   const { user } = useAuth();
@@ -43,6 +45,18 @@ export default function HomeScreen({ navigation }) {
   useFocusEffect(
     useCallback(() => { loadData(); }, [loadData])
   );
+
+  // Auto-refresh every 5 min while screen is open — matches Dexcom G7 update interval
+  useEffect(() => {
+    const interval = setInterval(() => { loadData(); }, AUTO_REFRESH_MS);
+    const subscription = AppState.addEventListener('change', state => {
+      if (state === 'active') loadData(); // refresh when user returns to app from background
+    });
+    return () => {
+      clearInterval(interval);
+      subscription.remove();
+    };
+  }, [loadData]);
 
   const onRefresh = () => { setRefreshing(true); loadData(); };
 

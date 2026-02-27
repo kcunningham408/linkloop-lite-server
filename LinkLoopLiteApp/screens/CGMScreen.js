@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Modal, RefreshControl, ActivityIndicator, Alert, Dimensions, Linking } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, AppState, Dimensions, Linking, Modal, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import { glucoseAPI, dexcomAPI } from '../services/api';
+import { dexcomAPI, glucoseAPI } from '../services/api';
+
+const AUTO_REFRESH_MS = 5 * 60 * 1000; // 5 minutes — matches Dexcom G7 update interval
 
 const { width } = Dimensions.get('window');
 
@@ -70,6 +72,19 @@ export default function CGMScreen() {
   }, [isMember, user?.linkedOwnerId]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  // Auto-refresh every 5 min while screen is open — matches Dexcom G7 update interval
+  useEffect(() => {
+    const interval = setInterval(() => { loadData(); }, AUTO_REFRESH_MS);
+    const subscription = AppState.addEventListener('change', state => {
+      if (state === 'active') loadData(); // also refresh when user returns to app
+    });
+    return () => {
+      clearInterval(interval);
+      subscription.remove();
+    };
+  }, [loadData]);
+
   const onRefresh = () => { setRefreshing(true); loadData(); };
 
   const handleAddReading = async () => {
