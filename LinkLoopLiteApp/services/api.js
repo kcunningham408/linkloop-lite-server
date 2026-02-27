@@ -319,6 +319,7 @@ export const suppliesAPI = {
 // ============ DEXCOM API ============
 
 export const dexcomAPI = {
+  // ── Individual Access API (OAuth) ──────────────────────────────
   getAuthUrl: async () => {
     return apiRequest('/dexcom/auth');
   },
@@ -335,6 +336,30 @@ export const dexcomAPI = {
 
   disconnect: async () => {
     return apiRequest('/dexcom/disconnect', {
+      method: 'POST',
+    });
+  },
+
+  // ── Dexcom Share API (real-time, username + password) ──────────
+  getShareStatus: async () => {
+    return apiRequest('/dexcom/share-status');
+  },
+
+  connectShare: async (username, password, region = 'us') => {
+    return apiRequest('/dexcom/share-connect', {
+      method: 'POST',
+      body: JSON.stringify({ username, password, region }),
+    });
+  },
+
+  disconnectShare: async () => {
+    return apiRequest('/dexcom/share-disconnect', {
+      method: 'DELETE',
+    });
+  },
+
+  syncShare: async () => {
+    return apiRequest('/dexcom/share-sync', {
       method: 'POST',
     });
   },
