@@ -125,6 +125,11 @@ router.get('/callback', async (req, res) => {
       return res.status(400).send(buildCallbackPage(false, 'Missing authorization code.'));
     }
 
+    // Validate state is a valid MongoDB ObjectId before doing anything
+    if (!/^[a-f\d]{24}$/i.test(state)) {
+      return res.status(400).send(buildCallbackPage(false, 'Invalid session. Please try connecting again from the app.'));
+    }
+
     // Exchange code for tokens
     const tokenResponse = await axios.post(`${DEXCOM_BASE}/v3/oauth2/token`, new URLSearchParams({
       client_id:     DEXCOM_CLIENT_ID,
