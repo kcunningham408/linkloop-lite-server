@@ -169,13 +169,14 @@ export default function HomeScreen({ navigation }) {
           <FeatureCard emoji="📊" title="Live Glucose" description={isMember ? "See real-time CGM data" : "Share real-time glucose data"} onPress={() => navigation.navigate('CGM')} />
           {isMember ? (
             <>
-              <FeatureCard emoji="💬" title="Message" description="Chat with your warrior" onPress={() => navigation.navigate('Chat')} />
+              <FeatureCard emoji="💬" title="Messages" description="Chat with your warrior" onPress={() => navigation.navigate('Messages')} />
               <FeatureCard emoji={'\uD83D\uDD14'} title="Alerts" description="Low & high notifications" onPress={() => navigation.navigate('Alerts')} />
               <FeatureCard emoji="⚙️" title="Profile" description="Your Loop Member settings" onPress={() => navigation.navigate('Profile')} />
             </>
           ) : (
             <>
               <FeatureCard emoji="👥" title="Care Circle" description="Connect with caregivers" onPress={() => navigation.navigate('Circle')} />
+              <FeatureCard emoji="💬" title="Messages" description="Chat with Care Circle" onPress={() => navigation.navigate('Messages')} />
               <FeatureCard emoji="📦" title="Supply Tracker" description="Never run out of supplies" onPress={() => navigation.navigate('Supplies')} />
               <FeatureCard emoji="✨" title="AI Insights" description="Pattern analysis by AI" onPress={() => navigation.navigate('Insights')} />
               <FeatureCard emoji="📝" title="Mood & Notes" description="Track how you're feeling" onPress={() => navigation.navigate('Mood')} />

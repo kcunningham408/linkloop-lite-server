@@ -16,6 +16,7 @@ import CareCircleScreen from './screens/CareCircleScreen';
 import ChatScreen from './screens/ChatScreen';
 import DexcomConnectScreen from './screens/DexcomConnectScreen';
 import HomeScreen from './screens/HomeScreen';
+import MessagesScreen from './screens/MessagesScreen';
 import InsightsScreen from './screens/InsightsScreen';
 import LoginScreen from './screens/LoginScreen';
 import MoodScreen from './screens/MoodScreen';
@@ -162,6 +163,17 @@ function AppNavigator() {
           <Stack.Screen
             name="Main"
             component={isMember ? LoopMemberTabs : MainTabs}
+          />
+          <Stack.Screen
+            name="Messages"
+            component={MessagesScreen}
+            options={{
+              headerShown: true,
+              title: 'Messages',
+              headerStyle: { backgroundColor: '#1C1C1E' },
+              headerTintColor: '#fff',
+              headerTitleStyle: { fontWeight: 'bold' },
+            }}
           />
           <Stack.Screen
             name="Chat"

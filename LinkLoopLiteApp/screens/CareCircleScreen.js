@@ -207,9 +207,22 @@ export default function CareCircleScreen() {
                   <Text style={styles.memberRelationship}>
                     {RELATIONSHIPS.find(r => r.value === member.relationship)?.label || 'Circle Member'}
                   </Text>
-                  <TouchableOpacity onPress={() => handleRemoveMember(member._id, member.memberName)}>
-                    <Text style={styles.removeText}>Remove</Text>
-                  </TouchableOpacity>
+                  <View style={styles.memberActions}>
+                    <TouchableOpacity
+                      style={styles.messageButton}
+                      onPress={() => navigation.navigate('Chat', {
+                        circleId: member._id,
+                        memberName: member.memberName,
+                        memberEmoji: member.memberEmoji || '\uD83D\uDC64',
+                        relationship: member.relationship,
+                      })}
+                    >
+                      <Text style={styles.messageButtonText}>💬 Message</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleRemoveMember(member._id, member.memberName)}>
+                      <Text style={styles.removeText}>Remove</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
                 <View style={styles.memberToggles}>
                   <View style={styles.toggleRow}>
@@ -434,6 +447,9 @@ const styles = StyleSheet.create({
   memberInfo: { flex: 1 },
   memberName: { fontSize: 17, fontWeight: '600', color: '#fff', marginBottom: 3 },
   memberRelationship: { fontSize: 13, color: '#A0A0A0', marginBottom: 6 },
+  memberActions: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 2 },
+  messageButton: { backgroundColor: '#1A2C4A', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: '#4A90D9' },
+  messageButtonText: { fontSize: 12, color: '#4A90D9', fontWeight: '600' },
   removeText: { fontSize: 12, color: '#FF6B6B' },
   memberToggles: { alignItems: 'flex-end', gap: 8 },
   toggleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
