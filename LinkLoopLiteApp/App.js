@@ -1,26 +1,26 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 // Import context
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Import screens
-import LoginScreen from './screens/LoginScreen';
-import HomeScreen from './screens/HomeScreen';
+import HealthDisclaimer from './components/HealthDisclaimer';
+import AchievementsScreen from './screens/AchievementsScreen';
+import AlertsScreen from './screens/AlertsScreen';
 import CGMScreen from './screens/CGMScreen';
 import CareCircleScreen from './screens/CareCircleScreen';
-import SuppliesScreen from './screens/SuppliesScreen';
-import ProfileScreen from './screens/ProfileScreen';
 import ChatScreen from './screens/ChatScreen';
-import AlertsScreen from './screens/AlertsScreen';
+import DexcomConnectScreen from './screens/DexcomConnectScreen';
+import HomeScreen from './screens/HomeScreen';
 import InsightsScreen from './screens/InsightsScreen';
+import LoginScreen from './screens/LoginScreen';
 import MoodScreen from './screens/MoodScreen';
-import AchievementsScreen from './screens/AchievementsScreen';
-import HealthDisclaimer from './components/HealthDisclaimer';
+import ProfileScreen from './screens/ProfileScreen';
+import SuppliesScreen from './screens/SuppliesScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -215,6 +215,13 @@ function AppNavigator() {
               headerStyle: { backgroundColor: '#1C1C1E' },
               headerTintColor: '#fff',
               headerTitleStyle: { fontWeight: 'bold' },
+            }}
+          />
+          <Stack.Screen
+            name="DexcomConnect"
+            component={DexcomConnectScreen}
+            options={{
+              headerShown: false,
             }}
           />
         </>

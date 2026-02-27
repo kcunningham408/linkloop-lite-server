@@ -1,0 +1,249 @@
+================================================================================
+  LINKLOOP — DEXCOM DATA FLOW DIAGRAM
+  Partner: VibeCMD LLC  |  App: LinkLoop  |  Date: February 2026
+================================================================================
+
+
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │                        ACTORS & SYSTEMS                                  │
+  │                                                                          │
+  │   [USER]          T1D Warrior using LinkLoop iOS app                     │
+  │   [APP]           LinkLoop iOS (React Native / Expo, iPhone only)        │
+  │   [SERVER]        LinkLoop Backend (Node.js / Express on Render.com)     │
+  │   [DB]            MongoDB Atlas (cloud database, US region)              │
+  │   [DEXCOM]        Dexcom API  — api.dexcom.com  (v3 REST API)           │
+  │   [CIRCLE]        Care Circle Members (family / caregivers)              │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+
+================================================================================
+  PHASE 1 — DEXCOM AUTHORIZATION (One-time setup, explicit user action)
+================================================================================
+
+  [USER]
+    │
+    │  Taps "Connect Dexcom" button on CGM screen
+    │
+    ▼
+  [APP]  ──── HTTPS GET /api/dexcom/auth ────────────────────────► [SERVER]
+                                                                       │
+                                                                       │  Builds Dexcom OAuth URL with:
+                                                                       │    • client_id (server env var)
+                                                                       │    • redirect_uri (server callback)
+                                                                       │    • scope: offline_access
+                                                                       │    • state: linkloop userId
+                                                                       │
+  [APP]  ◄──── Returns { authUrl } ─────────────────────────────── [SERVER]
+    │
+    │  Opens authUrl in iOS system browser (Safari)
+    │
+    ▼
+  [DEXCOM OAuth Login Page]  —  api.dexcom.com/v3/oauth2/login
+    │
+    │  User enters THEIR OWN Dexcom credentials
+    │  ⚠ LinkLoop never sees username or password
+    │
+    │  User reviews and approves requested permissions
+    │  (scope: offline_access — read glucose data)
+    │
+    │  Dexcom issues authorization code
+    │
+    ▼
+  [SERVER]  ◄──── HTTPS redirect with ?code=xxx&state=userId ──── [DEXCOM]
+    │
+    │  Exchanges auth code for tokens via POST /v3/oauth2/token:
+    │    • access_token   (short-lived, ~2 hours)
+    │    • refresh_token  (long-lived)
+    │    • expires_in
+    │
+    │  Saves tokens to [DB] — server-side only, NEVER sent to app
+    │    db.users.dexcom = {
+    │      accessToken:  "...",   ← encrypted at rest in MongoDB Atlas
+    │      refreshToken: "...",   ← encrypted at rest in MongoDB Atlas
+    │      tokenExpiry:  DateTime,
+    │      connected:    true,
+    │      lastSync:     null
+    │    }
+    │
+    │  Returns success HTML page ("Dexcom connected! Close this window.")
+    ▼
+  [USER]  closes browser, returns to LinkLoop app
+    │
+    │  App polls /api/dexcom/status — sees connected: true
+    ▼
+  CGM screen now shows "Dexcom Connected" status
+
+
+================================================================================
+  PHASE 2 — DATA SYNC (User-initiated, on demand)
+================================================================================
+
+  [USER]
+    │
+    │  Taps "Sync Now" on CGM screen
+    │
+    ▼
+  [APP]  ──── HTTPS POST /api/dexcom/sync (JWT auth header) ──────► [SERVER]
+                                                                       │
+                                                                       │  Checks token expiry:
+                                                                       │  If < 5 min remaining → auto-refresh
+                                                                       │    POST /v3/oauth2/token (refresh_token)
+                                                                       │    Saves new tokens to [DB]
+                                                                       │
+                                                                       │  Fetches glucose readings:
+  [DEXCOM API]  ◄─── HTTPS GET /v3/users/self/egvs ─────────────── [SERVER]
+       │               params: startDate, endDate
+       │               header: Authorization: Bearer {access_token}
+       │
+       │  Returns EGV records:
+       │    • systemTime   (timestamp)
+       │    • value        (mg/dL integer)
+       │    • trend        (e.g. "singleUp", "flat")
+       │
+  [SERVER]  ◄──────────────────────────────────────────────────── [DEXCOM API]
+       │
+       │  Transforms & stores in [DB] — GlucoseReading documents:
+       │    {
+       │      userId:     linkloop_user_id,
+       │      value:      integer (mg/dL),
+       │      trend:      "rising" | "stable" | "falling" | etc,
+       │      trendArrow: "↑" | "→" | "↓" | etc,
+       │      source:     "dexcom",
+       │      timestamp:  DateTime,
+       │      unit:       "mg/dL"
+       │    }
+       │
+       │  NOT stored: raw Dexcom userId, personal identifiers,
+       │              device serial number, raw trend strings
+       │
+       │  Returns { synced: N, message: "Synced N readings" }
+       │
+  [APP]  ◄─────────────────────────────────────────────────────── [SERVER]
+    │
+    │  Fetches latest readings via GET /api/glucose
+    ▼
+  CGM screen displays:
+    • Current glucose value + trend arrow
+    • 24-hour history graph
+    • Time since last reading
+    • High / Low / In Range status
+
+
+================================================================================
+  PHASE 3 — CARE CIRCLE SHARING (Optional, warrior controls)
+================================================================================
+
+  [USER / WARRIOR]
+    │
+    │  Chooses to invite family / caregiver to their Circle
+    │  Sends invite code (generated by server)
+    │
+    ▼
+  [CIRCLE MEMBER]  joins via invite code in LinkLoop app
+    │
+    │  Gets linked to warrior's account as role: "member"
+    │  Can view warrior's glucose readings — READ ONLY
+    │
+    ▼
+  [APP — Circle Member]  ──── HTTPS GET /api/glucose/member-view ──► [SERVER]
+                                                                        │
+                                                                        │  Verifies circle membership
+                                                                        │  Returns warrior's readings from [DB]
+                                                                        │  (same data warrior sees — no extras)
+                                                                        │
+  [APP — Circle Member]  ◄──────────────────────────────────────── [SERVER]
+    │
+    ▼
+  Circle member sees: glucose value, trend, history
+  Circle member CANNOT: modify readings, access Dexcom tokens,
+                        see warrior's Dexcom credentials,
+                        share data further
+
+
+================================================================================
+  PHASE 4 — DISCONNECTION / REVOCATION
+================================================================================
+
+  [USER]
+    │
+    │  Option A: Taps "Disconnect Dexcom" in LinkLoop app
+    │
+    ▼
+  [APP]  ──── HTTPS POST /api/dexcom/disconnect ──────────────────► [SERVER]
+                                                                       │
+                                                                       │  Immediately nulls all tokens in [DB]:
+                                                                       │    dexcom.accessToken  = null
+                                                                       │    dexcom.refreshToken = null
+                                                                       │    dexcom.connected    = false
+                                                                       │
+                                                                       │  Existing glucose readings are retained
+                                                                       │  (user's own historical data, not Dexcom's)
+                                                                       ▼
+                                                                     [DB] tokens deleted
+
+    │
+    │  Option B: User revokes access directly at dexcom.com
+    │            → access_token immediately invalidated by Dexcom
+    │            → Next sync attempt returns 401
+    │            → Server marks dexcom.connected = false automatically
+    │
+    │  Option C: User requests full account deletion
+    │            Email: vibetech@vibecmd.net
+    │            → All user data including glucose readings deleted within 30 days
+    │
+
+
+================================================================================
+  DATA STORAGE SUMMARY
+================================================================================
+
+  What is stored in LinkLoop's database (MongoDB Atlas):
+  ┌──────────────────────────────┬──────────────────┬──────────────────────┐
+  │ Data                         │ Location         │ Retention            │
+  ├──────────────────────────────┼──────────────────┼──────────────────────┤
+  │ Dexcom access_token          │ Server DB only   │ Until disconnect      │
+  │ Dexcom refresh_token         │ Server DB only   │ Until disconnect      │
+  │ Glucose readings (value,     │ Server DB        │ While account active  │
+  │   trend, timestamp)          │                  │                       │
+  │ User account (name, email)   │ Server DB        │ While account active  │
+  │ Care Circle membership       │ Server DB        │ While account active  │
+  └──────────────────────────────┴──────────────────┴──────────────────────┘
+
+  What is NEVER stored:
+    • Dexcom username or password
+    • Dexcom device serial numbers
+    • Raw Dexcom internal user IDs
+    • Any data not directly needed to display glucose to the user
+
+  What is NEVER shared:
+    • Data is never sold to third parties
+    • No advertising SDKs in the app
+    • No analytics platforms with access to health data
+    • Care Circle members only see data the warrior explicitly shares
+
+
+================================================================================
+  SECURITY CONTROLS
+================================================================================
+
+    ✅  All traffic — HTTPS / TLS 1.2+ enforced, no HTTP fallback
+    ✅  Authentication — JWT tokens, short-lived, validated server-side
+    ✅  Dexcom tokens — stored server-side only, never transmitted to app
+    ✅  Database — MongoDB Atlas with access controls and encryption at rest
+    ✅  Server — Render.com managed hosting (automatic security patches)
+    ✅  Auto token refresh — silent, 5 min before expiry, no user interruption
+    ✅  Disconnect — full token wipe on user request, immediate effect
+
+
+================================================================================
+  CONTACT
+================================================================================
+
+  Company:   VibeCMD LLC
+  App:       LinkLoop
+  Owner:     Kevin Cunningham
+  Email:     vibetech@vibecmd.net
+  Privacy:   https://vibecmd.net/privacy/linkloop
+  Server:    https://linkloop-9l3x.onrender.com
+
+================================================================================
