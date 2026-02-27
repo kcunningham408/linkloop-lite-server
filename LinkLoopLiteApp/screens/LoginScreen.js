@@ -1,11 +1,16 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  StyleSheet, Text, View, TextInput, TouchableOpacity, Alert,
-  KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView, StatusBar,
-} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useEffect, useRef, useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView, Platform,
+    ScrollView, StatusBar,
+    StyleSheet, Text,
+    TextInput, TouchableOpacity,
+    View,
+} from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import { pingServer, circleAPI } from '../services/api';
+import { circleAPI, pingServer } from '../services/api';
 
 // mode: 'landing' | 'login' | 'register' | 'join'
 export default function LoginScreen() {
@@ -285,11 +290,13 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Always show logo at top */}
-          <View style={styles.topLogo}>
-            <Text style={styles.topLogoSymbol}>∞</Text>
-            <Text style={styles.topLogoText}>LinkLoop</Text>
-          </View>
+          {/* Show small top logo only when a form is open */}
+          {(isLogin || isRegister || isJoin) && (
+            <View style={styles.topLogo}>
+              <Text style={styles.topLogoSymbol}>∞</Text>
+              <Text style={styles.topLogoText}>LinkLoop</Text>
+            </View>
+          )}
 
           {/* Landing CTAs or form */}
           {isLogin || isRegister || isJoin ? renderForm() : renderHero()}
