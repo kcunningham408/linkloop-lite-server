@@ -93,7 +93,7 @@ export default function HomeScreen({ navigation }) {
           {isMember ? `You're in the loop` : 'Stay Connected, Stay in Range'}
         </Text>
         <View style={styles.statsBadge}>
-          <Text style={styles.statsEmoji}>{isMember ? '👁️' : '🩺�'}</Text>
+          <Text style={styles.statsEmoji}>{isMember ? '\uD83D\uDC41\uFE0F' : '\uD83E\uDE7A'}</Text>
           <Text style={styles.statsText}>
             {isMember
               ? `Watching ${warriorName || 'your warrior'}'s loop`
@@ -170,7 +170,7 @@ export default function HomeScreen({ navigation }) {
           {isMember ? (
             <>
               <FeatureCard emoji="💬" title="Message" description="Chat with your warrior" onPress={() => navigation.navigate('Chat')} />
-              <FeatureCard emoji="�" title="Alerts" description="Low & high notifications" onPress={() => navigation.navigate('Alerts')} />
+              <FeatureCard emoji={'\uD83D\uDD14'} title="Alerts" description="Low & high notifications" onPress={() => navigation.navigate('Alerts')} />
               <FeatureCard emoji="⚙️" title="Profile" description="Your Loop Member settings" onPress={() => navigation.navigate('Profile')} />
             </>
           ) : (

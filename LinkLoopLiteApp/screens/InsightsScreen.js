@@ -173,7 +173,7 @@ export default function InsightsScreen() {
           ) : (
             <>
               <Text style={styles.motivationLabel}>✨ Daily Motivation</Text>
-              <Text style={styles.motivationText}>T1D doesn't define you — but how you handle it sure says a lot about who you are. �</Text>
+              <Text style={styles.motivationText}>{"T1D doesn\u2019t define you \u2014 but how you handle it sure says a lot about who you are. \uD83D\uDCAA"}</Text>
             </>
           )}
         </View>
