@@ -4,6 +4,8 @@ const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
+const { startDexcomSyncJob } = require('./jobs/dexcomSync');
+
 const app = express();
 
 // Middleware
@@ -18,7 +20,10 @@ app.get('/support', (req, res) => res.sendFile(path.join(__dirname, 'public', 's
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/linkloop')
-  .then(() => console.log('✅ Connected to MongoDB'))
+  .then(() => {
+    console.log('✅ Connected to MongoDB');
+    startDexcomSyncJob();
+  })
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
 // Routes
