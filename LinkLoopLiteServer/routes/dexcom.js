@@ -200,15 +200,17 @@ router.post('/sync', auth, async (req, res) => {
       return res.status(401).json({ message: 'Dexcom session expired. Please reconnect.' });
     }
 
-    // Determine time range — last sync or last 24 hours (max 90 days for Dexcom)
+    // Determine time range — always look back 3 hours to account for Dexcom
+    // Individual Access API delay (~3h vs Follow app which uses direct push).
+    // Dedup logic below prevents double inserts.
     const endDate = new Date();
     let startDate;
 
     if (user.dexcom.lastSync) {
       startDate = new Date(user.dexcom.lastSync);
-      // Roll back 10 minutes to overlap — dedup prevents double inserts
-      startDate.setMinutes(startDate.getMinutes() - 10);
-      // Don't go more than 24 hours back on sync
+      // Roll back 3 hours to account for Dexcom API delay
+      startDate.setHours(startDate.getHours() - 3);
+      // Don't go more than 24 hours back
       const maxLookback = new Date(endDate);
       maxLookback.setHours(maxLookback.getHours() - 24);
       if (startDate < maxLookback) startDate = maxLookback;
@@ -230,6 +232,7 @@ router.post('/sync', auth, async (req, res) => {
       headers: {
         Authorization: `Bearer ${user.dexcom.accessToken}`,
       },
+      timeout: 15000, // 15-second timeout — prevents infinite spinner
     });
 
     const records = egvResponse.data?.records || [];
