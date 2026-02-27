@@ -216,8 +216,8 @@ router.post('/sync', auth, async (req, res) => {
       startDate.setHours(startDate.getHours() - 3);
     }
 
-    // Dexcom v3 requires ISO 8601 UTC with explicit Z, no milliseconds
-    const formatDate = (d) => d.toISOString().replace(/\.\d{3}Z$/, 'Z');
+    // Dexcom v3 requires exactly YYYY-MM-DDThh:mm:ss — no Z, no milliseconds
+    const formatDate = (d) => d.toISOString().slice(0, 19);
 
     // Fetch EGVs from Dexcom
     const egvResponse = await axios.get(`${DEXCOM_BASE}/v3/users/self/egvs`, {
