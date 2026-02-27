@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+const axios = require('axios');
 require('dotenv').config();
 
 const { startDexcomSyncJob } = require('./jobs/dexcomSync');
@@ -62,3 +63,15 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`⚡ LinkLoop Server running on port ${PORT}`);
 });
+
+// ── Keep-alive ping — prevents Render free tier from sleeping ─────
+// Pings our own health endpoint every 10 minutes
+const SERVER_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+setInterval(async () => {
+  try {
+    await axios.get(`${SERVER_URL}/api/health`);
+    console.log('[KeepAlive] Pinged successfully');
+  } catch (err) {
+    console.log('[KeepAlive] Ping failed:', err.message);
+  }
+}, 10 * 60 * 1000); // every 10 minutes
