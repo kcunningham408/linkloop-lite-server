@@ -18,7 +18,18 @@ router.get('/me', auth, async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.json(user);
+    // Return normalized object so linkedOwnerId is always a plain string, not an ObjectId
+    res.json({
+      id: user._id,
+      email: user.email || null,
+      phone: user.phone || null,
+      name: user.name,
+      role: user.role,
+      linkedOwnerId: user.linkedOwnerId ? user.linkedOwnerId.toString() : null,
+      profileEmoji: user.profileEmoji,
+      settings: user.settings,
+      createdAt: user.createdAt,
+    });
   } catch (err) {
     console.error('Get user error:', err);
     res.status(500).json({ message: 'Server error' });
