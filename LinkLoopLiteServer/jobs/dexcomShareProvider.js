@@ -194,10 +194,12 @@ async function syncUserViaShare(user, GlucoseReading) {
     user.dexcomShare.sessionId = sessionId;
   }
 
-  // Fetch last 3 hours of readings (36 readings at 5-min intervals)
+  // Fetch last 24h of readings — use full day window since Share API can return empty
+  // for smaller windows intermittently. maxCount=288 = 24h at 5-min intervals.
+  // Dedup below prevents double inserts.
   let rawRecords;
   try {
-    rawRecords = await fetchShareReadings(sessionId, region, 180, 36);
+    rawRecords = await fetchShareReadings(sessionId, region, 1440, 288);
   } catch (err) {
     const code = err.response?.data?.Code;
     // Session expired — clear and retry once
@@ -206,10 +208,20 @@ async function syncUserViaShare(user, GlucoseReading) {
       user.dexcomShare.sessionId = null;
       sessionId = await getSessionId(accountId, password, region);
       user.dexcomShare.sessionId = sessionId;
-      rawRecords = await fetchShareReadings(sessionId, region, 180, 36);
+      rawRecords = await fetchShareReadings(sessionId, region, 1440, 288);
     } else {
       throw err;
     }
+  }
+
+  // Empty result can also mean a silently-expired session — force re-auth once
+  if (!rawRecords || rawRecords.length === 0) {
+    console.log(`[DexcomShare] Empty result for user ${user._id}, forcing re-auth...`);
+    user.dexcomShare.sessionId = null;
+    sessionId = await getSessionId(accountId, password, region);
+    user.dexcomShare.sessionId = sessionId;
+    await user.save();
+    rawRecords = await fetchShareReadings(sessionId, region, 1440, 288);
   }
 
   await user.save();
@@ -220,17 +232,27 @@ async function syncUserViaShare(user, GlucoseReading) {
     return { synced: 0 };
   }
 
-  // Dedup against existing readings
-  const cutoff = new Date(Date.now() - 3 * 60 * 60 * 1000);
+  // Dedup against existing readings — use 24h window to catch anything already stored
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const existing = await GlucoseReading.find({
     userId: user._id,
     source: 'dexcom',
     timestamp: { $gte: cutoff },
   }).select('timestamp');
-  const existingSet = new Set(existing.map(r => r.timestamp.toISOString()));
+
+  // Round timestamps to nearest second for comparison (Share has ms precision, DB may not)
+  const existingSet = new Set(existing.map(r => {
+    const d = new Date(r.timestamp);
+    d.setMilliseconds(0);
+    return d.toISOString();
+  }));
 
   const newReadings = parseShareRecords(rawRecords, user._id)
-    .filter(r => !existingSet.has(r.timestamp.toISOString()));
+    .filter(r => {
+      const rounded = new Date(r.timestamp);
+      rounded.setMilliseconds(0);
+      return !existingSet.has(rounded.toISOString());
+    });
 
   if (newReadings.length > 0) {
     await GlucoseReading.insertMany(newReadings);
