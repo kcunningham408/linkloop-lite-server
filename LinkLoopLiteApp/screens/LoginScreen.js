@@ -1,15 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   StyleSheet, Text, View, TextInput, TouchableOpacity, Alert,
-  KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView,
+  KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView, StatusBar,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
 import { pingServer, circleAPI } from '../services/api';
 
-// mode: 'login' | 'register' | 'join'
+// mode: 'landing' | 'login' | 'register' | 'join'
 export default function LoginScreen() {
-  const [mode, setMode] = useState('login');
+  const [mode, setMode] = useState('landing');
   const [loginMethod, setLoginMethod] = useState('email');
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -75,9 +75,7 @@ export default function LoginScreen() {
       }
       setIsLoading(true);
       try {
-        // 1. Create the account (role will be upgraded to 'member' by joinCircle)
         await register(identifier, password, name, 'member');
-        // 2. Join the circle — auth token is set by register so this is ready to go
         await circleAPI.joinCircle(inviteCode.trim().toUpperCase());
       } catch (err) {
         Alert.alert('Join Failed', err.message || 'Invalid invite code or sign-up issue');
@@ -88,233 +86,367 @@ export default function LoginScreen() {
   };
 
   const isJoin = mode === 'join';
+  const isRegister = mode === 'register';
   const isLogin = mode === 'login';
-  const accentColor = isJoin ? '#34C759' : '#4A90D9';
-  const gradientColors = isJoin ? ['#1A3A22', '#0F2017'] : ['#4A90D9', '#3A7BC8'];
+
+  // ── Hero section shown when no form is active (landing) ──────────
+  const renderHero = () => (
+    <View style={styles.heroSection}>
+      <View style={styles.logoRow}>
+        <Text style={styles.logoSymbol}>∞</Text>
+        <Text style={styles.logoText}>LinkLoop</Text>
+      </View>
+      <Text style={styles.tagline}>Real-time glucose sharing{'\n'}for T1D warriors and the people who care</Text>
+
+      {/* Primary CTAs */}
+      <TouchableOpacity style={styles.btnSignIn} onPress={() => resetFields('login')}>
+        <Text style={styles.btnSignInText}>Sign In</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.btnJoinCircle} onPress={() => resetFields('join')}>
+        <Text style={styles.btnJoinCircleText}>Join a Circle</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => resetFields('register')} style={styles.signUpLink}>
+        <Text style={styles.signUpLinkText}>
+          New T1D Warrior?{'  '}
+          <Text style={styles.signUpLinkBold}>Create an account</Text>
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  // ── Shared form fields ────────────────────────────────────────────
+  const renderForm = () => (
+    <View style={styles.formCard}>
+
+      {/* Back button */}
+      <TouchableOpacity onPress={() => resetFields('landing')} style={styles.backBtn}>
+        <Text style={styles.backBtnText}>←  Back</Text>
+      </TouchableOpacity>
+
+      {/* Form title */}
+      <Text style={styles.formTitle}>
+        {isLogin ? 'Welcome back' : isRegister ? 'Create your account' : 'Join a Care Circle'}
+      </Text>
+      {isLogin && (
+        <Text style={styles.formSubtitle}>Sign in to your LinkLoop account</Text>
+      )}
+      {isRegister && (
+        <Text style={styles.formSubtitle}>Start sharing your glucose data with loved ones</Text>
+      )}
+      {isJoin && (
+        <Text style={styles.formSubtitle}>Enter your invite code to get connected automatically</Text>
+      )}
+
+      {/* Invite code — join only */}
+      {isJoin && (
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Invite Code</Text>
+          <TextInput
+            ref={inviteRef}
+            style={[styles.input, styles.inviteInput]}
+            placeholder="e.g. A1B2C3D4"
+            placeholderTextColor="#2A6B3A"
+            value={inviteCode}
+            onChangeText={(t) => setInviteCode(t.toUpperCase())}
+            autoCapitalize="characters"
+            maxLength={8}
+            returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => nameRef.current?.focus()}
+          />
+        </View>
+      )}
+
+      {/* Name — register + join */}
+      {(isRegister || isJoin) && (
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Your Name</Text>
+          <TextInput
+            ref={nameRef}
+            style={styles.input}
+            placeholder="Your name"
+            placeholderTextColor="#555"
+            value={name}
+            onChangeText={setName}
+            autoCapitalize="words"
+            returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => identifierRef.current?.focus()}
+          />
+        </View>
+      )}
+
+      {/* Email / Phone toggle */}
+      <View style={styles.methodToggle}>
+        <TouchableOpacity
+          style={[styles.methodTab, loginMethod === 'email' && styles.methodTabActive]}
+          onPress={() => { setLoginMethod('email'); setIdentifier(''); }}
+        >
+          <Text style={[styles.methodTabText, loginMethod === 'email' && styles.methodTabActiveText]}>Email</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.methodTab, loginMethod === 'phone' && styles.methodTabActive]}
+          onPress={() => { setLoginMethod('phone'); setIdentifier(''); }}
+        >
+          <Text style={[styles.methodTabText, loginMethod === 'phone' && styles.methodTabActiveText]}>Phone</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.inputGroup}>
+        <Text style={styles.inputLabel}>{loginMethod === 'email' ? 'Email' : 'Phone Number'}</Text>
+        <TextInput
+          ref={identifierRef}
+          style={styles.input}
+          placeholder={loginMethod === 'email' ? 'your@email.com' : '(555) 123-4567'}
+          placeholderTextColor="#555"
+          value={identifier}
+          onChangeText={setIdentifier}
+          keyboardType={loginMethod === 'email' ? 'email-address' : 'phone-pad'}
+          autoCapitalize="none"
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => passwordRef.current?.focus()}
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <Text style={styles.inputLabel}>Password</Text>
+        <View style={styles.passwordRow}>
+          <TextInput
+            ref={passwordRef}
+            style={styles.passwordInput}
+            placeholder="Password"
+            placeholderTextColor="#555"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+            returnKeyType="go"
+            onSubmitEditing={handleSubmit}
+          />
+          <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPassword(!showPassword)}>
+            <Text style={styles.eyeBtnText}>{showPassword ? 'Hide' : 'Show'}</Text>
+          </TouchableOpacity>
+        </View>
+        {!isLogin && <Text style={styles.hint}>At least 6 characters</Text>}
+      </View>
+
+      {/* Submit */}
+      <TouchableOpacity
+        style={[
+          styles.submitBtn,
+          isJoin && styles.submitBtnGreen,
+        ]}
+        onPress={handleSubmit}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.submitBtnText}>
+            {isLogin ? 'Sign In' : isRegister ? 'Create Account' : 'Join Circle'}
+          </Text>
+        )}
+      </TouchableOpacity>
+
+      {/* Sign up / sign in crosslinks */}
+      {isLogin && (
+        <TouchableOpacity onPress={() => resetFields('register')} style={styles.crossLink}>
+          <Text style={styles.crossLinkText}>
+            New here?{'  '}<Text style={styles.crossLinkBold}>Create a free account</Text>
+          </Text>
+        </TouchableOpacity>
+      )}
+      {isRegister && (
+        <TouchableOpacity onPress={() => resetFields('login')} style={styles.crossLink}>
+          <Text style={styles.crossLinkText}>
+            Already have an account?{'  '}<Text style={styles.crossLinkBold}>Sign In</Text>
+          </Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+
+  // ── Landing mode: no form shown yet ──────────────────────────────
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <LinearGradient colors={gradientColors} style={styles.header}>
-        <Text style={styles.logo}>\u221e LinkLoop</Text>
-        <Text style={styles.tagline}>
-          {isJoin ? "You've been invited to a Loop" : 'Stay Connected, Stay in Range'}
-        </Text>
-      </LinearGradient>
-
-      <ScrollView style={styles.formContainer} keyboardShouldPersistTaps="handled">
-
-        {/* Mode selector: 3 tabs */}
-        <View style={styles.modeTabs}>
-          <TouchableOpacity
-            style={[styles.modeTab, mode === 'login' && styles.modeTabActive]}
-            onPress={() => resetFields('login')}
-          >
-            <Text style={[styles.modeTabText, mode === 'login' && styles.modeTabTextActive]}>
-              Sign In
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.modeTab, mode === 'register' && styles.modeTabActive]}
-            onPress={() => resetFields('register')}
-          >
-            <Text style={[styles.modeTabText, mode === 'register' && styles.modeTabTextActive]}>
-              Sign Up
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.modeTab, mode === 'join' && styles.modeTabJoinActive]}
-            onPress={() => resetFields('join')}
-          >
-            <Text style={[styles.modeTabText, mode === 'join' && styles.modeTabTextActive]}>
-              Join a Loop
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Join banner */}
-        {isJoin && (
-          <View style={styles.joinBanner}>
-            <Text style={styles.joinBannerEmoji}>\U0001f49a</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.joinBannerTitle}>Someone invited you!</Text>
-              <Text style={styles.joinBannerSub}>
-                Enter the invite code they sent you, then create your account.
-                You'll be connected automatically.
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {/* Invite code field — Join mode only, shown first */}
-        {isJoin && (
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Invite Code</Text>
-            <TextInput
-              ref={inviteRef}
-              style={[styles.input, styles.inviteCodeInput]}
-              placeholder="e.g. A1B2C3D4"
-              placeholderTextColor="#2A6B3A"
-              value={inviteCode}
-              onChangeText={(t) => setInviteCode(t.toUpperCase())}
-              autoCapitalize="characters"
-              maxLength={8}
-              returnKeyType="next"
-              blurOnSubmit={false}
-              onSubmitEditing={() => nameRef.current?.focus()}
-            />
-          </View>
-        )}
-
-        {/* Name field — register + join modes */}
-        {!isLogin && (
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Your Name</Text>
-            <TextInput
-              ref={nameRef}
-              style={styles.input}
-              placeholder="Your name"
-              placeholderTextColor="#666"
-              value={name}
-              onChangeText={setName}
-              autoCapitalize="words"
-              returnKeyType="next"
-              blurOnSubmit={false}
-              onSubmitEditing={() => identifierRef.current?.focus()}
-            />
-          </View>
-        )}
-
-        {/* Email / Phone toggle */}
-        <View style={styles.methodToggle}>
-          <TouchableOpacity
-            style={[styles.methodTab, loginMethod === 'email' && [styles.methodTabActive, { backgroundColor: accentColor }]]}
-            onPress={() => { setLoginMethod('email'); setIdentifier(''); }}
-          >
-            <Text style={[styles.methodTabText, loginMethod === 'email' && styles.methodTabTextActive]}>
-              Email
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.methodTab, loginMethod === 'phone' && [styles.methodTabActive, { backgroundColor: accentColor }]]}
-            onPress={() => { setLoginMethod('phone'); setIdentifier(''); }}
-          >
-            <Text style={[styles.methodTabText, loginMethod === 'phone' && styles.methodTabTextActive]}>
-              Phone
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>{loginMethod === 'email' ? 'Email' : 'Phone Number'}</Text>
-          <TextInput
-            ref={identifierRef}
-            style={styles.input}
-            placeholder={loginMethod === 'email' ? 'your@email.com' : '(555) 123-4567'}
-            placeholderTextColor="#666"
-            value={identifier}
-            onChangeText={setIdentifier}
-            keyboardType={loginMethod === 'email' ? 'email-address' : 'phone-pad'}
-            autoCapitalize="none"
-            returnKeyType="next"
-            blurOnSubmit={false}
-            onSubmitEditing={() => passwordRef.current?.focus()}
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Password</Text>
-          <View style={styles.passwordRow}>
-            <TextInput
-              ref={passwordRef}
-              style={styles.passwordInput}
-              placeholder={'\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022'}
-              placeholderTextColor="#666"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              returnKeyType="go"
-              onSubmitEditing={handleSubmit}
-            />
-            <TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword(!showPassword)}>
-              <Text style={styles.eyeIcon}>{showPassword ? 'Hide' : 'Show'}</Text>
-            </TouchableOpacity>
-          </View>
-          {!isLogin && (
-            <Text style={styles.passwordHint}>At least 6 characters</Text>
-          )}
-        </View>
-
-        <TouchableOpacity
-          style={[styles.submitButton, { backgroundColor: accentColor }]}
-          onPress={handleSubmit}
-          disabled={isLoading}
+      <StatusBar barStyle="light-content" />
+      <LinearGradient
+        colors={isJoin ? ['#0B2010', '#111111'] : ['#0D1B2E', '#111111']}
+        style={styles.gradient}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          {isLoading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.submitButtonText}>
-              {mode === 'login' ? 'Sign In' : mode === 'register' ? 'Create Account' : 'Join the Loop'}
-            </Text>
-          )}
-        </TouchableOpacity>
+          {/* Always show logo at top */}
+          <View style={styles.topLogo}>
+            <Text style={styles.topLogoSymbol}>∞</Text>
+            <Text style={styles.topLogoText}>LinkLoop</Text>
+          </View>
 
-        <View style={{ height: 40 }} />
-      </ScrollView>
+          {/* Landing CTAs or form */}
+          {isLogin || isRegister || isJoin ? renderForm() : renderHero()}
+        </ScrollView>
+      </LinearGradient>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111111' },
-  header: { paddingTop: 60, paddingBottom: 40, alignItems: 'center' },
-  logo: { fontSize: 42, fontWeight: 'bold', color: '#fff', marginBottom: 8 },
-  tagline: { fontSize: 16, color: '#fff', opacity: 0.9, textAlign: 'center', paddingHorizontal: 20 },
-  formContainer: { flex: 1, padding: 25, paddingTop: 20 },
+  container: { flex: 1 },
+  gradient: { flex: 1 },
+  scroll: { flexGrow: 1, paddingBottom: 40 },
 
-  modeTabs: { flexDirection: 'row', backgroundColor: '#2C2C2E', borderRadius: 12, padding: 4, marginBottom: 24 },
-  modeTab: { flex: 1, paddingVertical: 11, borderRadius: 10, alignItems: 'center' },
-  modeTabActive: { backgroundColor: '#4A90D9' },
-  modeTabJoinActive: { backgroundColor: '#34C759' },
-  modeTabText: { fontSize: 13, color: '#A0A0A0', fontWeight: '600' },
-  modeTabTextActive: { color: '#fff' },
-
-  joinBanner: {
-    flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#0D2B15',
-    borderRadius: 12, padding: 16, marginBottom: 20,
-    borderWidth: 1, borderColor: '#1A4A26', gap: 12,
+  // ── Top logo (shown always) ──
+  topLogo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 70,
+    paddingBottom: 10,
+    gap: 10,
   },
-  joinBannerEmoji: { fontSize: 28 },
-  joinBannerTitle: { fontSize: 15, fontWeight: '700', color: '#34C759', marginBottom: 4 },
-  joinBannerSub: { fontSize: 13, color: '#A0C8A8', lineHeight: 18 },
+  topLogoSymbol: {
+    fontSize: 38,
+    fontWeight: '900',
+    color: '#4A90D9',
+  },
+  topLogoText: {
+    fontSize: 34,
+    fontWeight: '800',
+    color: '#fff',
+    letterSpacing: -0.5,
+  },
 
-  methodToggle: { flexDirection: 'row', backgroundColor: '#2C2C2E', borderRadius: 12, padding: 4, marginBottom: 20 },
-  methodTab: { flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
-  methodTabActive: {},
-  methodTabText: { fontSize: 15, color: '#A0A0A0', fontWeight: '600' },
-  methodTabTextActive: { color: '#fff' },
+  // ── Hero / landing ──
+  heroSection: {
+    paddingHorizontal: 30,
+    paddingTop: 30,
+    alignItems: 'center',
+  },
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 16,
+  },
+  logoSymbol: { fontSize: 52, fontWeight: '900', color: '#4A90D9' },
+  logoText: { fontSize: 46, fontWeight: '800', color: '#fff', letterSpacing: -1 },
+  tagline: {
+    fontSize: 17,
+    color: '#A0A0A0',
+    textAlign: 'center',
+    lineHeight: 26,
+    marginBottom: 48,
+  },
 
-  inputContainer: { marginBottom: 20 },
-  label: { fontSize: 14, fontWeight: '600', color: '#E0E0E0', marginBottom: 8 },
+  btnSignIn: {
+    width: '100%',
+    backgroundColor: '#4A90D9',
+    borderRadius: 14,
+    paddingVertical: 18,
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  btnSignInText: { color: '#fff', fontSize: 17, fontWeight: '700' },
+
+  btnJoinCircle: {
+    width: '100%',
+    backgroundColor: 'transparent',
+    borderRadius: 14,
+    paddingVertical: 17,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#34C759',
+    marginBottom: 32,
+  },
+  btnJoinCircleText: { color: '#34C759', fontSize: 17, fontWeight: '700' },
+
+  signUpLink: { paddingVertical: 8 },
+  signUpLinkText: { color: '#666', fontSize: 14, textAlign: 'center' },
+  signUpLinkBold: { color: '#4A90D9', fontWeight: '700' },
+
+  // ── Form card ──
+  formCard: {
+    marginHorizontal: 20,
+    marginTop: 16,
+    backgroundColor: '#1A1A1A',
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: '#2C2C2E',
+  },
+  backBtn: { marginBottom: 20 },
+  backBtnText: { color: '#4A90D9', fontSize: 15, fontWeight: '600' },
+  formTitle: { fontSize: 24, fontWeight: '800', color: '#fff', marginBottom: 6 },
+  formSubtitle: { fontSize: 14, color: '#777', marginBottom: 28, lineHeight: 20 },
+
+  methodToggle: {
+    flexDirection: 'row',
+    backgroundColor: '#2C2C2E',
+    borderRadius: 10,
+    padding: 3,
+    marginBottom: 20,
+  },
+  methodTab: {
+    flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center',
+  },
+  methodTabActive: { backgroundColor: '#4A90D9' },
+  methodTabText: { fontSize: 14, color: '#777', fontWeight: '600' },
+  methodTabActiveText: { color: '#fff' },
+
+  inputGroup: { marginBottom: 18 },
+  inputLabel: { fontSize: 13, fontWeight: '600', color: '#999', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
   input: {
-    backgroundColor: '#1C1C1E', borderRadius: 12, padding: 15,
-    fontSize: 16, borderWidth: 1, borderColor: '#2C2C2E', color: '#fff',
+    backgroundColor: '#111',
+    borderRadius: 12,
+    padding: 15,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#2C2C2E',
+    color: '#fff',
   },
-  inviteCodeInput: {
-    fontSize: 24, textAlign: 'center', letterSpacing: 6,
-    fontWeight: 'bold', color: '#34C759', borderColor: '#34C759',
+  inviteInput: {
+    fontSize: 22,
+    textAlign: 'center',
+    letterSpacing: 8,
+    fontWeight: '800',
+    color: '#34C759',
+    borderColor: '#34C759',
+    borderWidth: 2,
   },
   passwordRow: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#1C1C1E',
-    borderRadius: 12, borderWidth: 1, borderColor: '#2C2C2E',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#111',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#2C2C2E',
   },
   passwordInput: { flex: 1, padding: 15, fontSize: 16, color: '#fff' },
-  eyeButton: { paddingHorizontal: 14, paddingVertical: 12 },
-  eyeIcon: { fontSize: 14, color: '#A0A0A0', fontWeight: '600' },
-  passwordHint: { fontSize: 12, color: '#666', marginTop: 6 },
+  eyeBtn: { paddingHorizontal: 16, paddingVertical: 12 },
+  eyeBtnText: { color: '#555', fontSize: 13, fontWeight: '600' },
+  hint: { fontSize: 12, color: '#555', marginTop: 6 },
 
-  submitButton: { borderRadius: 12, padding: 18, alignItems: 'center', marginTop: 10 },
-  submitButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  submitBtn: {
+    backgroundColor: '#4A90D9',
+    borderRadius: 14,
+    padding: 18,
+    alignItems: 'center',
+    marginTop: 6,
+    marginBottom: 4,
+  },
+  submitBtnGreen: { backgroundColor: '#34C759' },
+  submitBtnText: { color: '#fff', fontSize: 17, fontWeight: '700' },
+
+  crossLink: { paddingTop: 20, alignItems: 'center' },
+  crossLinkText: { color: '#555', fontSize: 14 },
+  crossLinkBold: { color: '#4A90D9', fontWeight: '700' },
 });
