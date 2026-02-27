@@ -51,6 +51,7 @@ async function refreshTokenIfNeeded(user) {
 
   const now = new Date();
   // Refresh 5 minutes before expiry
+  if (!user.dexcom.tokenExpiry) return true; // no expiry stored yet — assume still valid
   const expiryBuffer = new Date(user.dexcom.tokenExpiry);
   expiryBuffer.setMinutes(expiryBuffer.getMinutes() - 5);
 
@@ -210,7 +211,8 @@ router.post('/sync', auth, async (req, res) => {
       startDate.setHours(startDate.getHours() - 3);
     }
 
-    const formatDate = (d) => d.toISOString().replace(/\.\d{3}Z$/, '');
+    // Dexcom v3 requires ISO 8601 UTC with explicit Z, no milliseconds
+    const formatDate = (d) => d.toISOString().replace(/\.\d{3}Z$/, 'Z');
 
     // Fetch EGVs from Dexcom
     const egvResponse = await axios.get(`${DEXCOM_BASE}/v3/users/self/egvs`, {
@@ -247,7 +249,9 @@ router.post('/sync', auth, async (req, res) => {
       const value = record.value;
       if (value == null || value < 20 || value > 600) continue;
 
-      const timestamp = new Date(record.systemTime);
+      // Dexcom returns systemTime without Z — force UTC parse
+      const rawTime = record.systemTime?.endsWith('Z') ? record.systemTime : record.systemTime + 'Z';
+      const timestamp = new Date(rawTime);
       if (existingTimestamps.has(timestamp.toISOString())) continue;
 
       const trend     = TREND_MAP[record.trend]       || 'stable';
