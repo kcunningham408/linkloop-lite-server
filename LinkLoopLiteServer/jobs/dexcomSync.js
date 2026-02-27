@@ -111,15 +111,17 @@ async function syncUser(user) {
   }
 
   try {
+    const startStr = formatDate(startDate);
+    const endStr   = formatDate(endDate);
+    console.log(`[DexcomSync] user ${user._id} querying ${startStr} → ${endStr}`);
+
     const egvResponse = await axios.get(`${DEXCOM_BASE}/v3/users/self/egvs`, {
-      params: {
-        startDate: formatDate(startDate),
-        endDate:   formatDate(endDate),
-      },
+      params: { startDate: startStr, endDate: endStr },
       headers: { Authorization: `Bearer ${user.dexcom.accessToken}` },
     });
 
     const records = egvResponse.data?.records || [];
+    console.log(`[DexcomSync] user ${user._id} got ${records.length} record(s) from Dexcom`);
     if (records.length === 0) {
       user.dexcom.lastSync = endDate;
       await user.save();
