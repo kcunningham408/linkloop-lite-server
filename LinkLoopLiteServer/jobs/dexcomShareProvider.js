@@ -143,11 +143,11 @@ function parseShareRecords(records, userId) {
     const value = record.Value;
     if (value == null || value < 20 || value > 600) continue;
 
-    // WT is a .NET timestamp: "/Date(1234567890000)/" — milliseconds since epoch
+    // WT is a .NET JSON date: "/Date(1234567890000-0800)/" — extract only the ms part
     let timestamp;
     try {
-      const wt = record.WT.replace('/Date(', '').replace(')/', '').replace(')', '');
-      timestamp = new Date(parseInt(wt, 10));
+      const ms = parseInt(record.WT.replace(/.*Date\((\d+)[^)]*\).*/, '$1'), 10);
+      timestamp = new Date(ms);
     } catch {
       continue;
     }
