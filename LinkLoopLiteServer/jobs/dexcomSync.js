@@ -96,10 +96,13 @@ async function syncUser(user) {
   const endDate = new Date();
   let startDate;
 
+  // Dexcom Individual Access API has a ~3-hour data delay vs the Follow app
+  // (Follow uses direct push; the pull API lags behind). Always look back 3 hours
+  // so we never miss readings. Dedup logic below prevents double inserts.
   if (user.dexcom.lastSync) {
     startDate = new Date(user.dexcom.lastSync);
-    // Roll back 10 minutes to overlap — dedup prevents double inserts
-    startDate.setMinutes(startDate.getMinutes() - 10);
+    // Always roll back 3 hours to account for Dexcom API delay
+    startDate.setHours(startDate.getHours() - 3);
     // Don't look back more than 24 hours
     const maxLookback = new Date(endDate);
     maxLookback.setHours(maxLookback.getHours() - 24);
