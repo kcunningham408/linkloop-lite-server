@@ -19,3 +19,10 @@ LinkLoopLiteApp/.expo/
 
 # Build
 *.tgz
+
+# Temp / scratch files at repo root
+*.pdf
+*.zip
+attachments/
+debug_*.js
+force_*.js
