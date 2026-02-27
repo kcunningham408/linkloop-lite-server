@@ -93,7 +93,7 @@ export default function HomeScreen({ navigation }) {
           {isMember ? `You're in the loop` : 'Stay Connected, Stay in Range'}
         </Text>
         <View style={styles.statsBadge}>
-          <Text style={styles.statsEmoji}>{isMember ? '�' : '�💙'}</Text>
+          <Text style={styles.statsEmoji}>{isMember ? '👁️' : '🩺�'}</Text>
           <Text style={styles.statsText}>
             {isMember
               ? `Watching ${warriorName || 'your warrior'}'s loop`
