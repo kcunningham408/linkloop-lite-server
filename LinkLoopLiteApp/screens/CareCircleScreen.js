@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Modal, Switch, RefreshControl, ActivityIndicator, Alert, Share, Linking, Platform, Clipboard } from 'react-native';
-import { circleAPI, alertsAPI } from '../services/api';
-import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Clipboard, Linking, Modal, Platform, RefreshControl, ScrollView, Share, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useAuth } from '../context/AuthContext';
+import { alertsAPI, circleAPI } from '../services/api';
 
 // TODO: Replace with actual App Store / Play Store URLs when live
 const APP_DOWNLOAD_URL = 'https://linkloop-9l3x.onrender.com'; // placeholder until app store listing
@@ -18,7 +18,7 @@ const RELATIONSHIPS = [
 ];
 
 export default function CareCircleScreen() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, checkAuth } = useAuth();
   const isMember = user?.role === 'member';
   const navigation = useNavigation();
   const [members, setMembers] = useState([]);
@@ -94,6 +94,8 @@ export default function CareCircleScreen() {
     setSaving(true);
     try {
       const data = await circleAPI.joinCircle(joinCode.trim());
+      // Refresh user profile so role + linkedOwnerId update immediately in the app
+      await checkAuth();
       Alert.alert('Success!', 'Joined ' + data.owner.name + "'s Care Circle");
       setShowJoinModal(false);
       setJoinCode('');
