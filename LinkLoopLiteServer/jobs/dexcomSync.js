@@ -98,6 +98,8 @@ async function syncUser(user) {
 
   if (user.dexcom.lastSync) {
     startDate = new Date(user.dexcom.lastSync);
+    // Roll back 10 minutes to overlap — dedup prevents double inserts
+    startDate.setMinutes(startDate.getMinutes() - 10);
     // Don't look back more than 24 hours
     const maxLookback = new Date(endDate);
     maxLookback.setHours(maxLookback.getHours() - 24);
