@@ -7,6 +7,7 @@ const cron   = require('node-cron');
 const axios  = require('axios');
 const User   = require('../models/User');
 const GlucoseReading = require('../models/GlucoseReading');
+const { syncUserViaShare } = require('./dexcomShareProvider');
 
 const DEXCOM_CLIENT_ID     = process.env.DEXCOM_CLIENT_ID;
 const DEXCOM_CLIENT_SECRET = process.env.DEXCOM_CLIENT_SECRET;
@@ -87,6 +88,23 @@ async function refreshTokenIfNeeded(user) {
 
 // ── Sync one user ──────────────────────────────────────────────────
 async function syncUser(user) {
+  // ── Try Dexcom Share first (real-time, no delay) ──────────────
+  if (user.dexcomShare?.connected) {
+    try {
+      const result = await syncUserViaShare(user, GlucoseReading);
+      if (result !== null) {
+        if (result.synced > 0) {
+          console.log(`[DexcomShare] Synced ${result.synced} new reading(s) for user ${user._id}`);
+        }
+        return; // Share succeeded — skip Individual Access API
+      }
+    } catch (err) {
+      console.error(`[DexcomShare] Sync failed for user ${user._id}:`, err.response?.data || err.message);
+      // Fall through to Individual Access API below
+    }
+  }
+
+  // ── Fall back to Individual Access API (OAuth, ~3h delay) ─────
   const tokenValid = await refreshTokenIfNeeded(user);
   if (!tokenValid) {
     console.log(`[DexcomSync] Skipping user ${user._id} — token invalid/expired`);
@@ -179,7 +197,13 @@ function startDexcomSyncJob() {
   cron.schedule('*/5 * * * *', async () => {
     console.log('[DexcomSync] Running scheduled sync...');
     try {
-      const users = await User.find({ 'dexcom.connected': true });
+      // Find all users with either Dexcom connection active
+      const users = await User.find({
+        $or: [
+          { 'dexcom.connected': true },
+          { 'dexcomShare.connected': true },
+        ]
+      });
       if (users.length === 0) {
         console.log('[DexcomSync] No connected users, skipping.');
         return;

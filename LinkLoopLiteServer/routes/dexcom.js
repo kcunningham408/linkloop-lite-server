@@ -3,6 +3,7 @@ const axios = require('axios');
 const auth = require('../middleware/auth');
 const User = require('../models/User');
 const GlucoseReading = require('../models/GlucoseReading');
+const { encryptPassword, getAccountId, getSessionId, syncUserViaShare } = require('../jobs/dexcomShareProvider');
 
 const router = express.Router();
 
@@ -326,6 +327,117 @@ router.post('/disconnect', auth, async (req, res) => {
     res.json({ message: 'Dexcom disconnected successfully' });
   } catch (err) {
     console.error('Dexcom disconnect error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// ── 6.  POST /api/dexcom/share-connect  ───────────────────────────
+// Validates Dexcom Share credentials and saves them (password encrypted at rest)
+router.post('/share-connect', auth, async (req, res) => {
+  try {
+    const { username, password, region = 'us' } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ message: 'Username and password are required' });
+    }
+    if (!['us', 'ous'].includes(region)) {
+      return res.status(400).json({ message: 'Region must be "us" or "ous"' });
+    }
+
+    const user = await User.findById(req.user.userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Verify credentials by getting accountId + sessionId from Dexcom
+    let accountId, sessionId;
+    try {
+      accountId = await getAccountId(username, password, region);
+      sessionId = await getSessionId(accountId, password, region);
+    } catch (err) {
+      const msg = err.response?.data?.Message || err.message || 'Invalid credentials';
+      return res.status(401).json({ message: `Dexcom Share login failed: ${msg}` });
+    }
+
+    user.dexcomShare = {
+      username,
+      passwordEncrypted: encryptPassword(password),
+      accountId,
+      sessionId,
+      region,
+      connected: true,
+      lastSync: null,
+    };
+    await user.save();
+
+    res.json({ message: 'Dexcom Share connected successfully', connected: true });
+  } catch (err) {
+    console.error('Dexcom Share connect error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// ── 7.  DELETE /api/dexcom/share-disconnect  ──────────────────────
+router.delete('/share-disconnect', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    user.dexcomShare = {
+      username: null,
+      passwordEncrypted: null,
+      accountId: null,
+      sessionId: null,
+      region: 'us',
+      connected: false,
+      lastSync: null,
+    };
+    await user.save();
+
+    res.json({ message: 'Dexcom Share disconnected' });
+  } catch (err) {
+    console.error('Dexcom Share disconnect error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// ── 8.  POST /api/dexcom/share-sync  ──────────────────────────────
+// Manual trigger — same as cron but on-demand via Share API
+router.post('/share-sync', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user || !user.dexcomShare?.connected) {
+      return res.status(400).json({ message: 'Dexcom Share not connected' });
+    }
+
+    const result = await syncUserViaShare(user, GlucoseReading);
+    if (result === null) {
+      return res.status(400).json({ message: 'Dexcom Share not configured' });
+    }
+
+    res.json({
+      message: result.synced > 0
+        ? `Synced ${result.synced} new reading${result.synced !== 1 ? 's' : ''} from Dexcom`
+        : 'No new readings found',
+      synced: result.synced,
+    });
+  } catch (err) {
+    console.error('Dexcom Share sync error:', err.response?.data || err.message);
+    res.status(500).json({ message: 'Failed to sync via Dexcom Share' });
+  }
+});
+
+// ── 9.  GET /api/dexcom/share-status  ─────────────────────────────
+router.get('/share-status', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    res.json({
+      connected: user.dexcomShare?.connected || false,
+      username:  user.dexcomShare?.username  || null,
+      region:    user.dexcomShare?.region    || 'us',
+      lastSync:  user.dexcomShare?.lastSync  || null,
+    });
+  } catch (err) {
+    console.error('Dexcom Share status error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });

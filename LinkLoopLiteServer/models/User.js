@@ -47,11 +47,22 @@ const userSchema = new mongoose.Schema({
     lowAlerts: { type: Boolean, default: true },
     highAlerts: { type: Boolean, default: true }
   },
+  // Dexcom Individual Access API (OAuth) — official, ~3h data delay until approved
   dexcom: {
     accessToken: { type: String, default: null },
     refreshToken: { type: String, default: null },
     tokenExpiry: { type: Date, default: null },
     dexcomUserId: { type: String, default: null },
+    connected: { type: Boolean, default: false },
+    lastSync: { type: Date, default: null }
+  },
+  // Dexcom Share API — real-time, same feed as Follow app, uses username+password
+  dexcomShare: {
+    username: { type: String, default: null },
+    passwordEncrypted: { type: String, default: null },
+    accountId: { type: String, default: null },
+    sessionId: { type: String, default: null },
+    region: { type: String, enum: ['us', 'ous'], default: 'us' },
     connected: { type: Boolean, default: false },
     lastSync: { type: Date, default: null }
   },
