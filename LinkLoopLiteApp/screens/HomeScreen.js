@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, AppState, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import { glucoseAPI } from '../services/api';
+import { alertsAPI, glucoseAPI } from '../services/api';
 
 const AUTO_REFRESH_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -18,6 +18,7 @@ export default function HomeScreen({ navigation }) {
   const [warriorName, setWarriorName] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [activeAlertCount, setActiveAlertCount] = useState(0);
 
   const loadData = useCallback(async () => {
     try {
@@ -34,6 +35,10 @@ export default function HomeScreen({ navigation }) {
         if (statsData.status === 'fulfilled') setStats(statsData.value);
         if (latestData.status === 'fulfilled') setLatestGlucose(latestData.value);
       }
+      try {
+        const alertData = await alertsAPI.getActiveAlerts().catch(() => ({ activeCount: 0 }));
+        setActiveAlertCount(alertData.activeCount || 0);
+      } catch (e) {}
     } catch (err) {
       console.log('Home load error:', err);
     } finally {
@@ -46,11 +51,10 @@ export default function HomeScreen({ navigation }) {
     useCallback(() => { loadData(); }, [loadData])
   );
 
-  // Auto-refresh every 5 min while screen is open — matches Dexcom G7 update interval
   useEffect(() => {
     const interval = setInterval(() => { loadData(); }, AUTO_REFRESH_MS);
     const subscription = AppState.addEventListener('change', state => {
-      if (state === 'active') loadData(); // refresh when user returns to app from background
+      if (state === 'active') loadData();
     });
     return () => {
       clearInterval(interval);
@@ -75,66 +79,56 @@ export default function HomeScreen({ navigation }) {
   };
 
   const getTrendArrow = (trend) => {
-    const arrows = { rising_fast: '↑↑', rising: '↑', stable: '→', falling: '↓', falling_fast: '↓↓' };
-    return arrows[trend] || '→';
+    const arrows = { rising_fast: '\u2191\u2191', rising: '\u2191', stable: '\u2192', falling: '\u2193', falling_fast: '\u2193\u2193' };
+    return arrows[trend] || '\u2192';
   };
+
+  const minsOld = latestGlucose?.timestamp
+    ? Math.floor((Date.now() - new Date(latestGlucose.timestamp).getTime()) / 60000)
+    : null;
 
   return (
     <ScrollView
       style={styles.container}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#4A90D9']} />}
     >
+      {/* Compact Hero */}
       <LinearGradient
         colors={isMember ? ['#34C759', '#2A9E47'] : ['#4A90D9', '#3A7BC8']}
-        style={styles.heroSection}
+        style={styles.hero}
       >
-        <Text style={styles.heroTitle}>∞ LinkLoop</Text>
-        <Text style={styles.heroSubtitle}>
-          {isMember ? `You're in the loop` : 'Stay Connected, Stay in Range'}
-        </Text>
-        <View style={styles.statsBadge}>
-          <Text style={styles.statsEmoji}>{isMember ? '\uD83D\uDC41\uFE0F' : '\uD83E\uDE7A'}</Text>
-          <Text style={styles.statsText}>
+        <Text style={styles.heroTitle}>{'\u221E'} LinkLoop</Text>
+        <View style={styles.heroBadge}>
+          <Text style={styles.heroBadgeEmoji}>{isMember ? '\uD83D\uDC41\uFE0F' : '\uD83E\uDE7A'}</Text>
+          <Text style={styles.heroBadgeText}>
             {isMember
-              ? `Watching ${warriorName || 'your warrior'}'s loop`
-              : (user?.name ? `Welcome, ${user.name}!` : 'Your T1D Support Network')}
+              ? 'Watching ' + (warriorName || 'your warrior') + "'s loop"
+              : (user?.name ? 'Welcome back, ' + user.name : 'Stay Connected, Stay in Range')}
           </Text>
         </View>
       </LinearGradient>
 
       <View style={styles.content}>
-        <Text style={styles.sectionTitle}>
-          {isMember ? `${warriorName || 'Warrior'}'s Loop` : 'Welcome to LinkLoop'}
-        </Text>
-        <Text style={styles.description}>
-          {isMember
-            ? `You have read-only access to ${warriorName || 'your warrior'}'s real-time glucose data. You'll see their live readings, stats, and alerts below.`
-            : 'LinkLoop connects Type 1 Diabetics and their caregivers through real-time CGM sharing, supply tracking, AI insights, and community support.'}
-        </Text>
-
-        {/* Current Glucose Reading */}
-        <TouchableOpacity style={styles.glucoseCard} onPress={() => navigation.navigate('CGM')}>
+        {/* Glucose Card */}
+        <TouchableOpacity style={styles.glucoseCard} onPress={() => navigation.navigate('CGM')} activeOpacity={0.8}>
           {latestGlucose ? (
             <View>
-              {(() => {
-                const minsOld = Math.floor((Date.now() - new Date(latestGlucose.timestamp).getTime()) / 60000);
-                return minsOld > 30 ? (
-                  <View style={styles.staleWarning}>
-                    <Text style={styles.staleWarningText}>⚠️ Data is {minsOld} min old</Text>
-                  </View>
-                ) : null;
-              })()}
-              <View style={styles.glucoseCardContent}>
+              {minsOld > 30 && (
+                <View style={styles.staleWarning}>
+                  <Text style={styles.staleWarningText}>{'\u26A0\uFE0F'} Data is {minsOld} min old</Text>
+                </View>
+              )}
+              <View style={styles.glucoseRow}>
                 <View style={styles.glucoseLeft}>
-                  <Text style={styles.glucoseCardLabel}>
-                    {isMember ? `${warriorName || 'Warrior'}'s Glucose` : 'Current Glucose'}
+                  <Text style={styles.glucoseLabel}>
+                    {isMember ? (warriorName || 'Warrior') + "'s Glucose" : 'Current Glucose'}
                   </Text>
                   <View style={styles.glucoseReadingRow}>
-                    <Text style={[styles.glucoseCardValue, { color: getGlucoseColor(latestGlucose.value) }]}>
+                    <Text style={[styles.glucoseValue, { color: getGlucoseColor(latestGlucose.value) }]}>
                       {latestGlucose.value}
                     </Text>
-                    <Text style={styles.glucoseCardUnit}>mg/dL</Text>
-                    <Text style={[styles.glucoseCardTrend, { color: getGlucoseColor(latestGlucose.value) }]}>
+                    <Text style={styles.glucoseUnit}>mg/dL</Text>
+                    <Text style={[styles.glucoseTrend, { color: getGlucoseColor(latestGlucose.value) }]}>
                       {getTrendArrow(latestGlucose.trend)}
                     </Text>
                   </View>
@@ -144,49 +138,32 @@ export default function HomeScreen({ navigation }) {
                     </Text>
                   </View>
                 </View>
-                <Text style={styles.glucoseCardTime}>
-                  {new Date(latestGlucose.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </Text>
+                <View style={styles.glucoseRight}>
+                  <Text style={styles.glucoseTime}>
+                    {new Date(latestGlucose.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </Text>
+                  <Text style={styles.glucoseChevron}>{'\u203A'}</Text>
+                </View>
               </View>
             </View>
           ) : (
-            <View style={styles.glucoseCardContent}>
+            <View style={styles.glucoseRow}>
               <View>
-                <Text style={styles.glucoseCardLabel}>
-                  {isMember ? `${warriorName || 'Warrior'}'s Glucose` : 'Current Glucose'}
+                <Text style={styles.glucoseLabel}>
+                  {isMember ? (warriorName || 'Warrior') + "'s Glucose" : 'Current Glucose'}
                 </Text>
-                <Text style={styles.glucoseCardEmpty}>
-                  {isMember ? 'No readings from your warrior yet' : 'No readings yet — tap to log'}
+                <Text style={styles.glucoseEmpty}>
+                  {isMember ? 'No readings from your warrior yet' : 'No readings yet \u2014 tap to sync'}
                 </Text>
               </View>
-              <Text style={styles.glucoseCardArrow}>›</Text>
+              <Text style={styles.glucoseChevron}>{'\u203A'}</Text>
             </View>
           )}
         </TouchableOpacity>
 
-        {/* Feature grid — warriors get full set, members get their relevant subset */}
-        <View style={styles.featuresGrid}>
-          <FeatureCard emoji="📊" title="Live Glucose" description={isMember ? "See real-time CGM data" : "Share real-time glucose data"} onPress={() => navigation.navigate('CGM')} />
-          {isMember ? (
-            <>
-              <FeatureCard emoji="💬" title="Messages" description="Chat with your warrior" onPress={() => navigation.navigate('Messages')} />
-              <FeatureCard emoji={'\uD83D\uDD14'} title="Alerts" description="Low & high notifications" onPress={() => navigation.navigate('Alerts')} />
-              <FeatureCard emoji="⚙️" title="Profile" description="Your Loop Member settings" onPress={() => navigation.navigate('Profile')} />
-            </>
-          ) : (
-            <>
-              <FeatureCard emoji="👥" title="Care Circle" description="Connect with caregivers" onPress={() => navigation.navigate('Circle')} />
-              <FeatureCard emoji="💬" title="Messages" description="Chat with Care Circle" onPress={() => navigation.navigate('Messages')} />
-              <FeatureCard emoji="📦" title="Supply Tracker" description="Never run out of supplies" onPress={() => navigation.navigate('Supplies')} />
-              <FeatureCard emoji="✨" title="AI Insights" description="Pattern analysis by AI" onPress={() => navigation.navigate('Insights')} />
-              <FeatureCard emoji="📝" title="Mood & Notes" description="Track how you're feeling" onPress={() => navigation.navigate('Mood')} />
-              <FeatureCard emoji="🏆" title="Achievements" description="Earn badges & streaks" onPress={() => navigation.navigate('Achievements')} />
-            </>
-          )}
-        </View>
-
-        <View style={styles.quickStats}>
-          <Text style={styles.quickStatsTitle}>Today's Overview</Text>
+        {/* Today's Overview */}
+        <View style={styles.statsCard}>
+          <Text style={styles.statsTitle}>Today's Overview</Text>
           {loading ? (
             <ActivityIndicator size="small" color="#4A90D9" style={{ paddingVertical: 20 }} />
           ) : stats && stats.count > 0 ? (
@@ -194,18 +171,84 @@ export default function HomeScreen({ navigation }) {
               <StatBox label="Time in Range" value={stats.timeInRange + '%'} color="#4A90D9" />
               <StatBox label="Avg Glucose" value={'' + stats.average} color="#FFA500" />
               <StatBox label="Low Events" value={'' + stats.low} color="#FF6B6B" />
+              <StatBox label="High Events" value={'' + (stats.high || 0)} color="#FFA500" />
             </View>
           ) : (
             <View style={styles.emptyStats}>
-              <Text style={styles.emptyStatsText}>No glucose readings today — tap CGM Sync to get started</Text>
+              <Text style={styles.emptyStatsText}>
+                {isMember ? 'No readings from your warrior today' : 'No readings today \u2014 connect Dexcom or log manually'}
+              </Text>
             </View>
           )}
         </View>
 
-        <View style={styles.infoBox}>
-          <Text style={styles.infoIcon}>💡</Text>
-          <Text style={styles.infoText}>
-            LinkLoop — your T1D wellness companion. Built with ❤️ for the T1D community.
+        {/* Active Alerts Banner */}
+        {activeAlertCount > 0 && (
+          <TouchableOpacity
+            style={styles.alertBanner}
+            onPress={() => navigation.navigate('Alerts')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.alertBannerIcon}>{'\uD83D\uDD14'}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.alertBannerTitle}>
+                {activeAlertCount} Active Alert{activeAlertCount > 1 ? 's' : ''}
+              </Text>
+              <Text style={styles.alertBannerSub}>Tap to view & acknowledge</Text>
+            </View>
+            <Text style={styles.alertBannerArrow}>{'\u203A'}</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Quick Actions */}
+        <Text style={styles.quickActionsTitle}>Quick Actions</Text>
+        <View style={styles.quickActions}>
+          <QuickAction
+            emoji={'\uD83D\uDCAC'}
+            label="Messages"
+            onPress={() => navigation.navigate('Messages')}
+          />
+          {isMember ? (
+            <>
+              <QuickAction
+                emoji={'\uD83D\uDD14'}
+                label="Alerts"
+                badge={activeAlertCount > 0 ? activeAlertCount : null}
+                onPress={() => navigation.navigate('Alerts')}
+              />
+              <QuickAction
+                emoji={'\u2699\uFE0F'}
+                label="Profile"
+                onPress={() => navigation.navigate('Profile')}
+              />
+            </>
+          ) : (
+            <>
+              <QuickAction
+                emoji={'\u2728'}
+                label="Insights"
+                onPress={() => navigation.navigate('Insights')}
+              />
+              <QuickAction
+                emoji={'\uD83D\uDCDD'}
+                label="Mood"
+                onPress={() => navigation.navigate('Mood')}
+              />
+              <QuickAction
+                emoji={'\uD83D\uDD14'}
+                label="Alerts"
+                badge={activeAlertCount > 0 ? activeAlertCount : null}
+                onPress={() => navigation.navigate('Alerts')}
+              />
+            </>
+          )}
+        </View>
+
+        {/* Disclaimer */}
+        <View style={styles.disclaimer}>
+          <Text style={styles.disclaimerIcon}>{'\uD83D\uDC9A'}</Text>
+          <Text style={styles.disclaimerText}>
+            LinkLoop is a wellness companion — not a medical device. Always consult your care team.
           </Text>
         </View>
       </View>
@@ -213,12 +256,18 @@ export default function HomeScreen({ navigation }) {
   );
 }
 
-function FeatureCard({ emoji, title, description, onPress }) {
+function QuickAction({ emoji, label, onPress, badge }) {
   return (
-    <TouchableOpacity style={styles.featureCard} onPress={onPress}>
-      <Text style={styles.featureEmoji}>{emoji}</Text>
-      <Text style={styles.featureTitle}>{title}</Text>
-      <Text style={styles.featureDescription}>{description}</Text>
+    <TouchableOpacity style={styles.quickAction} onPress={onPress} activeOpacity={0.7}>
+      <View style={styles.quickActionInner}>
+        <Text style={styles.quickActionEmoji}>{emoji}</Text>
+        {badge ? (
+          <View style={styles.quickActionBadge}>
+            <Text style={styles.quickActionBadgeText}>{badge}</Text>
+          </View>
+        ) : null}
+      </View>
+      <Text style={styles.quickActionLabel}>{label}</Text>
     </TouchableOpacity>
   );
 }
@@ -233,230 +282,61 @@ function StatBox({ label, value, color }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#111111',
-  },
-  heroSection: {
-    padding: 30,
-    alignItems: 'center',
-    paddingTop: 40,
-    paddingBottom: 50,
-  },
-  heroTitle: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 10,
-  },
-  heroSubtitle: {
-    fontSize: 18,
-    color: '#fff',
-    opacity: 0.9,
-    marginBottom: 20,
-  },
-  statsBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statsEmoji: {
-    fontSize: 20,
-    marginRight: 8,
-  },
-  statsText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  content: {
-    padding: 20,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 10,
-  },
-  description: {
-    fontSize: 16,
-    color: '#A0A0A0',
-    lineHeight: 24,
-    marginBottom: 20,
-  },
-  glucoseCard: {
-    backgroundColor: '#1C1C1E',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#2C2C2E',
-  },
-  staleWarning: {
-    backgroundColor: 'rgba(255,165,0,0.15)',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255,165,0,0.4)',
-  },
-  staleWarningText: {
-    fontSize: 12,
-    color: '#FFA500',
-    fontWeight: '600',
-  },
-  glucoseCardContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
+  container: { flex: 1, backgroundColor: '#111111' },
+  hero: { padding: 24, alignItems: 'center', paddingTop: 35, paddingBottom: 30 },
+  heroTitle: { fontSize: 32, fontWeight: 'bold', color: '#fff', marginBottom: 10 },
+  heroBadge: { backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, flexDirection: 'row', alignItems: 'center' },
+  heroBadgeEmoji: { fontSize: 18, marginRight: 8 },
+  heroBadgeText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  content: { padding: 16 },
+
+  // Glucose Card
+  glucoseCard: { backgroundColor: '#1C1C1E', borderRadius: 16, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: '#2C2C2E' },
+  staleWarning: { backgroundColor: 'rgba(255,165,0,0.15)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, marginBottom: 10, borderWidth: 1, borderColor: 'rgba(255,165,0,0.4)' },
+  staleWarningText: { fontSize: 12, color: '#FFA500', fontWeight: '600' },
+  glucoseRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   glucoseLeft: {},
-  glucoseCardLabel: {
-    fontSize: 13,
-    color: '#888',
-    fontWeight: '600',
-    marginBottom: 6,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  glucoseReadingRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: 6,
-  },
-  glucoseCardValue: {
-    fontSize: 42,
-    fontWeight: 'bold',
-  },
-  glucoseCardUnit: {
-    fontSize: 16,
-    color: '#888',
-    marginLeft: 4,
-  },
-  glucoseCardTrend: {
-    fontSize: 28,
-    marginLeft: 10,
-    fontWeight: 'bold',
-  },
-  glucoseStatusBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 10,
-  },
-  glucoseStatusText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  glucoseCardTime: {
-    fontSize: 13,
-    color: '#888',
-  },
-  glucoseCardEmpty: {
-    fontSize: 14,
-    color: '#888',
-    marginTop: 4,
-  },
-  glucoseCardArrow: {
-    fontSize: 28,
-    color: '#555',
-    fontWeight: '300',
-  },
-  featuresGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: 30,
-  },
-  featureCard: {
-    width: '48%',
-    backgroundColor: '#1C1C1E',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 15,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#2C2C2E',
-  },
-  featureEmoji: {
-    fontSize: 40,
-    marginBottom: 10,
-  },
-  featureTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 5,
-    textAlign: 'center',
-  },
-  featureDescription: {
-    fontSize: 12,
-    color: '#A0A0A0',
-    textAlign: 'center',
-  },
-  quickStats: {
-    backgroundColor: '#1C1C1E',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#2C2C2E',
-  },
-  quickStatsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 15,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  statBox: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  statLabel: {
-    fontSize: 11,
-    color: '#A0A0A0',
-    textAlign: 'center',
-  },
-  emptyStats: {
-    paddingVertical: 15,
-    alignItems: 'center',
-  },
-  emptyStatsText: {
-    fontSize: 14,
-    color: '#888',
-    textAlign: 'center',
-  },
-  infoBox: {
-    backgroundColor: '#1A2235',
-    borderRadius: 12,
-    padding: 15,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#2A3A50',
-  },
-  infoIcon: {
-    fontSize: 24,
-    marginRight: 10,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#A0A0A0',
-    lineHeight: 20,
-  },
+  glucoseLabel: { fontSize: 12, color: '#888', fontWeight: '600', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 },
+  glucoseReadingRow: { flexDirection: 'row', alignItems: 'baseline', marginBottom: 6 },
+  glucoseValue: { fontSize: 44, fontWeight: 'bold' },
+  glucoseUnit: { fontSize: 16, color: '#888', marginLeft: 4 },
+  glucoseTrend: { fontSize: 28, marginLeft: 10, fontWeight: 'bold' },
+  glucoseStatusBadge: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10 },
+  glucoseStatusText: { fontSize: 12, fontWeight: 'bold' },
+  glucoseRight: { alignItems: 'flex-end' },
+  glucoseTime: { fontSize: 13, color: '#888', marginBottom: 4 },
+  glucoseChevron: { fontSize: 28, color: '#555', fontWeight: '300' },
+  glucoseEmpty: { fontSize: 14, color: '#888', marginTop: 4 },
+
+  // Stats Card
+  statsCard: { backgroundColor: '#1C1C1E', borderRadius: 16, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: '#2C2C2E' },
+  statsTitle: { fontSize: 16, fontWeight: 'bold', color: '#fff', marginBottom: 14 },
+  statsRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  statBox: { flex: 1, alignItems: 'center' },
+  statValue: { fontSize: 22, fontWeight: 'bold', marginBottom: 4 },
+  statLabel: { fontSize: 10, color: '#A0A0A0', textAlign: 'center' },
+  emptyStats: { paddingVertical: 12, alignItems: 'center' },
+  emptyStatsText: { fontSize: 14, color: '#888', textAlign: 'center' },
+
+  // Alert Banner
+  alertBanner: { backgroundColor: '#2A1A1A', borderRadius: 14, padding: 16, flexDirection: 'row', alignItems: 'center', marginBottom: 16, borderWidth: 2, borderColor: '#FF6B6B' },
+  alertBannerIcon: { fontSize: 28, marginRight: 12 },
+  alertBannerTitle: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  alertBannerSub: { fontSize: 12, color: '#FF6B6B', marginTop: 2 },
+  alertBannerArrow: { fontSize: 28, color: '#FF6B6B', fontWeight: '300' },
+
+  // Quick Actions
+  quickActionsTitle: { fontSize: 16, fontWeight: 'bold', color: '#fff', marginBottom: 12 },
+  quickActions: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
+  quickAction: { flex: 1, alignItems: 'center', backgroundColor: '#1C1C1E', borderRadius: 14, paddingVertical: 16, marginHorizontal: 4, borderWidth: 1, borderColor: '#2C2C2E' },
+  quickActionInner: { position: 'relative', marginBottom: 6 },
+  quickActionEmoji: { fontSize: 28 },
+  quickActionBadge: { position: 'absolute', top: -6, right: -10, backgroundColor: '#FF6B6B', borderRadius: 10, minWidth: 18, height: 18, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4 },
+  quickActionBadgeText: { fontSize: 10, fontWeight: 'bold', color: '#fff' },
+  quickActionLabel: { fontSize: 12, color: '#A0A0A0', fontWeight: '600' },
+
+  // Disclaimer
+  disclaimer: { backgroundColor: '#1C1C1E', borderRadius: 12, padding: 14, flexDirection: 'row', alignItems: 'flex-start', marginBottom: 20, borderWidth: 1, borderColor: '#2C2C2E' },
+  disclaimerIcon: { fontSize: 18, marginRight: 10, marginTop: 1 },
+  disclaimerText: { flex: 1, fontSize: 12, color: '#888', lineHeight: 18 },
 });

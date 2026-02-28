@@ -49,12 +49,22 @@ export default function MessagesScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const [groupLastMessage, setGroupLastMessage] = useState(null);
 
   const loadConversations = useCallback(async () => {
     try {
       setError(null);
-      const data = await chatAPI.getConversations();
-      setConversations(Array.isArray(data) ? data : []);
+      const [convoData, groupData] = await Promise.allSettled([
+        chatAPI.getConversations(),
+        chatAPI.getGroupMessages().catch(() => []),
+      ]);
+      if (convoData.status === 'fulfilled') {
+        setConversations(Array.isArray(convoData.value) ? convoData.value : []);
+      }
+      if (groupData.status === 'fulfilled') {
+        const msgs = Array.isArray(groupData.value) ? groupData.value : (groupData.value?.messages || []);
+        if (msgs.length > 0) setGroupLastMessage(msgs[msgs.length - 1]);
+      }
     } catch (err) {
       console.log('Load conversations error:', err);
       setError(err.message || 'Could not load messages');
@@ -163,10 +173,18 @@ export default function MessagesScreen({ navigation }) {
                     <Text style={styles.personName} numberOfLines={1}>
                       Care Circle Group
                     </Text>
+                    {groupLastMessage && (
+                      <Text style={styles.timestamp}>{formatTime(groupLastMessage.createdAt)}</Text>
+                    )}
                   </View>
                   <View style={styles.rowSub}>
                     <Text style={styles.lastMessage} numberOfLines={1}>
-                      Chat with everyone in your circle
+                      {groupLastMessage
+                        ? (groupLastMessage.senderName ? groupLastMessage.senderName + ': ' : '') +
+                          (groupLastMessage.text?.length > 40
+                            ? groupLastMessage.text.slice(0, 40) + '\u2026'
+                            : groupLastMessage.text || 'Sent a message')
+                        : 'No messages yet \u2014 start the group chat!'}
                     </Text>
                   </View>
                   <Text style={[styles.relationshipLabel, { color: '#34C759' }]}>

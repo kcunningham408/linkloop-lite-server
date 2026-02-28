@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { alertsAPI, circleAPI } from '../services/api';
 
 // TODO: Replace with actual App Store / Play Store URLs when live
-const APP_DOWNLOAD_URL = 'https://linkloop-9l3x.onrender.com'; // placeholder until app store listing
+const APP_DOWNLOAD_URL = 'https://apps.apple.com/app/linkloop/id6746382498'; // App Store listing
 
 const RELATIONSHIPS = [
   { value: 'parent', label: 'Parent', emoji: '👨‍👩‍👧' },
@@ -355,8 +355,8 @@ export default function CareCircleScreen() {
           </View>
         )}
 
-        {/* Quick Actions — Join is only for members (or unlinked users) */}
-        {isMember && (
+        {/* Quick Actions — Join is only for members who are NOT yet linked */}
+        {isMember && !user?.linkedOwnerId && (
           <View style={styles.quickActions}>
             <TouchableOpacity style={styles.actionButtonPrimary} onPress={() => setShowJoinModal(true)}>
               <Text style={styles.actionButtonIcon}>🔗</Text>

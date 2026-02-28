@@ -75,8 +75,12 @@ export default function SuppliesScreen() {
     ]);
   };
 
-  const needsRefill = supplies.filter(s => s.daysLeft <= 7).length;
-  const wellStocked = supplies.filter(s => s.daysLeft > 7).length;
+  const getActualDaysLeft = (s) => {
+    const daysSince = s.createdAt ? Math.floor((Date.now() - new Date(s.createdAt).getTime()) / 86400000) : 0;
+    return Math.max(0, (s.daysLeft || 30) - daysSince);
+  };
+  const needsRefill = supplies.filter(s => getActualDaysLeft(s) <= 7).length;
+  const wellStocked = supplies.filter(s => getActualDaysLeft(s) > 7).length;
 
   return (
     <ScrollView
@@ -119,7 +123,12 @@ export default function SuppliesScreen() {
           </View>
         ) : (
           supplies.map((supply) => {
-            const status = getStatusInfo(supply.daysLeft);
+            // Auto-decrement daysLeft based on time elapsed since creation
+            const daysSinceCreated = supply.createdAt
+              ? Math.floor((Date.now() - new Date(supply.createdAt).getTime()) / 86400000)
+              : 0;
+            const actualDaysLeft = Math.max(0, (supply.daysLeft || 30) - daysSinceCreated);
+            const status = getStatusInfo(actualDaysLeft);
             return (
               <TouchableOpacity key={supply._id} style={styles.supplyCard} onLongPress={() => handleDeleteSupply(supply._id, supply.name)}>
                 <Text style={styles.supplyEmoji}>{supply.emoji}</Text>
@@ -131,7 +140,7 @@ export default function SuppliesScreen() {
                   <View style={[styles.statusBadge, { backgroundColor: status.bg }]}>
                     <Text style={[styles.statusText, { color: status.color }]}>{status.label}</Text>
                   </View>
-                  <Text style={styles.daysLeft}>{supply.daysLeft} days left</Text>
+                  <Text style={styles.daysLeft}>{actualDaysLeft} days left</Text>
                 </View>
               </TouchableOpacity>
             );
@@ -152,7 +161,7 @@ export default function SuppliesScreen() {
             <View style={styles.insightInfo}>
               <Text style={styles.insightTitle}>Average Supply Duration</Text>
               <Text style={styles.insightValue}>
-                {supplies.length > 0 ? Math.round(supplies.reduce((sum, s) => sum + s.daysLeft, 0) / supplies.length) : 0} days
+                {supplies.length > 0 ? Math.round(supplies.reduce((sum, s) => sum + getActualDaysLeft(s), 0) / supplies.length) : 0} days
               </Text>
             </View>
           </View>
@@ -177,12 +186,12 @@ export default function SuppliesScreen() {
         {/* Smart Reminders */}
         <View style={styles.remindersCard}>
           <Text style={styles.sectionTitle}>Smart Reminders</Text>
-          {supplies.filter(s => s.daysLeft <= 7).length > 0 ? (
-            supplies.filter(s => s.daysLeft <= 7).map((s) => (
+          {supplies.filter(s => getActualDaysLeft(s) <= 7).length > 0 ? (
+            supplies.filter(s => getActualDaysLeft(s) <= 7).map((s) => (
               <View key={s._id} style={styles.reminderItem}>
                 <Text style={styles.reminderEmoji}>🔔</Text>
                 <Text style={styles.reminderText}>
-                  <Text style={{ fontWeight: 'bold' }}>{s.name}</Text> is running low — only {s.daysLeft} day{s.daysLeft !== 1 ? 's' : ''} left
+                  <Text style={{ fontWeight: 'bold' }}>{s.name}</Text> is running low — only {getActualDaysLeft(s)} day{getActualDaysLeft(s) !== 1 ? 's' : ''} left
                 </Text>
               </View>
             ))

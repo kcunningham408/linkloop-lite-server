@@ -296,12 +296,12 @@ export default function AlertsScreen({ navigation }) {
       </View>
 
       <View style={styles.content}>
-        {/* Manual Check Button */}
+        {/* Manual Check Button — subtle, for testing */}
         <TouchableOpacity style={styles.checkButton} onPress={handleTriggerCheck}>
           <Text style={styles.checkButtonIcon}>📡</Text>
           <View>
-            <Text style={styles.checkButtonText}>Check Glucose Now</Text>
-            <Text style={styles.checkButtonSub}>Trigger alert if out of range</Text>
+            <Text style={styles.checkButtonText}>Manual Alert Check</Text>
+            <Text style={styles.checkButtonSub}>Test if current glucose triggers an alert</Text>
           </View>
         </TouchableOpacity>
 
@@ -561,20 +561,20 @@ const styles = StyleSheet.create({
 
   content: { padding: 16 },
 
-  // Check Button
+  // Check Button — subtle/secondary
   checkButton: {
     backgroundColor: '#1C1C1E',
     borderRadius: 14,
-    padding: 16,
+    padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
-    borderWidth: 2,
-    borderColor: '#4A90D9',
+    borderWidth: 1,
+    borderColor: '#2C2C2E',
   },
-  checkButtonIcon: { fontSize: 30, marginRight: 14 },
-  checkButtonText: { fontSize: 16, fontWeight: '700', color: '#fff' },
-  checkButtonSub: { fontSize: 12, color: '#888', marginTop: 2 },
+  checkButtonIcon: { fontSize: 22, marginRight: 12 },
+  checkButtonText: { fontSize: 14, fontWeight: '600', color: '#A0A0A0' },
+  checkButtonSub: { fontSize: 11, color: '#666', marginTop: 1 },
 
   // Filter
   filterRow: { flexDirection: 'row', marginBottom: 16, gap: 6 },

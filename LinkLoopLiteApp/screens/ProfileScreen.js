@@ -1,10 +1,13 @@
+import Constants from 'expo-constants';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Linking, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import { dexcomAPI, usersAPI } from '../services/api';
+import { usersAPI } from '../services/api';
+
+const APP_VERSION = Constants.expoConfig?.version || Constants.manifest?.version || '1.1.0';
 
 export default function ProfileScreen() {
-  const { user, logout, deleteAccount } = useAuth();
+  const { user, logout, deleteAccount, updateUser } = useAuth();
   const isMember = user?.role === 'member';
   const [pushPrefs, setPushPrefs] = useState({
     glucoseAlerts: true,
@@ -13,64 +16,16 @@ export default function ProfileScreen() {
     newMessages: true,
     groupMessages: true,
   });
-  const [dexcomStatus, setDexcomStatus] = useState({ connected: false, lastSync: null });
-  const [dexcomLoading, setDexcomLoading] = useState(!isMember); // skip loading state for members
+  const [editingName, setEditingName] = useState(false);
+  const [newName, setNewName] = useState(user?.name || '');
+  const [savingName, setSavingName] = useState(false);
 
   useEffect(() => {
-    // Members cannot connect Dexcom — don't waste a network call
-    if (!isMember) {
-      loadDexcomStatus();
-    }
     // Load push preferences from user object
     if (user?.pushPreferences) {
       setPushPrefs(prev => ({ ...prev, ...user.pushPreferences }));
     }
   }, []);
-
-  const loadDexcomStatus = async () => {
-    try {
-      const status = await dexcomAPI.getStatus();
-      setDexcomStatus(status);
-    } catch (err) {
-      console.log('Dexcom status error:', err);
-    } finally {
-      setDexcomLoading(false);
-    }
-  };
-
-  const handleConnectDexcom = async () => {
-    try {
-      const data = await dexcomAPI.getAuthUrl();
-      if (data.authUrl) {
-        await Linking.openURL(data.authUrl);
-        setTimeout(loadDexcomStatus, 3000);
-      }
-    } catch (err) {
-      Alert.alert('Error', err.message || 'Could not start Dexcom connection');
-    }
-  };
-
-  const handleDisconnectDexcom = () => {
-    Alert.alert(
-      'Disconnect Dexcom',
-      'This will remove your Dexcom connection. Existing readings will be kept.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Disconnect',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await dexcomAPI.disconnect();
-              setDexcomStatus({ connected: false, lastSync: null });
-            } catch (err) {
-              Alert.alert('Error', err.message || 'Could not disconnect');
-            }
-          },
-        },
-      ]
-    );
-  };
 
   const handleLogout = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
@@ -82,7 +37,7 @@ export default function ProfileScreen() {
   const handleDeleteAccount = () => {
     Alert.alert(
       'Delete Account',
-      'Are you sure you want to permanently delete your account? This will remove all your data including glucose readings, care circle, mood entries, and achievements. This action cannot be undone.',
+      'Are you sure you want to permanently delete your account? This will remove all your data including glucose readings, care circle, and mood entries. This action cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -111,6 +66,19 @@ export default function ProfileScreen() {
         },
       ]
     );
+  };
+
+  const handleSaveName = async () => {
+    if (!newName.trim()) { Alert.alert('Error', 'Name cannot be empty'); return; }
+    setSavingName(true);
+    try {
+      await updateUser({ name: newName.trim() });
+      setEditingName(false);
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Could not update name');
+    } finally {
+      setSavingName(false);
+    }
   };
 
   return (
@@ -146,7 +114,28 @@ export default function ProfileScreen() {
               <Text style={styles.settingIcon}>{'\uD83D\uDC64'}</Text>
               <View style={{ flex: 1 }}>
                 <Text style={styles.settingTitle}>Display Name</Text>
-                <Text style={styles.settingValue}>{user?.name || 'Not set'}</Text>
+                {editingName ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                    <TextInput
+                      style={[styles.nameInput]}
+                      value={newName}
+                      onChangeText={setNewName}
+                      autoFocus
+                      returnKeyType="done"
+                      onSubmitEditing={handleSaveName}
+                    />
+                    <TouchableOpacity onPress={handleSaveName} disabled={savingName} style={styles.nameSaveBtn}>
+                      <Text style={styles.nameSaveBtnText}>{savingName ? '...' : 'Save'}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => { setEditingName(false); setNewName(user?.name || ''); }} style={styles.nameCancelBtn}>
+                      <Text style={styles.nameCancelBtnText}>Cancel</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity onPress={() => setEditingName(true)}>
+                    <Text style={[styles.settingValue, { color: '#4A90D9' }]}>{user?.name || 'Not set'} ✏️</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
           </View>
@@ -265,42 +254,6 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* Connected Devices — warriors only */}
-        {!isMember && (
-          <View style={styles.settingsCard}>
-            <Text style={styles.sectionTitle}>Connected Devices</Text>
-
-            <View style={styles.settingItem}>
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingIcon}>🩸</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.settingTitle}>Dexcom CGM</Text>
-                  {dexcomLoading ? (
-                    <ActivityIndicator size="small" color="#4A90D9" style={{ alignSelf: 'flex-start', marginTop: 4 }} />
-                  ) : dexcomStatus.connected ? (
-                    <Text style={[styles.settingValue, { color: '#4A90D9' }]}>
-                      Connected{dexcomStatus.lastSync ? ' — Last sync ' + new Date(dexcomStatus.lastSync).toLocaleDateString() : ''}
-                    </Text>
-                  ) : (
-                    <Text style={styles.settingDescription}>Not connected</Text>
-                  )}
-                </View>
-              </View>
-              {!dexcomLoading && (
-                dexcomStatus.connected ? (
-                  <TouchableOpacity onPress={handleDisconnectDexcom} style={styles.dexcomActionButton}>
-                    <Text style={styles.dexcomDisconnectText}>Disconnect</Text>
-                  </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity onPress={handleConnectDexcom} style={styles.dexcomConnectButton}>
-                    <Text style={styles.dexcomConnectText}>Connect</Text>
-                  </TouchableOpacity>
-                )
-              )}
-            </View>
-          </View>
-        )}
-
         {/* App Info */}
         <View style={styles.settingsCard}>
           <Text style={styles.sectionTitle}>App Information</Text>
@@ -310,7 +263,7 @@ export default function ProfileScreen() {
               <Text style={styles.settingIcon}>📱</Text>
               <View style={{ flex: 1 }}>
                 <Text style={styles.settingTitle}>Version</Text>
-                <Text style={styles.settingValue}>1.0.0</Text>
+                <Text style={styles.settingValue}>{APP_VERSION}</Text>
               </View>
             </View>
           </View>
@@ -409,4 +362,9 @@ const styles = StyleSheet.create({
   disclaimerCard: { backgroundColor: '#1C1C1E', borderRadius: 12, padding: 16, flexDirection: 'row', alignItems: 'flex-start', marginBottom: 30, borderWidth: 1, borderColor: '#2C2C2E' },
   disclaimerIcon: { fontSize: 20, marginRight: 10, marginTop: 2 },
   disclaimerText: { fontSize: 12, color: '#888', flex: 1, lineHeight: 18 },
+  nameInput: { flex: 1, backgroundColor: '#2C2C2E', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, fontSize: 14, color: '#fff', borderWidth: 1, borderColor: '#4A90D9' },
+  nameSaveBtn: { backgroundColor: '#4A90D9', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, marginLeft: 8 },
+  nameSaveBtnText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  nameCancelBtn: { paddingHorizontal: 10, paddingVertical: 6, marginLeft: 4 },
+  nameCancelBtnText: { color: '#888', fontSize: 13 },
 });

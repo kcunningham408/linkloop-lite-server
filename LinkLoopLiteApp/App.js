@@ -9,7 +9,6 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Import screens
 import HealthDisclaimer from './components/HealthDisclaimer';
-import AchievementsScreen from './screens/AchievementsScreen';
 import AlertsScreen from './screens/AlertsScreen';
 import CGMScreen from './screens/CGMScreen';
 import CareCircleScreen from './screens/CareCircleScreen';
@@ -225,17 +224,6 @@ function AppNavigator() {
             options={{
               headerShown: true,
               title: 'Mood & Notes',
-              headerStyle: { backgroundColor: '#1C1C1E' },
-              headerTintColor: '#fff',
-              headerTitleStyle: { fontWeight: 'bold' },
-            }}
-          />
-          <Stack.Screen
-            name="Achievements"
-            component={AchievementsScreen}
-            options={{
-              headerShown: true,
-              title: 'Achievements',
               headerStyle: { backgroundColor: '#1C1C1E' },
               headerTintColor: '#fff',
               headerTitleStyle: { fontWeight: 'bold' },

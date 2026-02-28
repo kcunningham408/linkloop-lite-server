@@ -407,20 +407,6 @@ export const moodAPI = {
   },
 };
 
-// ============ ACHIEVEMENTS API ============
-
-export const achievementsAPI = {
-  getAll: async () => {
-    return apiRequest('/achievements');
-  },
-
-  check: async () => {
-    return apiRequest('/achievements/check', {
-      method: 'POST',
-    });
-  },
-};
-
 // ============ USERS API ============
 
 export const usersAPI = {

@@ -173,7 +173,7 @@ export default function CGMScreen({ navigation }) {
 
   const glucoseValue = currentGlucose ? currentGlucose.value : '--';
   const glucoseColor = getGlucoseColor(currentGlucose?.value);
-  const chartReadings = readings.slice(0, 5).reverse();
+  const chartReadings = readings.slice(0, 12).reverse();
 
   return (
     <ScrollView
@@ -349,32 +349,6 @@ export default function CGMScreen({ navigation }) {
           </View>
         )}
 
-        <View style={styles.alertsCard}>
-          <Text style={styles.alertsTitle}>⚠️ Alerts & Notifications</Text>
-          {readings.filter(r => r.value < lowThreshold || r.value > highThreshold).slice(0, 3).length > 0 ? (
-            readings.filter(r => r.value < lowThreshold || r.value > highThreshold).slice(0, 3).map((r, i) => (
-              <View key={i} style={styles.alertItem}>
-                <Text style={styles.alertIcon}>{r.value < 70 ? '🔔' : '📊'}</Text>
-                <View style={styles.alertContent}>
-                  <Text style={styles.alertText}>
-                    {r.value < lowThreshold ? 'Low glucose alert' : 'High glucose reading'}: {r.value} mg/dL
-                  </Text>
-                  <Text style={styles.alertTime}>
-                    {new Date(r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </Text>
-                </View>
-              </View>
-            ))
-          ) : (
-            <View style={styles.alertItem}>
-              <Text style={styles.alertIcon}>✅</Text>
-              <View style={styles.alertContent}>
-                <Text style={styles.alertText}>No alerts — looking good!</Text>
-                <Text style={styles.alertTime}>Keep it up</Text>
-              </View>
-            </View>
-          )}
-        </View>
       </View>
 
       {/* Add Reading Modal */}
@@ -446,7 +420,7 @@ const styles = StyleSheet.create({
   gridLabel: { position: 'absolute', right: 5, fontSize: 10, color: '#888' },
   targetLabel: { top: '48%' },
   pointsContainer: { flex: 1, flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-end' },
-  dataPoint: { position: 'absolute', width: width / 5 },
+  dataPoint: { position: 'absolute', width: width / 12 },
   point: { width: 12, height: 12, borderRadius: 6, alignSelf: 'center' },
   timeLabels: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 10 },
   timeLabel: { fontSize: 11, color: '#A0A0A0' },
@@ -480,13 +454,7 @@ const styles = StyleSheet.create({
   connectDexcomTitle: { fontSize: 16, fontWeight: '600', color: '#fff', marginBottom: 3 },
   connectDexcomSub: { fontSize: 13, color: '#A0A0A0' },
   connectChevron: { fontSize: 24, color: '#555', fontWeight: '300' },
-  alertsCard: { backgroundColor: '#1C1C1E', borderRadius: 12, padding: 20, marginBottom: 20, borderWidth: 1, borderColor: '#2C2C2E' },
-  alertsTitle: { fontSize: 16, fontWeight: 'bold', color: '#fff', marginBottom: 15 },
-  alertItem: { flexDirection: 'row', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#2C2C2E' },
-  alertIcon: { fontSize: 24, marginRight: 15 },
-  alertContent: { flex: 1 },
-  alertText: { fontSize: 14, color: '#E0E0E0', marginBottom: 3 },
-  alertTime: { fontSize: 12, color: '#888' },
+  shareNote: { fontSize: 12, color: '#00D4AA', textAlign: 'center', marginTop: 8, marginBottom: 4 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
   modalContent: { backgroundColor: '#1C1C1E', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 25, paddingBottom: 40 },
   modalTitle: { fontSize: 22, fontWeight: 'bold', color: '#fff', marginBottom: 20, textAlign: 'center' },
@@ -502,5 +470,4 @@ const styles = StyleSheet.create({
   cancelButtonText: { fontSize: 16, color: '#A0A0A0', fontWeight: '600' },
   saveButton: { flex: 1, paddingVertical: 14, borderRadius: 10, backgroundColor: '#4A90D9', alignItems: 'center' },
   saveButtonText: { fontSize: 16, color: '#fff', fontWeight: 'bold' },
-  shareNote: { fontSize: 12, color: '#00D4AA', textAlign: 'center', marginTop: 8, marginBottom: 4 },
 });
