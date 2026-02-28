@@ -146,13 +146,39 @@ export default function CareCircleScreen() {
   };
 
   const handleRemoveMember = (memberId, name) => {
-    Alert.alert('Remove Member', 'Remove ' + name + ' from your Care Circle?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: async () => {
-        try { await circleAPI.removeMember(memberId); loadMembers(); }
-        catch (err) { Alert.alert('Error', 'Could not remove member'); }
-      }},
-    ]);
+    Alert.alert(
+      'Remove from Circle',
+      `Are you sure you want to remove ${name} from your Care Circle?\n\nThey will lose access to your glucose data, alerts, and group chat.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove ' + name,
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Confirm Removal',
+              `This will immediately remove ${name}. They can only rejoin with a new invite code.`,
+              [
+                { text: 'Keep in Circle', style: 'cancel' },
+                {
+                  text: 'Yes, Remove',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      await circleAPI.removeMember(memberId);
+                      loadMembers();
+                      Alert.alert('Done', `${name} has been removed from your Care Circle.`);
+                    } catch (err) {
+                      Alert.alert('Error', 'Could not remove member. Please try again.');
+                    }
+                  },
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
   };
 
   const activeMembers = members.filter(m => m.status === 'active');
@@ -217,10 +243,13 @@ export default function CareCircleScreen() {
                         relationship: member.relationship,
                       })}
                     >
-                      <Text style={styles.messageButtonText}>💬 Message</Text>
+                      <Text style={styles.messageButtonText}>{'\uD83D\uDCAC'} Message</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleRemoveMember(member._id, member.memberName)}>
-                      <Text style={styles.removeText}>Remove</Text>
+                    <TouchableOpacity
+                      style={styles.removeButton}
+                      onPress={() => handleRemoveMember(member._id, member.memberName)}
+                    >
+                      <Text style={styles.removeButtonText}>Remove from Circle</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -450,7 +479,8 @@ const styles = StyleSheet.create({
   memberActions: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 2 },
   messageButton: { backgroundColor: '#1A2C4A', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: '#4A90D9' },
   messageButtonText: { fontSize: 12, color: '#4A90D9', fontWeight: '600' },
-  removeText: { fontSize: 12, color: '#FF6B6B' },
+  removeButton: { backgroundColor: '#2A1A1A', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: '#FF6B6B' },
+  removeButtonText: { fontSize: 12, color: '#FF6B6B', fontWeight: '600' },
   memberToggles: { alignItems: 'flex-end', gap: 8 },
   toggleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   toggleLabel: { fontSize: 11, color: '#A0A0A0' },
