@@ -44,6 +44,7 @@ app.use('/api/chat', require('./routes/chat'));
 app.use('/api/alerts', require('./routes/alerts'));
 app.use('/api/supplies', require('./routes/supplies'));
 app.use('/api/dexcom', require('./routes/dexcom'));
+app.use('/api/nightscout', require('./routes/nightscout'));
 app.use('/api/mood', require('./routes/mood'));
 
 // Health check endpoint

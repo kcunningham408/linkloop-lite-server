@@ -2,7 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, AppState, Dimensions, Modal, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import { dexcomAPI, glucoseAPI } from '../services/api';
+import { dexcomAPI, glucoseAPI, nightscoutAPI } from '../services/api';
 
 const AUTO_REFRESH_MS = 5 * 60 * 1000; // 5 minutes — matches Dexcom G7 update interval
 
@@ -38,6 +38,14 @@ export default function CGMScreen({ navigation }) {
   const [shareSyncing, setShareSyncing] = useState(false);
   const [warriorName, setWarriorName] = useState('');
 
+  // Nightscout
+  const [nsStatus, setNsStatus] = useState({ connected: false, url: null, lastSync: null });
+  const [nsSyncing, setNsSyncing] = useState(false);
+  const [showNsConnect, setShowNsConnect] = useState(false);
+  const [nsUrl, setNsUrl] = useState('');
+  const [nsSecret, setNsSecret] = useState('');
+  const [nsConnecting, setNsConnecting] = useState(false);
+
   const loadData = useCallback(async () => {
     try {
       if (isMember && user?.linkedOwnerId) {
@@ -49,10 +57,11 @@ export default function CGMScreen({ navigation }) {
         if (data.ownerName) setWarriorName(data.ownerName);
       } else {
         // T1D Warrior: fetch own data
-        const [readingsData, statsData, shareStatusData] = await Promise.allSettled([
+        const [readingsData, statsData, shareStatusData, nsStatusData] = await Promise.allSettled([
           glucoseAPI.getReadings(24),
           glucoseAPI.getStats(24),
           dexcomAPI.getShareStatus(),
+          nightscoutAPI.getStatus(),
         ]);
         if (readingsData.status === 'fulfilled') {
           const r = readingsData.value;
@@ -61,6 +70,7 @@ export default function CGMScreen({ navigation }) {
         }
         if (statsData.status === 'fulfilled') setStats(statsData.value);
         if (shareStatusData.status === 'fulfilled') setShareStatus(shareStatusData.value);
+        if (nsStatusData.status === 'fulfilled') setNsStatus(nsStatusData.value);
       }
     } catch (err) {
       console.log('CGM load error:', err);
@@ -143,6 +153,63 @@ export default function CGMScreen({ navigation }) {
     );
   };
 
+  // ── Nightscout handlers ────────────────────────────────────────────────────
+  const handleNsConnect = async () => {
+    if (!nsUrl.trim()) {
+      Alert.alert('Required', 'Enter your Nightscout site URL');
+      return;
+    }
+    setNsConnecting(true);
+    try {
+      const result = await nightscoutAPI.connect(nsUrl.trim(), nsSecret.trim() || null);
+      setNsStatus({ connected: true, url: result.url, lastSync: null });
+      setShowNsConnect(false);
+      setNsUrl('');
+      setNsSecret('');
+      Alert.alert('Connected!', 'Nightscout is connected. Tap Sync Now to pull your latest readings.');
+    } catch (err) {
+      Alert.alert('Connection Failed', err.message || 'Could not connect to Nightscout');
+    } finally {
+      setNsConnecting(false);
+    }
+  };
+
+  const handleNsSync = async () => {
+    setNsSyncing(true);
+    try {
+      const result = await nightscoutAPI.sync();
+      Alert.alert('Sync Complete', result.message || `Synced ${result.synced} readings`);
+      loadData();
+    } catch (err) {
+      Alert.alert('Sync Failed', err.message || 'Could not sync from Nightscout');
+    } finally {
+      setNsSyncing(false);
+    }
+  };
+
+  const handleNsDisconnect = () => {
+    Alert.alert(
+      'Disconnect Nightscout',
+      'This will remove your Nightscout URL. Your existing readings will be kept.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Disconnect',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await nightscoutAPI.disconnect();
+              setNsStatus({ connected: false, url: null, lastSync: null });
+              Alert.alert('Disconnected', 'Nightscout has been disconnected.');
+            } catch (err) {
+              Alert.alert('Error', err.message || 'Could not disconnect');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const getGlucoseColor = (value) => {
     if (!value) return '#4A90D9';
     if (value < lowThreshold) return '#FF6B6B';
@@ -206,7 +273,7 @@ export default function CGMScreen({ navigation }) {
           <>
             <Text style={styles.statusText}>{getGlucoseStatus(currentGlucose.value)}</Text>
             <Text style={styles.lastUpdate}>
-              {currentGlucose.source === 'dexcom' ? '🩸 Dexcom · ' : '📱 Manual · '}
+              {currentGlucose.source === 'dexcom' ? '🩸 Dexcom · ' : currentGlucose.source === 'nightscout' ? '🌐 Nightscout · ' : '📱 Manual · '}
               {new Date(currentGlucose.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </Text>
           </>
@@ -346,6 +413,53 @@ export default function CGMScreen({ navigation }) {
                 <Text style={styles.connectChevron}>›</Text>
               </TouchableOpacity>
             )}
+
+            {/* Nightscout — universal CGM bridge */}
+            <View style={styles.deviceDivider} />
+            {nsStatus.connected ? (
+              <>
+                <View style={styles.deviceItem}>
+                  <Text style={styles.deviceEmoji}>🌐</Text>
+                  <View style={styles.deviceInfo}>
+                    <Text style={styles.deviceName}>Nightscout · Live</Text>
+                    <Text style={[styles.deviceStatus, { color: '#9B59B6' }]}>
+                      {nsStatus.lastSync
+                        ? '⚡ Last sync: ' + new Date(nsStatus.lastSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        : '⚡ Connected'}
+                    </Text>
+                  </View>
+                  <View style={[styles.statusDot, { backgroundColor: '#9B59B6' }]} />
+                </View>
+                <View style={styles.dexcomActions}>
+                  <TouchableOpacity style={[styles.dexcomSyncButton, { backgroundColor: '#9B59B6' }]} onPress={handleNsSync} disabled={nsSyncing}>
+                    {nsSyncing ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <>
+                        <Text style={styles.dexcomButtonIcon}>⚡</Text>
+                        <Text style={styles.dexcomSyncText}>Sync Now</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.dexcomDisconnectButton} onPress={handleNsDisconnect}>
+                    <Text style={styles.dexcomDisconnectText}>Disconnect</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={[styles.shareNote, { color: '#9B59B6' }]}>🌐 Supports Dexcom, Libre, Medtronic & more</Text>
+              </>
+            ) : (
+              <TouchableOpacity
+                style={styles.connectDexcomButton}
+                onPress={() => setShowNsConnect(true)}
+              >
+                <Text style={styles.connectDexcomIcon}>🌐</Text>
+                <View style={styles.connectDexcomInfo}>
+                  <Text style={styles.connectDexcomTitle}>Connect Nightscout</Text>
+                  <Text style={styles.connectDexcomSub}>Universal · Dexcom, Libre, Medtronic & more</Text>
+                </View>
+                <Text style={styles.connectChevron}>›</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
@@ -374,6 +488,51 @@ export default function CGMScreen({ navigation }) {
               </TouchableOpacity>
               <TouchableOpacity style={styles.saveButton} onPress={handleAddReading} disabled={saving}>
                 {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveButtonText}>Save</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Nightscout Connect Modal */}
+      <Modal visible={showNsConnect} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Connect Nightscout</Text>
+            <Text style={{ fontSize: 13, color: '#A0A0A0', textAlign: 'center', marginBottom: 16, lineHeight: 19 }}>
+              Works with Dexcom, Freestyle Libre, Medtronic, and any CGM connected to your Nightscout site.
+            </Text>
+            <Text style={styles.inputLabel}>Nightscout URL</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="https://mysite.herokuapp.com"
+              placeholderTextColor="#555"
+              value={nsUrl}
+              onChangeText={setNsUrl}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+            />
+            <Text style={styles.inputLabel}>API Secret (optional)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Leave blank if not required"
+              placeholderTextColor="#555"
+              value={nsSecret}
+              onChangeText={setNsSecret}
+              autoCapitalize="none"
+              autoCorrect={false}
+              secureTextEntry
+            />
+            <Text style={{ fontSize: 11, color: '#666', marginTop: 6 }}>
+              Your API secret is stored securely and only used to read glucose data from your Nightscout site.
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.cancelButton} onPress={() => { setShowNsConnect(false); setNsUrl(''); setNsSecret(''); }}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.saveButton, { backgroundColor: '#9B59B6' }]} onPress={handleNsConnect} disabled={nsConnecting}>
+                {nsConnecting ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveButtonText}>Connect</Text>}
               </TouchableOpacity>
             </View>
           </View>

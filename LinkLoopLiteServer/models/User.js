@@ -66,6 +66,13 @@ const userSchema = new mongoose.Schema({
     connected: { type: Boolean, default: false },
     lastSync: { type: Date, default: null }
   },
+  // Nightscout — universal CGM bridge (Dexcom, Libre, Medtronic, etc.)
+  nightscout: {
+    url: { type: String, default: null },          // e.g. https://mysite.herokuapp.com
+    apiSecret: { type: String, default: null },     // SHA-1 hashed or plain — sent as api-secret header
+    connected: { type: Boolean, default: false },
+    lastSync: { type: Date, default: null }
+  },
   // Expo push token for native push notifications
   pushToken: {
     type: String,

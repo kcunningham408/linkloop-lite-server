@@ -382,6 +382,33 @@ export const dexcomAPI = {
   },
 };
 
+// ============ NIGHTSCOUT API ============
+
+export const nightscoutAPI = {
+  getStatus: async () => {
+    return apiRequest('/nightscout/status');
+  },
+
+  connect: async (url, apiSecret = null) => {
+    return apiRequest('/nightscout/connect', {
+      method: 'POST',
+      body: JSON.stringify({ url, apiSecret }),
+    });
+  },
+
+  sync: async () => {
+    return apiRequest('/nightscout/sync', {
+      method: 'POST',
+    });
+  },
+
+  disconnect: async () => {
+    return apiRequest('/nightscout/disconnect', {
+      method: 'DELETE',
+    });
+  },
+};
+
 // ============ MOOD API ============
 
 export const moodAPI = {
