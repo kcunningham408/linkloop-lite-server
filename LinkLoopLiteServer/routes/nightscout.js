@@ -3,6 +3,7 @@ const axios = require('axios');
 const auth = require('../middleware/auth');
 const User = require('../models/User');
 const GlucoseReading = require('../models/GlucoseReading');
+const { checkGlucoseAlert } = require('../jobs/alertChecker');
 
 const router = express.Router();
 
@@ -145,6 +146,11 @@ router.post('/sync', auth, async (req, res) => {
 
     if (newReadings.length > 0) {
       await GlucoseReading.insertMany(newReadings);
+
+      // Auto-check alerts for the latest synced reading
+      const latest = newReadings.reduce((a, b) => (new Date(a.timestamp) > new Date(b.timestamp) ? a : b));
+      checkGlucoseAlert(req.user.userId, latest.value).catch(err =>
+        console.error('[Nightscout] Alert check failed:', err.message));
     }
 
     // Update lastSync timestamp
@@ -152,7 +158,11 @@ router.post('/sync', auth, async (req, res) => {
       'nightscout.lastSync': new Date(),
     });
 
-    res.json({ message: `Synced ${newReadings.length} readings`, synced: newReadings.length });
+    const latestValue = newReadings.length > 0
+      ? newReadings.reduce((a, b) => (new Date(a.timestamp) > new Date(b.timestamp) ? a : b)).value
+      : null;
+
+    res.json({ message: `Synced ${newReadings.length} readings`, synced: newReadings.length, latestValue });
   } catch (err) {
     console.error('Nightscout sync error:', err);
     if (err.response?.status === 401) {

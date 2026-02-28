@@ -2,7 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, AppState, Dimensions, Modal, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import { dexcomAPI, glucoseAPI, nightscoutAPI } from '../services/api';
+import { dexcomAPI, glucoseAPI, nightscoutAPI, alertsAPI } from '../services/api';
 
 const AUTO_REFRESH_MS = 5 * 60 * 1000; // 5 minutes — matches Dexcom G7 update interval
 
@@ -105,6 +105,8 @@ export default function CGMScreen({ navigation }) {
     setSaving(true);
     try {
       await glucoseAPI.addReading(val, newTrend, 'manual', newNotes);
+      // Auto-trigger alert check for this reading
+      alertsAPI.triggerCheck(val).catch(() => {});
       setShowAddModal(false);
       setNewValue('');
       setNewNotes('');
@@ -122,6 +124,8 @@ export default function CGMScreen({ navigation }) {
     try {
       const result = await dexcomAPI.syncShare();
       Alert.alert('Sync Complete', result.message || `Synced ${result.synced} readings`);
+      // Trigger alert check for the latest reading after sync
+      if (result.latestValue) alertsAPI.triggerCheck(result.latestValue).catch(() => {});
       loadData();
     } catch (err) {
       Alert.alert('Sync Failed', err.message || 'Could not sync via Dexcom Share');
@@ -179,6 +183,8 @@ export default function CGMScreen({ navigation }) {
     try {
       const result = await nightscoutAPI.sync();
       Alert.alert('Sync Complete', result.message || `Synced ${result.synced} readings`);
+      // Trigger alert check for the latest reading after sync
+      if (result.latestValue) alertsAPI.triggerCheck(result.latestValue).catch(() => {});
       loadData();
     } catch (err) {
       Alert.alert('Sync Failed', err.message || 'Could not sync from Nightscout');

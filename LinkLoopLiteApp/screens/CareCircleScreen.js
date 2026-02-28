@@ -212,6 +212,17 @@ export default function CareCircleScreen() {
           <Text style={styles.alertBannerArrow}>›</Text>
         </TouchableOpacity>
 
+        {/* Add Member — compact inline button at the top */}
+        {!isMember && (
+          <TouchableOpacity style={styles.addMemberRow} onPress={() => setShowInviteModal(true)}>
+            <View style={styles.addMemberIcon}>
+              <Text style={{ fontSize: 18, color: '#fff' }}>+</Text>
+            </View>
+            <Text style={styles.addMemberText}>Add Circle Member</Text>
+            <Text style={styles.addMemberChevron}>›</Text>
+          </TouchableOpacity>
+        )}
+
         {/* Members Section */}
         <View style={styles.membersSection}>
           <Text style={styles.sectionTitle}>Circle Members ({activeMembers.length})</Text>
@@ -227,51 +238,53 @@ export default function CareCircleScreen() {
           ) : (
             activeMembers.map((member) => (
               <View key={member._id} style={styles.memberCard}>
-                <Text style={styles.memberEmoji}>{member.memberEmoji}</Text>
-                <View style={styles.memberInfo}>
-                  <Text style={styles.memberName}>{member.memberName}</Text>
-                  <Text style={styles.memberRelationship}>
-                    {RELATIONSHIPS.find(r => r.value === member.relationship)?.label || 'Circle Member'}
-                  </Text>
-                  <View style={styles.memberActions}>
-                    <TouchableOpacity
-                      style={styles.messageButton}
-                      onPress={() => navigation.navigate('Chat', {
-                        circleId: member._id,
-                        memberName: member.memberName,
-                        memberEmoji: member.memberEmoji || '\uD83D\uDC64',
-                        relationship: member.relationship,
-                      })}
-                    >
-                      <Text style={styles.messageButtonText}>{'\uD83D\uDCAC'} Message</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.removeButton}
-                      onPress={() => handleRemoveMember(member._id, member.memberName)}
-                    >
-                      <Text style={styles.removeButtonText}>Remove from Circle</Text>
-                    </TouchableOpacity>
+                <View style={styles.memberCardTop}>
+                  <Text style={styles.memberEmoji}>{member.memberEmoji}</Text>
+                  <View style={styles.memberInfo}>
+                    <Text style={styles.memberName}>{member.memberName}</Text>
+                    <Text style={styles.memberRelationship}>
+                      {RELATIONSHIPS.find(r => r.value === member.relationship)?.label || 'Circle Member'}
+                    </Text>
+                  </View>
+                  <View style={styles.memberToggles}>
+                    <View style={styles.toggleRow}>
+                      <Text style={styles.toggleLabel}>Glucose</Text>
+                      <Switch
+                        value={member.permissions?.viewGlucose ?? true}
+                        onValueChange={() => handleTogglePermission(member._id, 'viewGlucose', member.permissions?.viewGlucose)}
+                        trackColor={{ false: '#ccc', true: '#4A90D9' }}
+                        thumbColor="#fff"
+                      />
+                    </View>
+                    <View style={styles.toggleRow}>
+                      <Text style={styles.toggleLabel}>Low Alert</Text>
+                      <Switch
+                        value={member.permissions?.receiveLowAlerts ?? true}
+                        onValueChange={() => handleTogglePermission(member._id, 'receiveLowAlerts', member.permissions?.receiveLowAlerts)}
+                        trackColor={{ false: '#ccc', true: '#FF6B6B' }}
+                        thumbColor="#fff"
+                      />
+                    </View>
                   </View>
                 </View>
-                <View style={styles.memberToggles}>
-                  <View style={styles.toggleRow}>
-                    <Text style={styles.toggleLabel}>Glucose</Text>
-                    <Switch
-                      value={member.permissions?.viewGlucose ?? true}
-                      onValueChange={() => handleTogglePermission(member._id, 'viewGlucose', member.permissions?.viewGlucose)}
-                      trackColor={{ false: '#ccc', true: '#4A90D9' }}
-                      thumbColor="#fff"
-                    />
-                  </View>
-                  <View style={styles.toggleRow}>
-                    <Text style={styles.toggleLabel}>Low Alert</Text>
-                    <Switch
-                      value={member.permissions?.receiveLowAlerts ?? true}
-                      onValueChange={() => handleTogglePermission(member._id, 'receiveLowAlerts', member.permissions?.receiveLowAlerts)}
-                      trackColor={{ false: '#ccc', true: '#FF6B6B' }}
-                      thumbColor="#fff"
-                    />
-                  </View>
+                <View style={styles.memberCardActions}>
+                  <TouchableOpacity
+                    style={styles.messageButton}
+                    onPress={() => navigation.navigate('Chat', {
+                      circleId: member._id,
+                      memberName: member.memberName,
+                      memberEmoji: member.memberEmoji || '\uD83D\uDC64',
+                      relationship: member.relationship,
+                    })}
+                  >
+                    <Text style={styles.messageButtonText}>{'\uD83D\uDCAC'} Message</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.removeButton}
+                    onPress={() => handleRemoveMember(member._id, member.memberName)}
+                  >
+                    <Text style={styles.removeButtonText}>Remove</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             ))
@@ -303,11 +316,6 @@ export default function CareCircleScreen() {
             </>
           )}
         </View>
-
-        <TouchableOpacity style={styles.addButton} onPress={() => setShowInviteModal(true)}>
-          <Text style={styles.addButtonIcon}>➕</Text>
-          <Text style={styles.addButtonText}>Add Care Circle Member</Text>
-        </TouchableOpacity>
 
         {/* Sharing Settings — warriors only, real values from DB */}
         {!isMember && (
@@ -471,25 +479,27 @@ const styles = StyleSheet.create({
   emptyEmoji: { fontSize: 50, marginBottom: 10 },
   emptyTitle: { fontSize: 18, fontWeight: 'bold', color: '#fff', marginBottom: 6 },
   emptyText: { fontSize: 14, color: '#888', textAlign: 'center' },
-  memberCard: { backgroundColor: '#1C1C1E', borderRadius: 12, padding: 15, marginBottom: 12, flexDirection: 'row', alignItems: 'flex-start', borderWidth: 1, borderColor: '#2C2C2E' },
+  memberCard: { backgroundColor: '#1C1C1E', borderRadius: 12, padding: 15, marginBottom: 12, borderWidth: 1, borderColor: '#2C2C2E' },
+  memberCardTop: { flexDirection: 'row', alignItems: 'flex-start' },
   memberEmoji: { fontSize: 36, marginRight: 12, marginTop: 2 },
   memberInfo: { flex: 1 },
   memberName: { fontSize: 17, fontWeight: '600', color: '#fff', marginBottom: 3 },
-  memberRelationship: { fontSize: 13, color: '#A0A0A0', marginBottom: 6 },
-  memberActions: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 2 },
-  messageButton: { backgroundColor: '#1A2C4A', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: '#4A90D9' },
-  messageButtonText: { fontSize: 12, color: '#4A90D9', fontWeight: '600' },
-  removeButton: { backgroundColor: '#2A1A1A', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: '#FF6B6B' },
-  removeButtonText: { fontSize: 12, color: '#FF6B6B', fontWeight: '600' },
+  memberRelationship: { fontSize: 13, color: '#A0A0A0' },
+  memberCardActions: { flexDirection: 'row', alignItems: 'center', marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#2C2C2E', gap: 10 },
+  messageButton: { flex: 1, backgroundColor: '#1A2C4A', borderRadius: 8, paddingVertical: 8, alignItems: 'center', borderWidth: 1, borderColor: '#4A90D9' },
+  messageButtonText: { fontSize: 13, color: '#4A90D9', fontWeight: '600' },
+  removeButton: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, backgroundColor: '#2A1A1A', borderWidth: 1, borderColor: '#3A2020' },
+  removeButtonText: { fontSize: 12, color: '#FF6B6B', fontWeight: '500' },
   memberToggles: { alignItems: 'flex-end', gap: 8 },
   toggleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   toggleLabel: { fontSize: 11, color: '#A0A0A0' },
   pendingCard: { backgroundColor: '#1C1C1E', borderRadius: 12, padding: 15, marginBottom: 12, flexDirection: 'row', alignItems: 'flex-start', borderWidth: 1, borderStyle: 'dashed', borderColor: '#FFA500', opacity: 0.85 },
   copyCodeButton: { backgroundColor: '#2C2C2E', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, alignSelf: 'flex-start', borderWidth: 1, borderColor: '#4A90D9' },
   copyCodeText: { fontSize: 13, color: '#4A90D9', fontWeight: '600', letterSpacing: 1 },
-  addButton: { backgroundColor: '#1C1C1E', borderRadius: 12, padding: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 20, borderWidth: 2, borderColor: '#4A90D9', borderStyle: 'dashed' },
-  addButtonIcon: { fontSize: 24, marginRight: 10 },
-  addButtonText: { fontSize: 16, fontWeight: '600', color: '#4A90D9' },
+  addMemberRow: { backgroundColor: '#1C1C1E', borderRadius: 12, padding: 14, flexDirection: 'row', alignItems: 'center', marginBottom: 20, borderWidth: 1, borderColor: '#2C2C2E' },
+  addMemberIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#4A90D9', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  addMemberText: { flex: 1, fontSize: 15, fontWeight: '600', color: '#4A90D9' },
+  addMemberChevron: { fontSize: 24, color: '#4A90D9', fontWeight: '300' },
   sharingSettings: { backgroundColor: '#1C1C1E', borderRadius: 12, padding: 20, marginBottom: 20, borderWidth: 1, borderColor: '#2C2C2E' },
   settingItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#2C2C2E' },
   settingInfo: { flex: 1, marginRight: 15 },

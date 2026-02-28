@@ -8,6 +8,7 @@ const axios  = require('axios');
 const User   = require('../models/User');
 const GlucoseReading = require('../models/GlucoseReading');
 const { syncUserViaShare } = require('./dexcomShareProvider');
+const { checkGlucoseAlert } = require('./alertChecker');
 
 const DEXCOM_CLIENT_ID     = process.env.DEXCOM_CLIENT_ID;
 const DEXCOM_CLIENT_SECRET = process.env.DEXCOM_CLIENT_SECRET;
@@ -95,6 +96,11 @@ async function syncUser(user) {
       if (result !== null) {
         if (result.synced > 0) {
           console.log(`[DexcomShare] Synced ${result.synced} new reading(s) for user ${user._id}`);
+          // Auto-check alerts for the latest reading
+          if (result.latestValue) {
+            checkGlucoseAlert(user._id, result.latestValue).catch(err =>
+              console.error(`[DexcomShare] Alert check failed for user ${user._id}:`, err.message));
+          }
         }
         return; // Share succeeded — skip Individual Access API
       }
@@ -182,6 +188,10 @@ async function syncUser(user) {
     if (newReadings.length > 0) {
       await GlucoseReading.insertMany(newReadings);
       console.log(`[DexcomSync] Synced ${newReadings.length} new reading(s) for user ${user._id}`);
+      // Auto-check alerts for the most recent synced reading
+      const latest = newReadings.reduce((a, b) => (new Date(a.timestamp) > new Date(b.timestamp) ? a : b));
+      checkGlucoseAlert(user._id, latest.value).catch(err =>
+        console.error(`[DexcomSync] Alert check failed for user ${user._id}:`, err.message));
     }
 
     user.dexcom.lastSync = endDate;

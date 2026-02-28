@@ -261,7 +261,12 @@ async function syncUserViaShare(user, GlucoseReading) {
   user.dexcomShare.lastSync = new Date();
   await user.save();
 
-  return { synced: newReadings.length };
+  // Return the most recent value so callers can trigger alert checks
+  const latestValue = newReadings.length > 0
+    ? newReadings.reduce((a, b) => (new Date(a.timestamp) > new Date(b.timestamp) ? a : b)).value
+    : null;
+
+  return { synced: newReadings.length, latestValue };
 }
 
 module.exports = {

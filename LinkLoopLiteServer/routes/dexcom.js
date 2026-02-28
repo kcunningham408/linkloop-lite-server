@@ -417,6 +417,7 @@ router.post('/share-sync', auth, async (req, res) => {
         ? `Synced ${result.synced} new reading${result.synced !== 1 ? 's' : ''} from Dexcom`
         : 'No new readings found',
       synced: result.synced,
+      latestValue: result.latestValue || null,
     });
   } catch (err) {
     console.error('Dexcom Share sync error:', err.response?.data || err.message);
