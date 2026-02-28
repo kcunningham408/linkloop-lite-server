@@ -5,7 +5,7 @@ const CareCircle = require('../models/CareCircle');
 const GlucoseReading = require('../models/GlucoseReading');
 const Message = require('../models/Message');
 const User = require('../models/User');
-const { sendPushToUsers } = require('../jobs/pushNotifications');
+const { sendPushToUsersFiltered } = require('../jobs/pushNotifications');
 
 const router = express.Router();
 
@@ -171,14 +171,14 @@ router.post('/check', auth, async (req, res) => {
       await alertMessage.save();
     }
 
-    // Send push notifications to warrior + all notified members
+    // Send push notifications to warrior + all notified members (respects glucoseAlerts pref)
     const memberUserIds = notifiedMembers.map(m => m.userId.toString());
     const allNotifyIds = [req.user.userId, ...memberUserIds];
-    sendPushToUsers(allNotifyIds, alertConfig.title, alertConfig.message, {
+    sendPushToUsersFiltered(allNotifyIds, alertConfig.title, alertConfig.message, {
       alertId: alert._id.toString(),
       type: 'alert',
       severity: alertConfig.severity,
-    }).catch(err => console.error('[Push] Alert notify error:', err));
+    }, 'glucoseAlerts').catch(err => console.error('[Push] Alert notify error:', err));
 
     res.status(201).json({ alert, notifiedCount: notifiedMembers.length });
   } catch (err) {
@@ -335,17 +335,16 @@ router.post('/:id/acknowledge', auth, async (req, res) => {
       await ackMessage.save();
     }
 
-    // Push the acknowledgment to warrior + all other notified members
-    const otherMemberIds = alert.notifiedMembers
-      .map(m => m.userId.toString())
-      .filter(id => id !== userId);
-    const ackNotifyIds = [alert.userId.toString(), ...otherMemberIds].filter(id => id !== userId);
+    // Push the acknowledgment to warrior + ALL circle members (not just those notified for original alert)
+    const allCircles = await CareCircle.find({ ownerId: alert.userId, status: 'active' }).select('memberId');
+    const allCircleMemberIds = allCircles.map(c => c.memberId.toString());
+    const ackNotifyIds = [...new Set([alert.userId.toString(), ...allCircleMemberIds])].filter(id => id !== userId);
     const ackPushTitle = `✅ Alert Acknowledged`;
     const ackPushBody = `${user?.profileEmoji || ''} ${user?.name || 'Someone'}: "${message.slice(0, 80)}"`.trim();
-    sendPushToUsers(ackNotifyIds, ackPushTitle, ackPushBody, {
+    sendPushToUsersFiltered(ackNotifyIds, ackPushTitle, ackPushBody, {
       alertId: alert._id.toString(),
       type: 'acknowledgment',
-    }).catch(err => console.error('[Push] Ack notify error:', err));
+    }, 'acknowledgments').catch(err => console.error('[Push] Ack notify error:', err));
 
     res.json({
       message: 'Alert acknowledged — everyone has been notified',
@@ -392,13 +391,25 @@ router.post('/:id/resolve', auth, async (req, res) => {
       const resolveMsg = new Message({
         circleId: circle._id,
         senderId: req.user.userId,
-        senderName: '✅ Alert System',
-        senderEmoji: '✅',
+        senderName: '\u2705 Alert System',
+        senderEmoji: '\u2705',
         text: `Alert resolved by ${user?.name || 'User'}: "${alert.title}"`,
         type: 'system',
         alertId: alert._id
       });
       await resolveMsg.save();
+    }
+
+    // Push "alert resolved" to all circle members (respects alertResolved pref)
+    const resolveCircleMemberIds = circles.map(c => c.memberId.toString());
+    const resolveNotifyIds = [...new Set(resolveCircleMemberIds)];
+    if (resolveNotifyIds.length > 0) {
+      const resolvePushTitle = '\u2705 Alert Resolved';
+      const resolvePushBody = `${user?.name || 'User'} resolved: "${(alert.title || '').slice(0, 80)}"`;
+      sendPushToUsersFiltered(resolveNotifyIds, resolvePushTitle, resolvePushBody, {
+        alertId: alert._id.toString(),
+        type: 'resolved',
+      }, 'alertResolved').catch(err => console.error('[Push] Resolve notify error:', err));
     }
 
     res.json({ message: 'Alert resolved', alert });

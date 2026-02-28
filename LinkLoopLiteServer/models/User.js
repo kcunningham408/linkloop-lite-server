@@ -71,6 +71,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  // Per-category push notification preferences (all ON by default)
+  pushPreferences: {
+    glucoseAlerts:   { type: Boolean, default: true },  // low, high, urgent, rapid change
+    acknowledgments: { type: Boolean, default: true },  // someone acknowledged an alert
+    alertResolved:   { type: Boolean, default: true },  // warrior resolved an alert
+    newMessages:     { type: Boolean, default: true },  // 1-on-1 chat messages
+    groupMessages:   { type: Boolean, default: true },  // group Care Circle messages
+  },
   createdAt: {
     type: Date,
     default: Date.now

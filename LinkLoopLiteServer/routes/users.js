@@ -28,6 +28,7 @@ router.get('/me', auth, async (req, res) => {
       linkedOwnerId: user.linkedOwnerId ? user.linkedOwnerId.toString() : null,
       profileEmoji: user.profileEmoji,
       settings: user.settings,
+      pushPreferences: user.pushPreferences,
       createdAt: user.createdAt,
     });
   } catch (err) {
@@ -39,7 +40,7 @@ router.get('/me', auth, async (req, res) => {
 // @route   PUT /api/users/me
 router.put('/me', auth, async (req, res) => {
   try {
-    const { name, profileEmoji, settings } = req.body;
+    const { name, profileEmoji, settings, pushPreferences } = req.body;
 
     const user = await User.findById(req.user.userId);
     if (!user) {
@@ -49,6 +50,7 @@ router.put('/me', auth, async (req, res) => {
     if (name) user.name = name;
     if (profileEmoji) user.profileEmoji = profileEmoji;
     if (settings) user.settings = { ...user.settings, ...settings };
+    if (pushPreferences) user.pushPreferences = { ...user.pushPreferences, ...pushPreferences };
 
     await user.save();
 
@@ -61,7 +63,8 @@ router.put('/me', auth, async (req, res) => {
         name: user.name,
         role: user.role,
         profileEmoji: user.profileEmoji,
-        settings: user.settings
+        settings: user.settings,
+        pushPreferences: user.pushPreferences,
       }
     });
   } catch (err) {

@@ -3,6 +3,7 @@ const auth = require('../middleware/auth');
 const Message = require('../models/Message');
 const CareCircle = require('../models/CareCircle');
 const User = require('../models/User');
+const { sendPushToUsersFiltered } = require('../jobs/pushNotifications');
 
 const router = express.Router();
 
@@ -155,6 +156,19 @@ router.post('/group/messages', auth, async (req, res) => {
     });
 
     await message.save();
+
+    // Push notification to all other group members (respects groupMessages pref)
+    const groupCircles = await CareCircle.find({ ownerId: groupOwnerId, status: 'active' }).select('memberId');
+    const allGroupIds = [groupOwnerId, ...groupCircles.map(c => c.memberId.toString())];
+    const pushRecipients = [...new Set(allGroupIds)].filter(id => id !== userId);
+    if (pushRecipients.length > 0) {
+      const pushTitle = `\uD83D\uDC65 Group: ${user.name || 'Someone'}`;
+      const pushBody = text.trim().length > 100 ? text.trim().slice(0, 100) + '\u2026' : text.trim();
+      sendPushToUsersFiltered(pushRecipients, pushTitle, pushBody, {
+        type: 'groupMessage',
+      }, 'groupMessages').catch(err => console.error('[Push] Group message error:', err));
+    }
+
     res.status(201).json(message);
   } catch (err) {
     console.error('Send group message error:', err);
@@ -259,6 +273,16 @@ router.post('/:circleId/messages', auth, async (req, res) => {
     });
 
     await message.save();
+
+    // Push notification to the other person in the 1-on-1 chat (respects newMessages pref)
+    const isOwner = circle.ownerId.toString() === req.user.userId;
+    const recipientId = isOwner ? circle.memberId.toString() : circle.ownerId.toString();
+    const pushTitle = `\uD83D\uDCAC ${user.name || 'Someone'}`;
+    const pushBody = text.trim().length > 100 ? text.trim().slice(0, 100) + '\u2026' : text.trim();
+    sendPushToUsersFiltered([recipientId], pushTitle, pushBody, {
+      type: 'newMessage',
+      circleId: req.params.circleId,
+    }, 'newMessages').catch(err => console.error('[Push] 1-on-1 message error:', err));
 
     res.status(201).json(message);
   } catch (err) {

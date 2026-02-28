@@ -37,6 +37,48 @@ async function sendPushToUsers(userIds, title, body, data = {}) {
 }
 
 /**
+ * Send push notifications ONLY to users who have the given preference enabled.
+ * Falls back to sendPushToUsers if no category is specified.
+ *
+ * @param {string[]} userIds   - Array of MongoDB user _id strings
+ * @param {string}   title     - Notification title
+ * @param {string}   body      - Notification body
+ * @param {object}   data      - Extra data payload
+ * @param {string}   category  - pushPreferences key: glucoseAlerts, acknowledgments, alertResolved, newMessages, groupMessages
+ */
+async function sendPushToUsersFiltered(userIds, title, body, data = {}, category = null) {
+  if (!userIds || userIds.length === 0) return;
+
+  try {
+    const query = {
+      _id: { $in: userIds },
+      pushToken: { $ne: null, $exists: true }
+    };
+
+    // If a category is provided, only send to users who have that preference ON
+    if (category) {
+      query[`pushPreferences.${category}`] = { $ne: false }; // default is true, so $ne: false covers both true and undefined
+    }
+
+    const users = await User.find(query).select('pushToken name');
+
+    const tokens = users
+      .map(u => u.pushToken)
+      .filter(t => Expo.isExpoPushToken(t));
+
+    if (tokens.length === 0) {
+      console.log(`[Push] No valid tokens for category "${category}" among ${userIds.length} users`);
+      return;
+    }
+
+    console.log(`[Push] Sending "${category || 'unfiltered'}" push to ${tokens.length}/${userIds.length} users`);
+    await sendPushToTokens(tokens, title, body, data);
+  } catch (err) {
+    console.error('[Push] sendPushToUsersFiltered error:', err);
+  }
+}
+
+/**
  * Send push notifications directly to a list of Expo push tokens.
  *
  * @param {string[]} tokens  - Array of Expo push token strings
@@ -88,4 +130,4 @@ async function sendPushToTokens(tokens, title, body, data = {}) {
   }
 }
 
-module.exports = { sendPushToUsers, sendPushToTokens };
+module.exports = { sendPushToUsers, sendPushToUsersFiltered, sendPushToTokens };

@@ -1,12 +1,18 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import { dexcomAPI } from '../services/api';
+import { dexcomAPI, usersAPI } from '../services/api';
 
 export default function ProfileScreen() {
   const { user, logout, deleteAccount } = useAuth();
   const isMember = user?.role === 'member';
-  const [notifications, setNotifications] = useState(true);
+  const [pushPrefs, setPushPrefs] = useState({
+    glucoseAlerts: true,
+    acknowledgments: true,
+    alertResolved: true,
+    newMessages: true,
+    groupMessages: true,
+  });
   const [dexcomStatus, setDexcomStatus] = useState({ connected: false, lastSync: null });
   const [dexcomLoading, setDexcomLoading] = useState(!isMember); // skip loading state for members
 
@@ -14,6 +20,10 @@ export default function ProfileScreen() {
     // Members cannot connect Dexcom — don't waste a network call
     if (!isMember) {
       loadDexcomStatus();
+    }
+    // Load push preferences from user object
+    if (user?.pushPreferences) {
+      setPushPrefs(prev => ({ ...prev, ...user.pushPreferences }));
     }
   }, []);
 
@@ -133,7 +143,7 @@ export default function ProfileScreen() {
 
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingIcon}>👤</Text>
+              <Text style={styles.settingIcon}>{'\uD83D\uDC64'}</Text>
               <View style={{ flex: 1 }}>
                 <Text style={styles.settingTitle}>Display Name</Text>
                 <Text style={styles.settingValue}>{user?.name || 'Not set'}</Text>
@@ -143,23 +153,115 @@ export default function ProfileScreen() {
 
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingIcon}>📧</Text>
+              <Text style={styles.settingIcon}>{'\uD83D\uDCE7'}</Text>
               <View style={{ flex: 1 }}>
                 <Text style={styles.settingTitle}>Email</Text>
                 <Text style={styles.settingValue} numberOfLines={1}>{user?.email || 'Not set'}</Text>
               </View>
             </View>
           </View>
+        </View>
+
+        {/* Push Notification Preferences */}
+        <View style={styles.settingsCard}>
+          <Text style={styles.sectionTitle}>{'\uD83D\uDD14'} Notification Preferences</Text>
+          <Text style={[styles.settingDescription, { marginBottom: 12 }]}>
+            Control which push notifications you receive
+          </Text>
 
           <View style={styles.settingItem}>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingIcon}>🔔</Text>
+              <Text style={styles.settingIcon}>{'\uD83D\uDCC9'}</Text>
               <View style={{ flex: 1 }}>
-                <Text style={styles.settingTitle}>Push Notifications</Text>
-                <Text style={styles.settingDescription}>Receive glucose update notifications</Text>
+                <Text style={styles.settingTitle}>Glucose Alerts</Text>
+                <Text style={styles.settingDescription}>Low, high, urgent & rapid changes</Text>
               </View>
             </View>
-            <Switch value={notifications} onValueChange={setNotifications} trackColor={{ false: '#ccc', true: '#4A90D9' }} thumbColor="#fff" />
+            <Switch
+              value={pushPrefs.glucoseAlerts}
+              onValueChange={(val) => {
+                setPushPrefs(p => ({ ...p, glucoseAlerts: val }));
+                usersAPI.savePushPreferences({ glucoseAlerts: val }).catch(console.log);
+              }}
+              trackColor={{ false: '#3A3A3C', true: '#4A90D9' }}
+              thumbColor="#fff"
+            />
+          </View>
+
+          <View style={styles.settingItem}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingIcon}>{'\u2705'}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.settingTitle}>Acknowledgments</Text>
+                <Text style={styles.settingDescription}>Someone acknowledged an alert</Text>
+              </View>
+            </View>
+            <Switch
+              value={pushPrefs.acknowledgments}
+              onValueChange={(val) => {
+                setPushPrefs(p => ({ ...p, acknowledgments: val }));
+                usersAPI.savePushPreferences({ acknowledgments: val }).catch(console.log);
+              }}
+              trackColor={{ false: '#3A3A3C', true: '#4A90D9' }}
+              thumbColor="#fff"
+            />
+          </View>
+
+          <View style={styles.settingItem}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingIcon}>{'\u2611\uFE0F'}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.settingTitle}>Alert Resolved</Text>
+                <Text style={styles.settingDescription}>Warrior resolved an active alert</Text>
+              </View>
+            </View>
+            <Switch
+              value={pushPrefs.alertResolved}
+              onValueChange={(val) => {
+                setPushPrefs(p => ({ ...p, alertResolved: val }));
+                usersAPI.savePushPreferences({ alertResolved: val }).catch(console.log);
+              }}
+              trackColor={{ false: '#3A3A3C', true: '#4A90D9' }}
+              thumbColor="#fff"
+            />
+          </View>
+
+          <View style={styles.settingItem}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingIcon}>{'\uD83D\uDCAC'}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.settingTitle}>Direct Messages</Text>
+                <Text style={styles.settingDescription}>1-on-1 chat messages</Text>
+              </View>
+            </View>
+            <Switch
+              value={pushPrefs.newMessages}
+              onValueChange={(val) => {
+                setPushPrefs(p => ({ ...p, newMessages: val }));
+                usersAPI.savePushPreferences({ newMessages: val }).catch(console.log);
+              }}
+              trackColor={{ false: '#3A3A3C', true: '#4A90D9' }}
+              thumbColor="#fff"
+            />
+          </View>
+
+          <View style={styles.settingItem}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingIcon}>{'\uD83D\uDC65'}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.settingTitle}>Group Messages</Text>
+                <Text style={styles.settingDescription}>Care Circle group chat messages</Text>
+              </View>
+            </View>
+            <Switch
+              value={pushPrefs.groupMessages}
+              onValueChange={(val) => {
+                setPushPrefs(p => ({ ...p, groupMessages: val }));
+                usersAPI.savePushPreferences({ groupMessages: val }).catch(console.log);
+              }}
+              trackColor={{ false: '#3A3A3C', true: '#4A90D9' }}
+              thumbColor="#fff"
+            />
           </View>
         </View>
 

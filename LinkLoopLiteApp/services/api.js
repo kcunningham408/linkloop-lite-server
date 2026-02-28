@@ -430,4 +430,16 @@ export const usersAPI = {
       body: JSON.stringify({ pushToken: token }),
     });
   },
+  updateProfile: async (data) => {
+    return apiRequest('/users/me', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+  savePushPreferences: async (prefs) => {
+    return apiRequest('/users/me', {
+      method: 'PUT',
+      body: JSON.stringify({ pushPreferences: prefs }),
+    });
+  },
 };
