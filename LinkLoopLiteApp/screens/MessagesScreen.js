@@ -148,6 +148,36 @@ export default function MessagesScreen({ navigation }) {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4A90D9" />
           }
           ItemSeparatorComponent={() => <View style={styles.separator} />}
+          ListHeaderComponent={
+            <>
+              <TouchableOpacity
+                style={styles.row}
+                onPress={() => navigation.navigate('GroupChat')}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.avatar, { backgroundColor: '#1A2A44', borderColor: '#4A90D9' }]}>
+                  <Text style={styles.avatarEmoji}>{'\uD83D\uDC65'}</Text>
+                </View>
+                <View style={styles.rowContent}>
+                  <View style={styles.rowHeader}>
+                    <Text style={styles.personName} numberOfLines={1}>
+                      Care Circle Group
+                    </Text>
+                  </View>
+                  <View style={styles.rowSub}>
+                    <Text style={styles.lastMessage} numberOfLines={1}>
+                      Chat with everyone in your circle
+                    </Text>
+                  </View>
+                  <Text style={[styles.relationshipLabel, { color: '#34C759' }]}>
+                    Group Chat
+                  </Text>
+                </View>
+                <Text style={styles.chevron}>{'\u203A'}</Text>
+              </TouchableOpacity>
+              <View style={styles.separator} />
+            </>
+          }
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <Text style={styles.emptyEmoji}>💬</Text>

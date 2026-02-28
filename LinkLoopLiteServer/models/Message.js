@@ -1,11 +1,17 @@
 const mongoose = require('mongoose');
 
 const messageSchema = new mongoose.Schema({
-  // The care circle relationship this message belongs to
+  // The care circle relationship this message belongs to (1-on-1 chats)
   circleId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'CareCircle',
-    required: true
+    default: null
+  },
+  // For group chat: the warrior (owner) whose circle this group belongs to
+  groupOwnerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
   },
   // Who sent the message
   senderId: {
@@ -47,5 +53,6 @@ const messageSchema = new mongoose.Schema({
 });
 
 messageSchema.index({ circleId: 1, createdAt: -1 });
+messageSchema.index({ groupOwnerId: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Message', messageSchema);

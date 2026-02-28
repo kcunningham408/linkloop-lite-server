@@ -82,6 +82,130 @@ router.get('/conversations', auth, async (req, res) => {
   }
 });
 
+// ============================================================
+// GROUP CHAT — whole Care Circle together
+// (Must be above /:circleId routes so Express doesn't match "group" as a circleId)
+// ============================================================
+
+// Helper: Verify user belongs to the warrior's circle (as owner or member)
+async function verifyGroupAccess(ownerId, userId) {
+  if (ownerId === userId) return true;
+  const membership = await CareCircle.findOne({
+    ownerId,
+    memberId: userId,
+    status: 'active'
+  });
+  return !!membership;
+}
+
+// @route   GET /api/chat/group/messages
+router.get('/group/messages', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const user = await User.findById(userId).select('role linkedOwnerId');
+
+    const groupOwnerId = user.role === 'warrior' ? userId : (user.linkedOwnerId?.toString() || null);
+    if (!groupOwnerId) {
+      return res.status(400).json({ message: 'No care circle group found' });
+    }
+
+    const { before, limit = 50 } = req.query;
+    const query = { groupOwnerId };
+    if (before) query.createdAt = { $lt: new Date(before) };
+
+    const messages = await Message.find(query)
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit));
+
+    res.json(messages.reverse());
+  } catch (err) {
+    console.error('Get group messages error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   POST /api/chat/group/messages
+router.post('/group/messages', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const user = await User.findById(userId).select('name profileEmoji role linkedOwnerId');
+
+    const groupOwnerId = user.role === 'warrior' ? userId : (user.linkedOwnerId?.toString() || null);
+    if (!groupOwnerId) {
+      return res.status(400).json({ message: 'No care circle group found' });
+    }
+
+    const hasAccess = await verifyGroupAccess(groupOwnerId, userId);
+    if (!hasAccess) {
+      return res.status(403).json({ message: 'You do not have access to this group' });
+    }
+
+    const { text } = req.body;
+    if (!text || !text.trim()) {
+      return res.status(400).json({ message: 'Message text is required' });
+    }
+
+    const message = new Message({
+      groupOwnerId,
+      senderId: userId,
+      senderName: user.name || 'Unknown',
+      senderEmoji: user.profileEmoji || '👤',
+      text: text.trim(),
+      type: 'text'
+    });
+
+    await message.save();
+    res.status(201).json(message);
+  } catch (err) {
+    console.error('Send group message error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   GET /api/chat/group/info
+router.get('/group/info', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const user = await User.findById(userId).select('name profileEmoji role linkedOwnerId');
+
+    const groupOwnerId = user.role === 'warrior' ? userId : (user.linkedOwnerId?.toString() || null);
+    if (!groupOwnerId) {
+      return res.status(400).json({ message: 'No care circle group found' });
+    }
+
+    const owner = await User.findById(groupOwnerId).select('name profileEmoji');
+    const circles = await CareCircle.find({ ownerId: groupOwnerId, status: 'active' })
+      .populate('memberId', 'name profileEmoji');
+
+    const members = [
+      { id: owner._id, name: owner.name, emoji: owner.profileEmoji || '👤', role: 'warrior' },
+      ...circles
+        .filter(c => c.memberId)
+        .map(c => ({
+          id: c.memberId._id,
+          name: c.memberId.name || c.memberName,
+          emoji: c.memberId.profileEmoji || c.memberEmoji || '👤',
+          role: 'member',
+          relationship: c.relationship,
+        })),
+    ];
+
+    res.json({
+      groupOwnerId,
+      ownerName: owner.name,
+      memberCount: members.length,
+      members,
+    });
+  } catch (err) {
+    console.error('Get group info error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// ============================================================
+// 1-ON-1 CHAT — per care circle relationship
+// ============================================================
+
 // @route   GET /api/chat/:circleId/messages
 // @desc    Get messages for a specific care circle chat
 // @access  Private

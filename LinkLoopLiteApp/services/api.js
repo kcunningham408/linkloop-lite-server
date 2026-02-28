@@ -249,6 +249,23 @@ export const chatAPI = {
       body: JSON.stringify({ text }),
     });
   },
+
+  // Group chat — whole Care Circle together
+  getGroupMessages: async (before = null) => {
+    const query = before ? `?before=${before}` : '';
+    return apiRequest(`/chat/group/messages${query}`);
+  },
+
+  sendGroupMessage: async (text) => {
+    return apiRequest('/chat/group/messages', {
+      method: 'POST',
+      body: JSON.stringify({ text }),
+    });
+  },
+
+  getGroupInfo: async () => {
+    return apiRequest('/chat/group/info');
+  },
 };
 
 // ============ ALERTS API ============

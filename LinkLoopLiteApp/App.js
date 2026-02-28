@@ -15,6 +15,7 @@ import CGMScreen from './screens/CGMScreen';
 import CareCircleScreen from './screens/CareCircleScreen';
 import ChatScreen from './screens/ChatScreen';
 import DexcomConnectScreen from './screens/DexcomConnectScreen';
+import GroupChatScreen from './screens/GroupChatScreen';
 import HomeScreen from './screens/HomeScreen';
 import MessagesScreen from './screens/MessagesScreen';
 import InsightsScreen from './screens/InsightsScreen';
@@ -180,6 +181,17 @@ function AppNavigator() {
             component={ChatScreen}
             options={{
               headerShown: true,
+              headerStyle: { backgroundColor: '#1C1C1E' },
+              headerTintColor: '#fff',
+              headerTitleStyle: { fontWeight: 'bold' },
+            }}
+          />
+          <Stack.Screen
+            name="GroupChat"
+            component={GroupChatScreen}
+            options={{
+              headerShown: true,
+              title: 'Care Circle Group',
               headerStyle: { backgroundColor: '#1C1C1E' },
               headerTintColor: '#fff',
               headerTitleStyle: { fontWeight: 'bold' },
