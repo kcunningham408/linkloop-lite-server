@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const auth = require('../middleware/auth');
 const CareCircle = require('../models/CareCircle');
 const User = require('../models/User');
+const { sendPushToUsers } = require('../jobs/pushNotifications');
 
 const router = express.Router();
 
@@ -124,6 +125,26 @@ router.delete('/:id', auth, async (req, res) => {
     if (!member) {
       return res.status(404).json({ message: 'Member not found' });
     }
+
+    // If an actual user was linked, reset their role back to warrior
+    // so they no longer see the linked warrior's CGM data
+    if (member.memberId) {
+      await User.findByIdAndUpdate(member.memberId, {
+        role: 'warrior',
+        linkedOwnerId: null
+      });
+
+      // Send push notification so the member knows immediately
+      const warrior = await User.findById(req.user.userId).select('name');
+      const warriorName = warrior?.name || 'Your warrior';
+      sendPushToUsers(
+        [member.memberId.toString()],
+        'Removed from Care Circle',
+        `${warriorName} has removed you from their Care Circle. You no longer have access to their glucose data.`,
+        { type: 'circle_removed' }
+      ).catch(err => console.error('[Push] Circle removal notification error:', err));
+    }
+
     res.json({ message: 'Member removed from Care Circle' });
   } catch (err) {
     console.error('Delete circle member error:', err);

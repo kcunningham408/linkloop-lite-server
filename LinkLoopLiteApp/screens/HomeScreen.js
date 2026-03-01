@@ -1,14 +1,14 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, AppState, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, AppState, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { alertsAPI, glucoseAPI } from '../services/api';
 
 const AUTO_REFRESH_MS = 5 * 60 * 1000; // 5 minutes
 
 export default function HomeScreen({ navigation }) {
-  const { user } = useAuth();
+  const { user, circleRemoved, clearCircleRemoved, checkAuth } = useAuth();
   const isMember = user?.role === 'member';
   const lowThreshold = user?.settings?.lowThreshold ?? 70;
   const highThreshold = user?.settings?.highThreshold ?? 180;
@@ -23,10 +23,17 @@ export default function HomeScreen({ navigation }) {
   const loadData = useCallback(async () => {
     try {
       if (isMember && user?.linkedOwnerId) {
-        const data = await glucoseAPI.getMemberView(user.linkedOwnerId, 24);
-        setLatestGlucose(data.latest || null);
-        setStats(data.stats || null);
-        if (data.ownerName) setWarriorName(data.ownerName);
+        try {
+          const data = await glucoseAPI.getMemberView(user.linkedOwnerId, 24);
+          setLatestGlucose(data.latest || null);
+          setStats(data.stats || null);
+          if (data.ownerName) setWarriorName(data.ownerName);
+        } catch (memberErr) {
+          // If the member-view call fails (e.g. removed from circle), refresh profile
+          // The server will return updated role/linkedOwnerId
+          console.log('Member view failed, refreshing auth:', memberErr.message);
+          await checkAuth();
+        }
       } else {
         const [statsData, latestData] = await Promise.allSettled([
           glucoseAPI.getStats(24),
@@ -50,6 +57,17 @@ export default function HomeScreen({ navigation }) {
   useFocusEffect(
     useCallback(() => { loadData(); }, [loadData])
   );
+
+  // Show popup if this user was removed from a Care Circle
+  useEffect(() => {
+    if (circleRemoved) {
+      Alert.alert(
+        'Removed from Care Circle',
+        'You are no longer a member of a Care Circle. You will no longer see their glucose data or receive alerts.\n\nIf this was a mistake, ask the warrior to send you a new invite.',
+        [{ text: 'OK', onPress: () => clearCircleRemoved() }]
+      );
+    }
+  }, [circleRemoved]);
 
   useEffect(() => {
     const interval = setInterval(() => { loadData(); }, AUTO_REFRESH_MS);

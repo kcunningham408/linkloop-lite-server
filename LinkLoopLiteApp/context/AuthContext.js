@@ -1,7 +1,7 @@
+import * as Device from 'expo-device';
+import * as Notifications from 'expo-notifications';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Platform } from 'react-native';
-import * as Notifications from 'expo-notifications';
-import * as Device from 'expo-device';
 import { authAPI, clearToken, getCachedUser, getToken, setCachedUser, userAPI, usersAPI } from '../services/api';
 
 const AuthContext = createContext(null);
@@ -62,9 +62,22 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [circleRemoved, setCircleRemoved] = useState(false);
 
   useEffect(() => {
     checkAuth();
+  }, []);
+
+  // Listen for incoming push notifications while app is foregrounded
+  // If it's a circle_removed notification, immediately refresh auth
+  useEffect(() => {
+    const subscription = Notifications.addNotificationReceivedListener(notification => {
+      const data = notification.request?.content?.data;
+      if (data?.type === 'circle_removed') {
+        checkAuth();
+      }
+    });
+    return () => subscription.remove();
   }, []);
 
   const checkAuth = async () => {
@@ -86,6 +99,15 @@ export function AuthProvider({ children }) {
       // 2. Re-verify in the background and refresh if anything changed
       try {
         const profile = await userAPI.getProfile();
+
+        // Detect if this user was removed from a Care Circle:
+        // They were a member before but the server now says they're a warrior
+        const wasMember = (cached?.role === 'member' && cached?.linkedOwnerId);
+        const noLongerMember = (profile.role !== 'member' || !profile.linkedOwnerId);
+        if (wasMember && noLongerMember) {
+          setCircleRemoved(true);
+        }
+
         setUser(profile);
         await setCachedUser(profile);
         if (!cached) {
@@ -147,9 +169,11 @@ export function AuthProvider({ children }) {
     setIsAuthenticated(false);
   };
 
+  const clearCircleRemoved = () => setCircleRemoved(false);
+
   return (
     <AuthContext.Provider
-      value={{ user, isLoading, isAuthenticated, login, register, logout, updateUser, deleteAccount, checkAuth }}
+      value={{ user, isLoading, isAuthenticated, circleRemoved, login, register, logout, updateUser, deleteAccount, checkAuth, clearCircleRemoved }}
     >
       {children}
     </AuthContext.Provider>
