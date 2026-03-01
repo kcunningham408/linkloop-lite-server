@@ -11,7 +11,21 @@ router.get('/', auth, async (req, res) => {
   try {
     const members = await CareCircle.find({ ownerId: req.user.userId })
       .populate('memberId', 'name email phone profileEmoji');
-    res.json(members);
+
+    // Auto-clean orphaned records: if memberId was set but the user was deleted,
+    // populate returns null. Reset those back to pending so the warrior can re-invite.
+    const cleaned = [];
+    for (const m of members) {
+      if (m.status === 'active' && m.memberId === null) {
+        // The member account was deleted — reset to pending so warrior sees it correctly
+        m.status = 'pending';
+        m.inviteCode = null; // old code was consumed
+        await m.save();
+      }
+      cleaned.push(m);
+    }
+
+    res.json(cleaned);
   } catch (err) {
     console.error('Get circle error:', err);
     res.status(500).json({ message: 'Server error' });

@@ -311,6 +311,12 @@ export default function CareCircleScreen() {
                       </TouchableOpacity>
                     ) : null}
                   </View>
+                  <TouchableOpacity
+                    style={{ paddingHorizontal: 12, paddingVertical: 8 }}
+                    onPress={() => handleRemoveMember(member._id, member.memberName)}
+                  >
+                    <Text style={{ fontSize: 13, color: '#FF6B6B' }}>Remove</Text>
+                  </TouchableOpacity>
                 </View>
               ))}
             </>

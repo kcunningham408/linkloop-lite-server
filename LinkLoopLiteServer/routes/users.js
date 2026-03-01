@@ -100,7 +100,7 @@ router.delete('/me', auth, async (req, res) => {
     // Delete all user data in parallel
     await Promise.all([
       GlucoseReading.deleteMany({ userId }),
-      CareCircle.deleteMany({ $or: [{ ownerId: userId }, { members: userId }] }),
+      CareCircle.deleteMany({ $or: [{ ownerId: userId }, { memberId: userId }] }),
       Message.deleteMany({ $or: [{ senderId: userId }, { recipientId: userId }] }),
       Alert.deleteMany({ userId }),
       MoodEntry.deleteMany({ userId }),
