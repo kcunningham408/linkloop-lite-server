@@ -197,8 +197,12 @@ export default function CareCircleScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#4A90D9']} />}
     >
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Your Care Circle</Text>
-        <Text style={styles.headerSubtitle}>Share your glucose data and updates with trusted caregivers</Text>
+        <Text style={styles.headerTitle}>{isMember ? 'Care Circle' : 'Your Care Circle'}</Text>
+        <Text style={styles.headerSubtitle}>
+          {isMember
+            ? 'You\'re part of a Care Circle — here\'s who else is in the loop'
+            : 'Share your glucose data and updates with trusted caregivers'}
+        </Text>
       </View>
 
       <View style={styles.content}>
@@ -230,7 +234,8 @@ export default function CareCircleScreen() {
           </TouchableOpacity>
         )}
 
-        {/* Members Section */}
+        {/* Members Section — warrior only (members see the roster below) */}
+        {!isMember && (
         <View style={styles.membersSection}>
           <Text style={styles.sectionTitle}>Circle Members ({activeMembers.length})</Text>
 
@@ -329,6 +334,7 @@ export default function CareCircleScreen() {
             </>
           )}
         </View>
+        )}
 
         {/* Sharing Settings — warriors only, real values from DB */}
         {!isMember && (
