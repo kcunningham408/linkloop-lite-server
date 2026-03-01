@@ -1,4 +1,5 @@
 import { useFocusEffect } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useState } from 'react';
 import {
     ActivityIndicator,
@@ -12,6 +13,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import TYPE from '../config/typography';
+import ScreenHeader from '../components/ScreenHeader';
 import { chatAPI } from '../services/api';
 
 function formatTime(dateStr) {
@@ -47,8 +49,10 @@ function getLastMessagePreview(lastMessage) {
 
 export default function MessagesScreen({ navigation }) {
   const { user } = useAuth();
-  const { getAccent } = useTheme();
-  const accent = getAccent(user?.role === 'member');
+  const { getAccent, getGradient } = useTheme();
+  const isMember = user?.role === 'member';
+  const accent = getAccent(isMember);
+  const gradient = getGradient(isMember);
 
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -105,9 +109,14 @@ export default function MessagesScreen({ navigation }) {
         onPress={() => handleOpenChat(convo)}
         activeOpacity={0.7}
       >
+        {/* Accent stripe */}
+        <LinearGradient colors={gradient} style={styles.accentStripe} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} />
+
         {/* Avatar */}
-        <View style={styles.avatar}>
-          <Text style={styles.avatarEmoji}>{convo.otherPerson.emoji || '\uD83D\uDC64'}</Text>
+        <View style={[styles.avatarRing, { borderColor: accent + '50' }]}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarEmoji}>{convo.otherPerson.emoji || '👤'}</Text>
+          </View>
         </View>
 
         {/* Text content */}
@@ -120,14 +129,14 @@ export default function MessagesScreen({ navigation }) {
               <Text style={styles.timestamp}>{formatTime(convo.lastMessage.createdAt)}</Text>
             )}
           </View>
-          <View style={styles.rowSub}>
-            <Text style={styles.lastMessage} numberOfLines={1}>
-              {getLastMessagePreview(convo.lastMessage)}
+          <Text style={styles.lastMessage} numberOfLines={1}>
+            {getLastMessagePreview(convo.lastMessage)}
+          </Text>
+          <View style={[styles.rolePill, { backgroundColor: accent + '18' }]}>
+            <Text style={[styles.rolePillText, { color: accent }]}>
+              {convo.relationship || 'Care Circle Member'}
             </Text>
           </View>
-          <Text style={[styles.relationshipLabel, { color: accent }]}>
-            {convo.relationship || 'Care Circle Member'}
-          </Text>
         </View>
 
         <Text style={styles.chevron}>›</Text>
@@ -146,6 +155,7 @@ export default function MessagesScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
+      <ScreenHeader title="Messages" />
       {error ? (
         <View style={styles.centered}>
           <Text style={styles.errorEmoji}>⚠️</Text>
@@ -170,8 +180,11 @@ export default function MessagesScreen({ navigation }) {
                 onPress={() => navigation.navigate('GroupChat')}
                 activeOpacity={0.7}
               >
-                <View style={[styles.avatar, { backgroundColor: '#1A2A44', borderColor: accent }]}>
-                  <Text style={styles.avatarEmoji}>{'\uD83D\uDC65'}</Text>
+                <LinearGradient colors={['#34C759', '#30D158']} style={styles.accentStripe} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} />
+                <View style={[styles.avatarRing, { borderColor: '#34C75950' }]}>
+                  <View style={[styles.avatar, { backgroundColor: '#1A2A44' }]}>
+                    <Text style={styles.avatarEmoji}>👥</Text>
+                  </View>
                 </View>
                 <View style={styles.rowContent}>
                   <View style={styles.rowHeader}>
@@ -182,21 +195,21 @@ export default function MessagesScreen({ navigation }) {
                       <Text style={styles.timestamp}>{formatTime(groupLastMessage.createdAt)}</Text>
                     )}
                   </View>
-                  <View style={styles.rowSub}>
-                    <Text style={styles.lastMessage} numberOfLines={1}>
-                      {groupLastMessage
-                        ? (groupLastMessage.senderName ? groupLastMessage.senderName + ': ' : '') +
-                          (groupLastMessage.text?.length > 40
-                            ? groupLastMessage.text.slice(0, 40) + '\u2026'
-                            : groupLastMessage.text || 'Sent a message')
-                        : 'No messages yet \u2014 start the group chat!'}
+                  <Text style={styles.lastMessage} numberOfLines={1}>
+                    {groupLastMessage
+                      ? (groupLastMessage.senderName ? groupLastMessage.senderName + ': ' : '') +
+                        (groupLastMessage.text?.length > 40
+                          ? groupLastMessage.text.slice(0, 40) + '…'
+                          : groupLastMessage.text || 'Sent a message')
+                      : 'No messages yet — start the group chat!'}
+                  </Text>
+                  <View style={[styles.rolePill, { backgroundColor: '#34C75918' }]}>
+                    <Text style={[styles.rolePillText, { color: '#34C759' }]}>
+                      Group Chat
                     </Text>
                   </View>
-                  <Text style={[styles.relationshipLabel, { color: '#34C759' }]}>
-                    Group Chat
-                  </Text>
                 </View>
-                <Text style={styles.chevron}>{'\u203A'}</Text>
+                <Text style={styles.chevron}>›</Text>
               </TouchableOpacity>
               <View style={styles.separator} />
             </>
@@ -241,44 +254,68 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   errorText: {
-    fontSize: 15,
+    fontSize: TYPE.md,
     color: '#FF6B6B',
     textAlign: 'center',
     marginBottom: 20,
   },
   retryButton: {
-    backgroundColor: '#4A90D9',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 10,
   },
   retryText: {
     color: '#fff',
-    fontSize: 15,
+    fontSize: TYPE.md,
     fontWeight: TYPE.semibold,
   },
 
-  // Conversation row
+  // Conversation row — card style
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    backgroundColor: '#111111',
-  },
-  avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    marginHorizontal: 12,
+    marginVertical: 5,
     backgroundColor: '#1C1C1E',
+    borderRadius: 14,
+    padding: 14,
     borderWidth: 1,
     borderColor: '#2C2C2E',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
+    overflow: 'hidden',
+  },
+  accentStripe: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+    borderTopLeftRadius: 14,
+    borderBottomLeftRadius: 14,
+  },
+  avatarRing: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
   },
+  avatar: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: '#252528',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   avatarEmoji: {
-    fontSize: 26,
+    fontSize: 24,
   },
   rowContent: {
     flex: 1,
@@ -297,34 +334,37 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   timestamp: {
-    fontSize: TYPE.sm,
+    fontSize: TYPE.xs,
     color: '#666',
-  },
-  rowSub: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    fontWeight: TYPE.medium,
   },
   lastMessage: {
-    fontSize: TYPE.md,
+    fontSize: TYPE.sm,
     color: '#A0A0A0',
-    flex: 1,
+    lineHeight: 18,
+    marginBottom: 6,
   },
-  relationshipLabel: {
-    fontSize: 11,
-    color: '#4A90D9',
-    marginTop: 3,
-    textTransform: 'capitalize',
+  rolePill: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  rolePillText: {
+    fontSize: 10,
+    fontWeight: TYPE.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
   chevron: {
     fontSize: TYPE.xxl,
     color: '#444',
-    marginLeft: 8,
+    marginLeft: 6,
     fontWeight: '300',
   },
   separator: {
     height: 1,
-    backgroundColor: '#1C1C1E',
-    marginLeft: 82,
+    backgroundColor: 'transparent',
   },
 
   // Empty state
@@ -343,7 +383,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   emptyTitle: {
-    fontSize: 20,
+    fontSize: TYPE.xl,
     fontWeight: TYPE.bold,
     color: '#fff',
     marginBottom: 10,
