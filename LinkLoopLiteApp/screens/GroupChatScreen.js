@@ -9,10 +9,14 @@ import {
     View
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { chatAPI } from '../services/api';
 
 export default function GroupChatScreen({ navigation }) {
   const { user } = useAuth();
+  const { getAccent } = useTheme();
+  const accent = getAccent(user?.role === 'member');
+
   const [messages, setMessages] = useState([]);
   const [groupInfo, setGroupInfo] = useState(null);
   const [text, setText] = useState('');
@@ -179,11 +183,11 @@ export default function GroupChatScreen({ navigation }) {
         )}
         <View style={[
           styles.bubble,
-          mine ? styles.bubbleMe : styles.bubbleOther,
+          mine ? [styles.bubbleMe, { backgroundColor: accent }] : styles.bubbleOther,
           msg._temp && styles.bubbleSending,
         ]}>
           {!mine && (
-            <Text style={styles.senderName}>{msg.senderName || 'Unknown'}</Text>
+            <Text style={[styles.senderName, { color: accent }]}>{msg.senderName || 'Unknown'}</Text>
           )}
           <Text style={[styles.msgText, mine ? styles.msgTextMe : styles.msgTextOther]}>
             {msg.text}
@@ -200,7 +204,7 @@ export default function GroupChatScreen({ navigation }) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4A90D9" />
+          <ActivityIndicator size="large" color={accent} />
           <Text style={styles.loadingText}>Loading group chat...</Text>
         </View>
       </SafeAreaView>
@@ -238,7 +242,7 @@ export default function GroupChatScreen({ navigation }) {
           onEndReached={loadOlderMessages}
           onEndReachedThreshold={0.3}
           ListFooterComponent={loadingMore ? (
-            <ActivityIndicator size="small" color="#4A90D9" style={{ padding: 10 }} />
+            <ActivityIndicator size="small" color={accent} style={{ padding: 10 }} />
           ) : null}
           ListEmptyComponent={
             <View style={styles.emptyChat}>
@@ -264,7 +268,7 @@ export default function GroupChatScreen({ navigation }) {
             returnKeyType="default"
           />
           <TouchableOpacity
-            style={[styles.sendButton, !text.trim() && styles.sendButtonDisabled]}
+            style={[styles.sendButton, { backgroundColor: accent }, !text.trim() && styles.sendButtonDisabled]}
             onPress={handleSend}
             disabled={!text.trim() || sending}
           >

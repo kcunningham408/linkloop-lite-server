@@ -10,6 +10,8 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { moodAPI } from '../services/api';
 
 const MOOD_OPTIONS = [
@@ -24,6 +26,11 @@ const MOOD_OPTIONS = [
 ];
 
 export default function MoodScreen() {
+  const { user } = useAuth();
+  const { getAccent } = useTheme();
+  const isMember = user?.role === 'member';
+  const accent = getAccent(isMember);
+
   const [selectedMood, setSelectedMood] = useState(null);
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
@@ -131,7 +138,7 @@ export default function MoodScreen() {
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
         style={styles.container}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#4A90D9']} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[accent]} />}
       >
         {/* Header */}
         <View style={styles.header}>
@@ -147,14 +154,14 @@ export default function MoodScreen() {
                 key={mood.label}
                 style={[
                   styles.moodOption,
-                  selectedMood?.label === mood.label && styles.moodOptionSelected,
+                  selectedMood?.label === mood.label && [styles.moodOptionSelected, { borderColor: accent }],
                 ]}
                 onPress={() => setSelectedMood(mood)}
               >
                 <Text style={styles.moodEmoji}>{mood.emoji}</Text>
                 <Text style={[
                   styles.moodLabel,
-                  selectedMood?.label === mood.label && styles.moodLabelSelected,
+                  selectedMood?.label === mood.label && [styles.moodLabelSelected, { color: accent }],
                 ]}>{mood.display}</Text>
               </TouchableOpacity>
             ))}
@@ -179,7 +186,7 @@ export default function MoodScreen() {
 
           {/* Log Button */}
           <TouchableOpacity
-            style={[styles.logButton, !selectedMood && styles.logButtonDisabled]}
+            style={[styles.logButton, { backgroundColor: accent }, !selectedMood && styles.logButtonDisabled]}
             onPress={handleLogMood}
             disabled={!selectedMood || saving}
           >
@@ -207,7 +214,7 @@ export default function MoodScreen() {
               <Text style={styles.statsTitle}>📊 This Week's Mood</Text>
               <View style={styles.statsRow}>
                 <View style={styles.statBox}>
-                  <Text style={styles.statValue}>{stats.totalEntries}</Text>
+                  <Text style={[styles.statValue, { color: accent }]}>{stats.totalEntries}</Text>
                   <Text style={styles.statLabel}>Entries</Text>
                 </View>
                 {stats.topMood && (
@@ -233,7 +240,7 @@ export default function MoodScreen() {
                       <View key={item.label} style={styles.freqRow}>
                         <Text style={styles.freqEmoji}>{item.emoji}</Text>
                         <View style={styles.freqBarBg}>
-                          <View style={[styles.freqBarFill, { width: `${Math.max(pct, 5)}%` }]} />
+                          <View style={[styles.freqBarFill, { width: `${Math.max(pct, 5)}%`, backgroundColor: accent }]} />
                         </View>
                         <Text style={styles.freqCount}>{item.count}</Text>
                       </View>
@@ -247,7 +254,7 @@ export default function MoodScreen() {
           {/* Recent Entries */}
           <Text style={styles.sectionTitle}>Recent Entries</Text>
           {loading ? (
-            <ActivityIndicator size="small" color="#4A90D9" style={{ paddingVertical: 30 }} />
+            <ActivityIndicator size="small" color={accent} style={{ paddingVertical: 30 }} />
           ) : entries.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyEmoji}>📝</Text>
@@ -296,7 +303,7 @@ export default function MoodScreen() {
                   key={mood.label}
                   style={[
                     styles.moodOption,
-                    editMood?.label === mood.label && styles.moodOptionSelected,
+                    editMood?.label === mood.label && [styles.moodOptionSelected, { borderColor: accent }],
                     { width: '23%', marginBottom: 8 },
                   ]}
                   onPress={() => setEditMood(mood)}
@@ -304,7 +311,7 @@ export default function MoodScreen() {
                   <Text style={styles.moodEmoji}>{mood.emoji}</Text>
                   <Text style={[
                     styles.moodLabel,
-                    editMood?.label === mood.label && styles.moodLabelSelected,
+                    editMood?.label === mood.label && [styles.moodLabelSelected, { color: accent }],
                   ]}>{mood.display}</Text>
                 </TouchableOpacity>
               ))}
@@ -325,7 +332,7 @@ export default function MoodScreen() {
               <TouchableOpacity style={styles.cancelButton} onPress={() => setEditEntry(null)}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.saveButton} onPress={handleSaveEdit} disabled={editSaving}>
+              <TouchableOpacity style={[styles.saveButton, { backgroundColor: accent }]} onPress={handleSaveEdit} disabled={editSaving}>
                 {editSaving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveButtonText}>Save</Text>}
               </TouchableOpacity>
             </View>

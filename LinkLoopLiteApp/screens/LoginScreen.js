@@ -10,6 +10,7 @@ import {
     View,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { authAPI, circleAPI, pingServer } from '../services/api';
 
 // mode: 'landing' | 'login' | 'register' | 'join' | 'forgot' | 'reset'
@@ -34,6 +35,8 @@ export default function LoginScreen() {
   const newPasswordRef = useRef(null);
 
   const { login, register } = useAuth();
+  const { palette } = useTheme();
+  const accent = palette.warrior;
 
   useEffect(() => {
     pingServer();
@@ -148,13 +151,13 @@ export default function LoginScreen() {
   const renderHero = () => (
     <View style={styles.heroSection}>
       <View style={styles.logoRow}>
-        <Text style={styles.logoSymbol}>∞</Text>
+        <Text style={[styles.logoSymbol, { color: accent }]}>∞</Text>
         <Text style={styles.logoText}>LinkLoop</Text>
       </View>
       <Text style={styles.tagline}>Real-time glucose sharing{'\n'}for T1D warriors and the people who care</Text>
 
       {/* Primary CTAs */}
-      <TouchableOpacity style={styles.btnSignIn} onPress={() => resetFields('login')}>
+      <TouchableOpacity style={[styles.btnSignIn, { backgroundColor: accent }]} onPress={() => resetFields('login')}>
         <Text style={styles.btnSignInText}>Sign In</Text>
       </TouchableOpacity>
 
@@ -165,7 +168,7 @@ export default function LoginScreen() {
       <TouchableOpacity onPress={() => resetFields('register')} style={styles.signUpLink}>
         <Text style={styles.signUpLinkText}>
           New T1D Warrior?{'  '}
-          <Text style={styles.signUpLinkBold}>Create an account</Text>
+          <Text style={[styles.signUpLinkBold, { color: accent }]}>Create an account</Text>
         </Text>
       </TouchableOpacity>
     </View>
@@ -177,7 +180,7 @@ export default function LoginScreen() {
 
       {/* Back button */}
       <TouchableOpacity onPress={() => resetFields('landing')} style={styles.backBtn}>
-        <Text style={styles.backBtnText}>←  Back</Text>
+        <Text style={[styles.backBtnText, { color: accent }]}>←  Back</Text>
       </TouchableOpacity>
 
       {/* Form title */}
@@ -243,13 +246,13 @@ export default function LoginScreen() {
       {!isReset && (
         <View style={styles.methodToggle}>
           <TouchableOpacity
-            style={[styles.methodTab, loginMethod === 'email' && styles.methodTabActive]}
+            style={[styles.methodTab, loginMethod === 'email' && [styles.methodTabActive, { backgroundColor: accent }]]}
             onPress={() => { setLoginMethod('email'); setIdentifier(''); }}
           >
             <Text style={[styles.methodTabText, loginMethod === 'email' && styles.methodTabActiveText]}>Email</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.methodTab, loginMethod === 'phone' && styles.methodTabActive]}
+            style={[styles.methodTab, loginMethod === 'phone' && [styles.methodTabActive, { backgroundColor: accent }]]}
             onPress={() => { setLoginMethod('phone'); setIdentifier(''); }}
           >
             <Text style={[styles.methodTabText, loginMethod === 'phone' && styles.methodTabActiveText]}>Phone</Text>
@@ -346,6 +349,7 @@ export default function LoginScreen() {
       <TouchableOpacity
         style={[
           styles.submitBtn,
+          { backgroundColor: accent },
           isJoin && styles.submitBtnGreen,
         ]}
         onPress={handleSubmit}
@@ -365,12 +369,12 @@ export default function LoginScreen() {
         <>
           <TouchableOpacity onPress={() => resetFields('forgot')} style={styles.crossLink}>
             <Text style={styles.crossLinkText}>
-              <Text style={styles.crossLinkBold}>Forgot Password?</Text>
+              <Text style={[styles.crossLinkBold, { color: accent }]}>Forgot Password?</Text>
             </Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => resetFields('register')} style={styles.crossLink}>
             <Text style={styles.crossLinkText}>
-              New here?{'  '}<Text style={styles.crossLinkBold}>Create a free account</Text>
+              New here?{'  '}<Text style={[styles.crossLinkBold, { color: accent }]}>Create a free account</Text>
             </Text>
           </TouchableOpacity>
         </>
@@ -378,7 +382,7 @@ export default function LoginScreen() {
       {isRegister && (
         <TouchableOpacity onPress={() => resetFields('login')} style={styles.crossLink}>
           <Text style={styles.crossLinkText}>
-            Already have an account?{'  '}<Text style={styles.crossLinkBold}>Sign In</Text>
+            Already have an account?{'  '}<Text style={[styles.crossLinkBold, { color: accent }]}>Sign In</Text>
           </Text>
         </TouchableOpacity>
       )}
@@ -405,7 +409,7 @@ export default function LoginScreen() {
           {/* Show small top logo only when a form is open */}
           {(isLogin || isRegister || isJoin || isForgot || isReset) && (
             <View style={styles.topLogo}>
-              <Text style={styles.topLogoSymbol}>∞</Text>
+              <Text style={[styles.topLogoSymbol, { color: accent }]}>∞</Text>
               <Text style={styles.topLogoText}>LinkLoop</Text>
             </View>
           )}

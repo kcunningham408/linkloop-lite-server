@@ -2,6 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, AppState, Dimensions, Modal, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { alertsAPI, dexcomAPI, glucoseAPI, nightscoutAPI, notesAPI } from '../services/api';
 
 const AUTO_REFRESH_MS = 5 * 60 * 1000; // 5 minutes — matches Dexcom G7 update interval
@@ -18,7 +19,9 @@ const TREND_OPTIONS = [
 
 export default function CGMScreen({ navigation }) {
   const { user } = useAuth();
+  const { getAccent } = useTheme();
   const isMember = user?.role === 'member';
+  const accent = getAccent(isMember);
 
   // Use the warrior's personal thresholds if set, otherwise standard defaults
   const lowThreshold = user?.settings?.lowThreshold ?? 70;
@@ -253,10 +256,10 @@ export default function CGMScreen({ navigation }) {
   };
 
   const getGlucoseColor = (value) => {
-    if (!value) return '#4A90D9';
+    if (!value) return accent;
     if (value < lowThreshold) return '#FF6B6B';
     if (value > highThreshold) return '#FFA500';
-    return '#4A90D9';
+    return accent;
   };
 
   const getGlucoseStatus = (value) => {
@@ -287,7 +290,7 @@ export default function CGMScreen({ navigation }) {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#4A90D9']} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[accent]} />}
     >
       <LinearGradient
         colors={[glucoseColor, glucoseColor, '#111111']}
@@ -330,7 +333,7 @@ export default function CGMScreen({ navigation }) {
       <View style={styles.content}>
         {/* Warriors only: log reading button */}
         {!isMember && (
-          <TouchableOpacity style={styles.addButton} onPress={() => setShowAddModal(true)}>
+          <TouchableOpacity style={[styles.addButton, { backgroundColor: accent }]} onPress={() => setShowAddModal(true)}>
             <Text style={styles.addButtonIcon}>➕</Text>
             <Text style={styles.addButtonText}>Log Glucose Reading</Text>
           </TouchableOpacity>
@@ -339,13 +342,13 @@ export default function CGMScreen({ navigation }) {
         <View style={styles.chartContainer}>
           <Text style={styles.sectionTitle}>Today's Readings</Text>
           {loading ? (
-            <ActivityIndicator size="small" color="#4A90D9" style={{ paddingVertical: 40 }} />
+            <ActivityIndicator size="small" color={accent} style={{ paddingVertical: 40 }} />
           ) : chartReadings.length > 0 ? (
             <View style={styles.chartArea}>
               <View style={styles.chartGrid}>
                 <View style={[styles.gridLine, styles.highLine]} />
                 <Text style={styles.gridLabel}>180</Text>
-                <View style={[styles.gridLine, styles.targetLine]} />
+                <View style={[styles.gridLine, styles.targetLine, { borderColor: accent }]} />
                 <Text style={[styles.gridLabel, styles.targetLabel]}>Target</Text>
                 <View style={[styles.gridLine, styles.lowLine]} />
                 <Text style={styles.gridLabel}>70</Text>
@@ -382,7 +385,7 @@ export default function CGMScreen({ navigation }) {
           <Text style={styles.sectionTitle}>Today's Stats</Text>
           {stats && stats.count > 0 ? (
             <View style={styles.statsGrid}>
-              <StatCard label="Time in Range" value={stats.timeInRange + '%'} color="#4A90D9" />
+              <StatCard label="Time in Range" value={stats.timeInRange + '%'} color={accent} />
               <StatCard label="Avg Glucose" value={'' + stats.average} color="#666" />
               <StatCard label="High Events" value={'' + stats.high} color="#FFA500" />
               <StatCard label="Low Events" value={'' + stats.low} color="#FF6B6B" />
@@ -396,15 +399,15 @@ export default function CGMScreen({ navigation }) {
         <View style={styles.notesContainer}>
           <View style={styles.notesHeader}>
             <Text style={styles.sectionTitle}>📝 Notes</Text>
-            <TouchableOpacity style={styles.addNoteBtn} onPress={() => setShowNoteModal(true)}>
-              <Text style={styles.addNoteBtnText}>+ Add Note</Text>
+            <TouchableOpacity style={[styles.addNoteBtn, { borderColor: accent }]} onPress={() => setShowNoteModal(true)}>
+              <Text style={[styles.addNoteBtnText, { color: accent }]}>+ Add Note</Text>
             </TouchableOpacity>
           </View>
           {notes.length > 0 ? (
             notes.slice(0, 5).map((n) => (
               <TouchableOpacity key={n._id} style={styles.noteCard} onLongPress={() => handleDeleteNote(n._id)}>
                 <View style={styles.noteHeader}>
-                  <Text style={styles.noteAuthor}>{n.authorEmoji || '📝'} {n.authorName}</Text>
+                  <Text style={[styles.noteAuthor, { color: accent }]}>{n.authorEmoji || '📝'} {n.authorName}</Text>
                   <Text style={styles.noteTime}>
                     {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </Text>
@@ -427,11 +430,11 @@ export default function CGMScreen({ navigation }) {
               <Text style={styles.deviceEmoji}>📱</Text>
               <View style={styles.deviceInfo}>
                 <Text style={styles.deviceName}>Manual Entry</Text>
-                <Text style={styles.deviceStatus}>
+                <Text style={[styles.deviceStatus, { color: accent }]}>
                   {currentGlucose ? 'Last log: ' + new Date(currentGlucose.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No data yet'}
                 </Text>
               </View>
-              <View style={[styles.statusDot, { backgroundColor: currentGlucose ? '#4A90D9' : '#ccc' }]} />
+              <View style={[styles.statusDot, { backgroundColor: currentGlucose ? accent : '#ccc' }]} />
             </View>
 
             {/* Dexcom Share — the one and only CGM integration */}
@@ -542,7 +545,7 @@ export default function CGMScreen({ navigation }) {
             <Text style={styles.inputLabel}>Trend</Text>
             <View style={styles.trendRow}>
               {TREND_OPTIONS.map(t => (
-                <TouchableOpacity key={t.value} style={[styles.trendButton, newTrend === t.value && styles.trendButtonActive]} onPress={() => setNewTrend(t.value)}>
+                <TouchableOpacity key={t.value} style={[styles.trendButton, newTrend === t.value && [styles.trendButtonActive, { backgroundColor: accent, borderColor: accent }]]} onPress={() => setNewTrend(t.value)}>
                   <Text style={[styles.trendButtonText, newTrend === t.value && styles.trendButtonTextActive]}>{t.arrow}</Text>
                 </TouchableOpacity>
               ))}
@@ -553,7 +556,7 @@ export default function CGMScreen({ navigation }) {
               <TouchableOpacity style={styles.cancelButton} onPress={() => setShowAddModal(false)}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.saveButton} onPress={handleAddReading} disabled={saving}>
+              <TouchableOpacity style={[styles.saveButton, { backgroundColor: accent }]} onPress={handleAddReading} disabled={saving}>
                 {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveButtonText}>Save</Text>}
               </TouchableOpacity>
             </View>
@@ -629,7 +632,7 @@ export default function CGMScreen({ navigation }) {
               <TouchableOpacity style={styles.cancelButton} onPress={() => { setShowNoteModal(false); setNewNoteText(''); }}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.saveButton} onPress={handleAddNote} disabled={noteSaving || !newNoteText.trim()}>
+              <TouchableOpacity style={[styles.saveButton, { backgroundColor: accent }]} onPress={handleAddNote} disabled={noteSaving || !newNoteText.trim()}>
                 {noteSaving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveButtonText}>Save Note</Text>}
               </TouchableOpacity>
             </View>

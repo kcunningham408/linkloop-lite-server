@@ -10,6 +10,7 @@ import {
     View,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { chatAPI } from '../services/api';
 
 function formatTime(dateStr) {
@@ -45,6 +46,9 @@ function getLastMessagePreview(lastMessage) {
 
 export default function MessagesScreen({ navigation }) {
   const { user } = useAuth();
+  const { getAccent } = useTheme();
+  const accent = getAccent(user?.role === 'member');
+
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -120,7 +124,7 @@ export default function MessagesScreen({ navigation }) {
               {getLastMessagePreview(convo.lastMessage)}
             </Text>
           </View>
-          <Text style={styles.relationshipLabel}>
+          <Text style={[styles.relationshipLabel, { color: accent }]}>
             {convo.relationship || 'Care Circle Member'}
           </Text>
         </View>
@@ -133,7 +137,7 @@ export default function MessagesScreen({ navigation }) {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#4A90D9" />
+        <ActivityIndicator size="large" color={accent} />
         <Text style={styles.loadingText}>Loading messages…</Text>
       </View>
     );
@@ -145,7 +149,7 @@ export default function MessagesScreen({ navigation }) {
         <View style={styles.centered}>
           <Text style={styles.errorEmoji}>⚠️</Text>
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={loadConversations}>
+          <TouchableOpacity style={[styles.retryButton, { backgroundColor: accent }]} onPress={loadConversations}>
             <Text style={styles.retryText}>Try Again</Text>
           </TouchableOpacity>
         </View>
@@ -155,7 +159,7 @@ export default function MessagesScreen({ navigation }) {
           renderItem={renderConversation}
           keyExtractor={(item) => String(item.circleId)}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4A90D9" />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accent} colors={[accent]} />
           }
           ItemSeparatorComponent={() => <View style={styles.separator} />}
           ListHeaderComponent={
@@ -165,7 +169,7 @@ export default function MessagesScreen({ navigation }) {
                 onPress={() => navigation.navigate('GroupChat')}
                 activeOpacity={0.7}
               >
-                <View style={[styles.avatar, { backgroundColor: '#1A2A44', borderColor: '#4A90D9' }]}>
+                <View style={[styles.avatar, { backgroundColor: '#1A2A44', borderColor: accent }]}>
                   <Text style={styles.avatarEmoji}>{'\uD83D\uDC65'}</Text>
                 </View>
                 <View style={styles.rowContent}>

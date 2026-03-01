@@ -2,6 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Clipboard, Linking, Modal, Platform, RefreshControl, ScrollView, Share, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { alertsAPI, circleAPI } from '../services/api';
 
 // TODO: Replace with actual App Store / Play Store URLs when live
@@ -19,7 +20,9 @@ const RELATIONSHIPS = [
 
 export default function CareCircleScreen() {
   const { user, updateUser, checkAuth } = useAuth();
+  const { getAccent } = useTheme();
   const isMember = user?.role === 'member';
+  const accent = getAccent(isMember);
   const navigation = useNavigation();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -194,7 +197,7 @@ export default function CareCircleScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#4A90D9']} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[accent]} />}
     >
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{isMember ? 'Care Circle' : 'Your Care Circle'}</Text>
@@ -226,11 +229,11 @@ export default function CareCircleScreen() {
         {/* Add Member — compact inline button at the top */}
         {!isMember && (
           <TouchableOpacity style={styles.addMemberRow} onPress={() => setShowInviteModal(true)}>
-            <View style={styles.addMemberIcon}>
+            <View style={[styles.addMemberIcon, { backgroundColor: accent }]}>
               <Text style={{ fontSize: 18, color: '#fff' }}>+</Text>
             </View>
-            <Text style={styles.addMemberText}>Add Circle Member</Text>
-            <Text style={styles.addMemberChevron}>›</Text>
+            <Text style={[styles.addMemberText, { color: accent }]}>Add Circle Member</Text>
+            <Text style={[styles.addMemberChevron, { color: accent }]}>›</Text>
           </TouchableOpacity>
         )}
 
@@ -240,7 +243,7 @@ export default function CareCircleScreen() {
           <Text style={styles.sectionTitle}>Circle Members ({activeMembers.length})</Text>
 
           {loading ? (
-            <ActivityIndicator size="large" color="#4A90D9" style={{ paddingVertical: 40 }} />
+            <ActivityIndicator size="large" color={accent} style={{ paddingVertical: 40 }} />
           ) : activeMembers.length === 0 && pendingMembers.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyEmoji}>👥</Text>
@@ -264,7 +267,7 @@ export default function CareCircleScreen() {
                       <Switch
                         value={member.permissions?.viewGlucose ?? true}
                         onValueChange={() => handleTogglePermission(member._id, 'viewGlucose', member.permissions?.viewGlucose)}
-                        trackColor={{ false: '#ccc', true: '#4A90D9' }}
+                        trackColor={{ false: '#ccc', true: accent }}
                         thumbColor="#fff"
                       />
                     </View>
@@ -281,7 +284,7 @@ export default function CareCircleScreen() {
                 </View>
                 <View style={styles.memberCardActions}>
                   <TouchableOpacity
-                    style={styles.messageButton}
+                    style={[styles.messageButton, { borderColor: accent }]}
                     onPress={() => navigation.navigate('Chat', {
                       circleId: member._id,
                       memberName: member.memberName,
@@ -289,7 +292,7 @@ export default function CareCircleScreen() {
                       relationship: member.relationship,
                     })}
                   >
-                    <Text style={styles.messageButtonText}>{'\uD83D\uDCAC'} Message</Text>
+                    <Text style={[styles.messageButtonText, { color: accent }]}>{'\uD83D\uDCAC'} Message</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.removeButton}
@@ -313,13 +316,13 @@ export default function CareCircleScreen() {
                     <Text style={{ fontSize: 13, color: '#FFA500', fontStyle: 'italic', marginBottom: 6 }}>Waiting to join…</Text>
                     {member.inviteCode ? (
                       <TouchableOpacity
-                        style={styles.copyCodeButton}
+                        style={[styles.copyCodeButton, { borderColor: accent }]}
                         onPress={() => {
                           Clipboard.setString(member.inviteCode);
                           Alert.alert('Copied!', `Code ${member.inviteCode} copied to clipboard.`);
                         }}
                       >
-                        <Text style={styles.copyCodeText}>📋 {member.inviteCode}</Text>
+                        <Text style={[styles.copyCodeText, { color: accent }]}>📋 {member.inviteCode}</Text>
                       </TouchableOpacity>
                     ) : null}
                   </View>
@@ -349,7 +352,7 @@ export default function CareCircleScreen() {
               <Switch
                 value={shareGlucose}
                 onValueChange={() => handleToggleSetting('shareRealTimeGlucose', shareGlucose, setShareGlucose)}
-                trackColor={{ false: '#ccc', true: '#4A90D9' }}
+                trackColor={{ false: '#ccc', true: accent }}
                 thumbColor="#fff"
               />
             </View>
@@ -385,9 +388,9 @@ export default function CareCircleScreen() {
         {/* Quick Actions — Join is only for members who are NOT yet linked */}
         {isMember && !user?.linkedOwnerId && (
           <View style={styles.quickActions}>
-            <TouchableOpacity style={styles.actionButtonPrimary} onPress={() => setShowJoinModal(true)}>
+            <TouchableOpacity style={[styles.actionButtonPrimary, { borderColor: accent }]} onPress={() => setShowJoinModal(true)}>
               <Text style={styles.actionButtonIcon}>🔗</Text>
-              <Text style={styles.actionButtonPrimaryText}>Join a Circle</Text>
+              <Text style={[styles.actionButtonPrimaryText, { color: accent }]}>Join a Circle</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -397,7 +400,7 @@ export default function CareCircleScreen() {
           <View style={styles.membersSection}>
             <Text style={styles.sectionTitle}>Circle Members ({roster.length})</Text>
             {loading ? (
-              <ActivityIndicator size="large" color="#4A90D9" style={{ paddingVertical: 40 }} />
+              <ActivityIndicator size="large" color={accent} style={{ paddingVertical: 40 }} />
             ) : roster.length === 0 ? (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyEmoji}>👥</Text>
@@ -406,7 +409,7 @@ export default function CareCircleScreen() {
               </View>
             ) : (
               roster.map((member, idx) => (
-                <View key={idx} style={[styles.memberCard, member.isYou && { borderColor: '#4A90D9' }]}>
+                <View key={idx} style={[styles.memberCard, member.isYou && { borderColor: accent }]}>
                   <View style={styles.memberCardTop}>
                     <Text style={styles.memberEmoji}>{member.emoji || '👤'}</Text>
                     <View style={styles.memberInfo}>
@@ -427,7 +430,7 @@ export default function CareCircleScreen() {
         {/* Info Card */}
         <View style={styles.infoCard}>
           <Text style={styles.infoCardIcon}>🛡️</Text>
-          <Text style={styles.infoCardTitle}>Stay Connected</Text>
+          <Text style={[styles.infoCardTitle, { color: accent }]}>Stay Connected</Text>
           <Text style={styles.infoCardDescription}>Your Care Circle helps you share updates with the people who care about you most.</Text>
         </View>
       </View>
@@ -442,7 +445,7 @@ export default function CareCircleScreen() {
             <Text style={styles.inputLabel}>Relationship</Text>
             <View style={styles.relGrid}>
               {RELATIONSHIPS.map(r => (
-                <TouchableOpacity key={r.value} style={[styles.relChip, newRelationship === r.value && styles.relChipActive]} onPress={() => setNewRelationship(r.value)}>
+                <TouchableOpacity key={r.value} style={[styles.relChip, newRelationship === r.value && [styles.relChipActive, { backgroundColor: accent, borderColor: accent }]]} onPress={() => setNewRelationship(r.value)}>
                   <Text style={styles.relEmoji}>{r.emoji}</Text>
                   <Text style={[styles.relLabel, newRelationship === r.value && styles.relLabelActive]}>{r.label}</Text>
                 </TouchableOpacity>
@@ -452,7 +455,7 @@ export default function CareCircleScreen() {
               <TouchableOpacity style={styles.cancelButton} onPress={() => setShowInviteModal(false)}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.saveButton} onPress={handleCreateInvite} disabled={saving}>
+              <TouchableOpacity style={[styles.saveButton, { backgroundColor: accent }]} onPress={handleCreateInvite} disabled={saving}>
                 {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveButtonText}>Create Invite</Text>}
               </TouchableOpacity>
             </View>
@@ -466,11 +469,11 @@ export default function CareCircleScreen() {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>🎉 Invite Created!</Text>
             <Text style={styles.codeLabel}>Share this code with your circle member:</Text>
-            <View style={styles.codeBox}>
-              <Text style={styles.codeText}>{inviteCode}</Text>
+            <View style={[styles.codeBox, { borderColor: accent }]}>
+              <Text style={[styles.codeText, { color: accent }]}>{inviteCode}</Text>
             </View>
 
-            <TouchableOpacity style={styles.textInviteButton} onPress={handleTextInvite}>
+            <TouchableOpacity style={[styles.textInviteButton, { backgroundColor: accent }]} onPress={handleTextInvite}>
               <Text style={styles.textInviteIcon}>📱</Text>
               <View style={{ flex: 1 }}>
                 <Text style={styles.textInviteTitle}>Text Invite</Text>
@@ -501,7 +504,7 @@ export default function CareCircleScreen() {
               <TouchableOpacity style={styles.cancelButton} onPress={() => setShowJoinModal(false)}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.saveButton} onPress={handleJoinCircle} disabled={saving}>
+              <TouchableOpacity style={[styles.saveButton, { backgroundColor: accent }]} onPress={handleJoinCircle} disabled={saving}>
                 {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveButtonText}>Join</Text>}
               </TouchableOpacity>
             </View>

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Modal, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { suppliesAPI } from '../services/api';
 
 const SUPPLY_CATEGORIES = [
@@ -22,6 +24,11 @@ const getStatusInfo = (daysLeft) => {
 };
 
 export default function SuppliesScreen() {
+  const { user } = useAuth();
+  const { getAccent } = useTheme();
+  const isMember = user?.role === 'member';
+  const accent = getAccent(isMember);
+
   const [supplies, setSupplies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -85,7 +92,7 @@ export default function SuppliesScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#4A90D9']} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[accent]} />}
     >
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Supply Tracker</Text>
@@ -102,11 +109,11 @@ export default function SuppliesScreen() {
               <Text style={styles.summaryLabel}>Items Tracked</Text>
             </View>
             <View style={[styles.summaryItem, { borderLeftWidth: 1, borderRightWidth: 1, borderColor: '#2C2C2E' }]}>
-              <Text style={[styles.summaryNumber, { color: needsRefill > 0 ? '#FF6B6B' : '#4A90D9' }]}>{needsRefill}</Text>
+              <Text style={[styles.summaryNumber, { color: needsRefill > 0 ? '#FF6B6B' : accent }]}>{needsRefill}</Text>
               <Text style={styles.summaryLabel}>Needs Refill</Text>
             </View>
             <View style={styles.summaryItem}>
-              <Text style={[styles.summaryNumber, { color: '#4A90D9' }]}>{wellStocked}</Text>
+              <Text style={[styles.summaryNumber, { color: accent }]}>{wellStocked}</Text>
               <Text style={styles.summaryLabel}>Well Stocked</Text>
             </View>
           </View>
@@ -114,7 +121,7 @@ export default function SuppliesScreen() {
 
         {/* Supply List */}
         {loading ? (
-          <ActivityIndicator size="large" color="#4A90D9" style={{ paddingVertical: 40 }} />
+          <ActivityIndicator size="large" color={accent} style={{ paddingVertical: 40 }} />
         ) : supplies.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>📦</Text>
@@ -148,9 +155,9 @@ export default function SuppliesScreen() {
         )}
 
         {/* Add Supply Button */}
-        <TouchableOpacity style={styles.addButton} onPress={() => setShowAddModal(true)}>
+        <TouchableOpacity style={[styles.addButton, { borderColor: accent }]} onPress={() => setShowAddModal(true)}>
           <Text style={styles.addButtonIcon}>➕</Text>
-          <Text style={styles.addButtonText}>Add Supply</Text>
+          <Text style={[styles.addButtonText, { color: accent }]}>Add Supply</Text>
         </TouchableOpacity>
 
         {/* Usage Insights */}
@@ -233,7 +240,7 @@ export default function SuppliesScreen() {
             <Text style={styles.inputLabel}>Category</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
               {SUPPLY_CATEGORIES.map(c => (
-                <TouchableOpacity key={c.value} style={[styles.catChip, newSupply.category === c.value && styles.catChipActive]} onPress={() => setNewSupply({ ...newSupply, category: c.value })}>
+                <TouchableOpacity key={c.value} style={[styles.catChip, newSupply.category === c.value && [styles.catChipActive, { backgroundColor: accent, borderColor: accent }]]} onPress={() => setNewSupply({ ...newSupply, category: c.value })}>
                   <Text style={styles.catEmoji}>{c.emoji}</Text>
                   <Text style={[styles.catLabel, newSupply.category === c.value && styles.catLabelActive]}>{c.label}</Text>
                 </TouchableOpacity>
@@ -255,7 +262,7 @@ export default function SuppliesScreen() {
               <TouchableOpacity style={styles.cancelButton} onPress={() => setShowAddModal(false)}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.saveButton} onPress={handleAddSupply} disabled={saving}>
+              <TouchableOpacity style={[styles.saveButton, { backgroundColor: accent }]} onPress={handleAddSupply} disabled={saving}>
                 {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveButtonText}>Add Supply</Text>}
               </TouchableOpacity>
             </View>

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { insightsAPI } from '../services/api';
 
 const TIME_RANGES = [
@@ -31,6 +33,11 @@ const CATEGORY_ICONS = {
 };
 
 export default function InsightsScreen() {
+  const { user } = useAuth();
+  const { getAccent } = useTheme();
+  const isMember = user?.role === 'member';
+  const accent = getAccent(isMember);
+
   const [insights, setInsights] = useState([]);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -149,7 +156,7 @@ export default function InsightsScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#4A90D9']} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[accent]} />}
     >
       {/* Header */}
       <View style={styles.header}>
@@ -159,7 +166,7 @@ export default function InsightsScreen() {
 
       <View style={styles.content}>
         {/* Daily Motivation Card — always visible */}
-        <View style={styles.motivationCard}>
+        <View style={[styles.motivationCard, { backgroundColor: accent }]}>
           {motivationLoading ? (
             <View style={styles.motivationLoading}>
               <ActivityIndicator size="small" color="#fff" />
@@ -183,7 +190,7 @@ export default function InsightsScreen() {
           {TIME_RANGES.map(range => (
             <TouchableOpacity
               key={range.hours}
-              style={[styles.rangeTab, selectedRange === range.hours && styles.rangeTabActive]}
+              style={[styles.rangeTab, selectedRange === range.hours && [styles.rangeTabActive, { backgroundColor: accent }]]}
               onPress={() => setSelectedRange(range.hours)}
             >
               <Text style={[styles.rangeTabText, selectedRange === range.hours && styles.rangeTabTextActive]}>
@@ -208,13 +215,13 @@ export default function InsightsScreen() {
         {/* Tab Switcher: Insights vs Trends */}
         <View style={styles.tabRow}>
           <TouchableOpacity
-            style={[styles.tab, activeTab === 'insights' && styles.tabActive]}
+            style={[styles.tab, activeTab === 'insights' && [styles.tabActive, { backgroundColor: accent }]]}
             onPress={() => setActiveTab('insights')}
           >
             <Text style={[styles.tabText, activeTab === 'insights' && styles.tabTextActive]}>📋 Insights</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.tab, activeTab === 'trends' && styles.tabActive]}
+            style={[styles.tab, activeTab === 'trends' && [styles.tabActive, { backgroundColor: accent }]]}
             onPress={() => setActiveTab('trends')}
           >
             <Text style={[styles.tabText, activeTab === 'trends' && styles.tabTextActive]}>📈 AI Trends</Text>
@@ -251,23 +258,23 @@ export default function InsightsScreen() {
                 <View style={styles.aiCardHeader}>
                   <Text style={styles.aiCardIcon}>🤖</Text>
                   <Text style={styles.aiCardTitle}>AI Analysis</Text>
-                  <Text style={styles.aiCardBadge}>Groq AI</Text>
+                  <Text style={[styles.aiCardBadge, { backgroundColor: accent }]}>Groq AI</Text>
                 </View>
                 {aiSummary ? (
                   <>
                     <Text style={styles.aiCardText}>{aiSummary}</Text>
-                    <TouchableOpacity style={styles.refreshButton} onPress={refreshAISummary}>
-                      <Text style={styles.refreshButtonText}>🔄 New Insight</Text>
+                    <TouchableOpacity style={[styles.refreshButton, { borderColor: accent }]} onPress={refreshAISummary}>
+                      <Text style={[styles.refreshButtonText, { color: accent }]}>🔄 New Insight</Text>
                     </TouchableOpacity>
                   </>
                 ) : aiLoading ? (
                   <View style={styles.aiLoadingRow}>
-                    <ActivityIndicator size="small" color="#4A90D9" />
-                    <Text style={styles.aiLoadingText}>Analyzing your patterns...</Text>
+                    <ActivityIndicator size="small" color={accent} />
+                    <Text style={[styles.aiLoadingText, { color: accent }]}>Analyzing your patterns...</Text>
                   </View>
                 ) : (
-                  <TouchableOpacity style={styles.refreshButton} onPress={refreshAISummary}>
-                    <Text style={styles.refreshButtonText}>✨ Generate AI Insight</Text>
+                  <TouchableOpacity style={[styles.refreshButton, { borderColor: accent }]} onPress={refreshAISummary}>
+                    <Text style={[styles.refreshButtonText, { color: accent }]}>✨ Generate AI Insight</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -276,7 +283,7 @@ export default function InsightsScreen() {
             {/* Insights List */}
             {loading ? (
               <View style={styles.loadingBox}>
-                <ActivityIndicator size="large" color="#4A90D9" />
+                <ActivityIndicator size="large" color={accent} />
                 <Text style={styles.loadingText}>Analyzing your patterns...</Text>
               </View>
             ) : insights.length === 0 ? (
@@ -347,7 +354,7 @@ export default function InsightsScreen() {
 
             {trendsLoading ? (
               <View style={styles.loadingBox}>
-                <ActivityIndicator size="large" color="#4A90D9" />
+                <ActivityIndicator size="large" color={accent} />
                 <Text style={styles.loadingText}>AI is scanning your data for trends...</Text>
               </View>
             ) : aiTrends.length === 0 ? (
@@ -387,8 +394,8 @@ export default function InsightsScreen() {
 
             {/* Refresh Trends Button */}
             {aiTrends.length > 0 && !trendsLoading && (
-              <TouchableOpacity style={styles.refreshButton} onPress={refreshAITrends}>
-                <Text style={styles.refreshButtonText}>🔄 New Trends</Text>
+              <TouchableOpacity style={[styles.refreshButton, { borderColor: accent }]} onPress={refreshAITrends}>
+                <Text style={[styles.refreshButtonText, { color: accent }]}>🔄 New Trends</Text>
               </TouchableOpacity>
             )}
           </>

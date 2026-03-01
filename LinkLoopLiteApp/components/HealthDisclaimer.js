@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Modal } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme } from '../context/ThemeContext';
 
 const DISCLAIMER_KEY = '@linkloop_disclaimer_accepted';
 
 export default function HealthDisclaimer() {
   const [visible, setVisible] = useState(false);
+  const { palette } = useTheme();
+  const accent = palette.warrior;
 
   useEffect(() => {
     checkDisclaimer();
@@ -59,7 +62,7 @@ export default function HealthDisclaimer() {
             By continuing, you acknowledge that LinkLoop is a personal wellness journal and agree to our Terms of Service and Privacy Policy.
           </Text>
 
-          <TouchableOpacity style={styles.acceptButton} onPress={handleAccept}>
+          <TouchableOpacity style={[styles.acceptButton, { backgroundColor: accent }]} onPress={handleAccept}>
             <Text style={styles.acceptButtonText}>I Understand</Text>
           </TouchableOpacity>
         </View>

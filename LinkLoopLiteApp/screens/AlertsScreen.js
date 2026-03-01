@@ -11,6 +11,7 @@ import {
     View
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { alertsAPI, glucoseAPI } from '../services/api';
 
 const SEVERITY_CONFIG = {
@@ -37,6 +38,9 @@ const STATUS_CONFIG = {
 
 export default function AlertsScreen({ navigation }) {
   const { user } = useAuth();
+  const { getAccent } = useTheme();
+  const isMember = user?.role === 'member';
+  const accent = getAccent(isMember);
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -275,7 +279,7 @@ export default function AlertsScreen({ navigation }) {
         <View style={styles.alertActions}>
           {alert.status === 'active' && !userAcked && (
             <TouchableOpacity
-              style={styles.ackButton}
+              style={[styles.ackButton, { backgroundColor: accent }]}
               onPress={() => openAcknowledge(alert)}
             >
               <Text style={styles.ackButtonText}>✋ I'm Handling It</Text>
@@ -323,7 +327,7 @@ export default function AlertsScreen({ navigation }) {
     <ScrollView
       style={styles.container}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#4A90D9']} />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[accent]} />
       }
     >
       {/* Header */}
@@ -354,7 +358,7 @@ export default function AlertsScreen({ navigation }) {
           ].map(f => (
             <TouchableOpacity
               key={f.key}
-              style={[styles.filterTab, filter === f.key && styles.filterTabActive]}
+              style={[styles.filterTab, filter === f.key && [styles.filterTabActive, { backgroundColor: accent, borderColor: accent }]]}
               onPress={() => { setFilter(f.key); setLoading(true); }}
             >
               <Text style={[styles.filterTabText, filter === f.key && styles.filterTabTextActive]}>
@@ -365,7 +369,7 @@ export default function AlertsScreen({ navigation }) {
         </View>
 
         {loading ? (
-          <ActivityIndicator size="large" color="#4A90D9" style={{ paddingVertical: 40 }} />
+          <ActivityIndicator size="large" color={accent} style={{ paddingVertical: 40 }} />
         ) : alerts.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>✨</Text>
@@ -446,7 +450,7 @@ export default function AlertsScreen({ navigation }) {
               ].map((qr, idx) => (
                 <TouchableOpacity
                   key={idx}
-                  style={[styles.quickChip, ackMessage === qr && styles.quickChipActive]}
+                  style={[styles.quickChip, ackMessage === qr && [styles.quickChipActive, { backgroundColor: accent, borderColor: accent }]]}
                   onPress={() => setAckMessage(qr)}
                 >
                   <Text style={[styles.quickChipText, ackMessage === qr && styles.quickChipTextActive]}>
@@ -474,7 +478,7 @@ export default function AlertsScreen({ navigation }) {
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.confirmAckButton}
+                style={[styles.confirmAckButton, { backgroundColor: accent }]}
                 onPress={handleAcknowledge}
                 disabled={submitting}
               >
@@ -494,7 +498,7 @@ export default function AlertsScreen({ navigation }) {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             {detailLoading ? (
-              <ActivityIndicator size="large" color="#4A90D9" style={{ padding: 40 }} />
+              <ActivityIndicator size="large" color={accent} style={{ padding: 40 }} />
             ) : detailAlert ? (
               <>
                 <Text style={styles.modalTitle}>
@@ -565,7 +569,7 @@ export default function AlertsScreen({ navigation }) {
                 {/* Action buttons in detail */}
                 {detailAlert.status === 'active' && !hasUserAcknowledged(detailAlert) && (
                   <TouchableOpacity
-                    style={styles.ackButton}
+                    style={[styles.ackButton, { backgroundColor: accent }]}
                     onPress={() => {
                       setShowDetailModal(false);
                       openAcknowledge(detailAlert);

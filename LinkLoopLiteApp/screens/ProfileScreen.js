@@ -2,13 +2,16 @@ import Constants from 'expo-constants';
 import { useEffect, useState } from 'react';
 import { Alert, Linking, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { circleAPI, glucoseAPI, usersAPI } from '../services/api';
 
 const APP_VERSION = Constants.expoConfig?.version || Constants.manifest?.version || '1.1.0';
 
 export default function ProfileScreen() {
   const { user, logout, deleteAccount, updateUser } = useAuth();
+  const { palette, setTheme, palettes } = useTheme();
   const isMember = user?.role === 'member';
+  const accent = isMember ? palette.member : palette.warrior;
   const [pushPrefs, setPushPrefs] = useState({
     glucoseAlerts: true,
     acknowledgments: true,
@@ -186,14 +189,14 @@ export default function ProfileScreen() {
       <View style={styles.content}>
         {/* Profile Card */}
         <View style={styles.profileCard}>
-          <View style={styles.avatar}>
+          <View style={[styles.avatar, { backgroundColor: accent }]}>
             <Text style={styles.avatarText}>{user?.name?.charAt(0)?.toUpperCase() || '∞'}</Text>
           </View>
           <Text style={styles.profileName}>{user?.name || 'LinkLoop User'}</Text>
           <Text style={styles.profileEmail}>{user?.email || ''}</Text>
           <View style={styles.badgeRow}>
-            <View style={[styles.badge, isMember && { borderColor: '#34C759' }]}>
-              <Text style={[styles.badgeText, isMember && { color: '#34C759' }]}>
+            <View style={[styles.badge, { borderColor: accent }]}>
+              <Text style={[styles.badgeText, { color: accent }]}>
                 {isMember ? '∞ Loop Member' : '💙 T1D Warrior'}
               </Text>
             </View>
@@ -212,14 +215,14 @@ export default function ProfileScreen() {
                 {editingName ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
                     <TextInput
-                      style={[styles.nameInput]}
+                      style={[styles.nameInput, { borderColor: accent }]}
                       value={newName}
                       onChangeText={setNewName}
                       autoFocus
                       returnKeyType="done"
                       onSubmitEditing={handleSaveName}
                     />
-                    <TouchableOpacity onPress={handleSaveName} disabled={savingName} style={styles.nameSaveBtn}>
+                    <TouchableOpacity onPress={handleSaveName} disabled={savingName} style={[styles.nameSaveBtn, { backgroundColor: accent }]}>
                       <Text style={styles.nameSaveBtnText}>{savingName ? '...' : 'Save'}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => { setEditingName(false); setNewName(user?.name || ''); }} style={styles.nameCancelBtn}>
@@ -228,7 +231,7 @@ export default function ProfileScreen() {
                   </View>
                 ) : (
                   <TouchableOpacity onPress={() => setEditingName(true)}>
-                    <Text style={[styles.settingValue, { color: '#4A90D9' }]}>{user?.name || 'Not set'} ✏️</Text>
+                    <Text style={[styles.settingValue, { color: accent }]}>{user?.name || 'Not set'} ✏️</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -256,7 +259,7 @@ export default function ProfileScreen() {
                   {editingWarriorName ? (
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
                       <TextInput
-                        style={[styles.nameInput]}
+                        style={[styles.nameInput, { borderColor: accent }]}
                         value={newWarriorName}
                         onChangeText={setNewWarriorName}
                         placeholder="e.g. Shayla, My Daughter"
@@ -265,7 +268,7 @@ export default function ProfileScreen() {
                         returnKeyType="done"
                         onSubmitEditing={handleSaveWarriorName}
                       />
-                      <TouchableOpacity onPress={handleSaveWarriorName} disabled={savingWarriorName} style={styles.nameSaveBtn}>
+                      <TouchableOpacity onPress={handleSaveWarriorName} disabled={savingWarriorName} style={[styles.nameSaveBtn, { backgroundColor: accent }]}>
                         <Text style={styles.nameSaveBtnText}>{savingWarriorName ? '...' : 'Save'}</Text>
                       </TouchableOpacity>
                       <TouchableOpacity onPress={() => { setEditingWarriorName(false); setNewWarriorName(user?.warriorDisplayName || ''); }} style={styles.nameCancelBtn}>
@@ -274,7 +277,7 @@ export default function ProfileScreen() {
                     </View>
                   ) : (
                     <TouchableOpacity onPress={() => setEditingWarriorName(true)}>
-                      <Text style={[styles.settingValue, { color: '#4A90D9' }]}>{user?.warriorDisplayName || 'Use default name'} ✏️</Text>
+                      <Text style={[styles.settingValue, { color: accent }]}>{user?.warriorDisplayName || 'Use default name'} ✏️</Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -301,7 +304,7 @@ export default function ProfileScreen() {
               </View>
             </View>
             <TextInput
-              style={styles.thresholdInput}
+              style={[styles.thresholdInput, { borderColor: accent }]}
               value={lowThreshold}
               onChangeText={setLowThreshold}
               keyboardType="number-pad"
@@ -319,7 +322,7 @@ export default function ProfileScreen() {
               </View>
             </View>
             <TextInput
-              style={styles.thresholdInput}
+              style={[styles.thresholdInput, { borderColor: accent }]}
               value={highThreshold}
               onChangeText={setHighThreshold}
               keyboardType="number-pad"
@@ -337,7 +340,7 @@ export default function ProfileScreen() {
               </View>
             </View>
             <TextInput
-              style={styles.thresholdInput}
+              style={[styles.thresholdInput, { borderColor: accent }]}
               value={highAlertDelay}
               onChangeText={setHighAlertDelay}
               keyboardType="number-pad"
@@ -349,7 +352,7 @@ export default function ProfileScreen() {
           </View>
 
           <TouchableOpacity
-            style={[styles.nameSaveBtn, { alignSelf: 'flex-end', marginTop: 10, paddingHorizontal: 20, paddingVertical: 10 }]}
+            style={[styles.nameSaveBtn, { backgroundColor: accent, alignSelf: 'flex-end', marginTop: 10, paddingHorizontal: 20, paddingVertical: 10 }]}
             onPress={handleSaveThresholds}
             disabled={savingThresholds}
           >
@@ -378,7 +381,7 @@ export default function ProfileScreen() {
                 setPushPrefs(p => ({ ...p, glucoseAlerts: val }));
                 usersAPI.savePushPreferences({ glucoseAlerts: val }).catch(console.log);
               }}
-              trackColor={{ false: '#3A3A3C', true: '#4A90D9' }}
+              trackColor={{ false: '#3A3A3C', true: accent }}
               thumbColor="#fff"
             />
           </View>
@@ -397,7 +400,7 @@ export default function ProfileScreen() {
                 setPushPrefs(p => ({ ...p, acknowledgments: val }));
                 usersAPI.savePushPreferences({ acknowledgments: val }).catch(console.log);
               }}
-              trackColor={{ false: '#3A3A3C', true: '#4A90D9' }}
+              trackColor={{ false: '#3A3A3C', true: accent }}
               thumbColor="#fff"
             />
           </View>
@@ -416,7 +419,7 @@ export default function ProfileScreen() {
                 setPushPrefs(p => ({ ...p, alertResolved: val }));
                 usersAPI.savePushPreferences({ alertResolved: val }).catch(console.log);
               }}
-              trackColor={{ false: '#3A3A3C', true: '#4A90D9' }}
+              trackColor={{ false: '#3A3A3C', true: accent }}
               thumbColor="#fff"
             />
           </View>
@@ -435,7 +438,7 @@ export default function ProfileScreen() {
                 setPushPrefs(p => ({ ...p, newMessages: val }));
                 usersAPI.savePushPreferences({ newMessages: val }).catch(console.log);
               }}
-              trackColor={{ false: '#3A3A3C', true: '#4A90D9' }}
+              trackColor={{ false: '#3A3A3C', true: accent }}
               thumbColor="#fff"
             />
           </View>
@@ -454,7 +457,7 @@ export default function ProfileScreen() {
                 setPushPrefs(p => ({ ...p, groupMessages: val }));
                 usersAPI.savePushPreferences({ groupMessages: val }).catch(console.log);
               }}
-              trackColor={{ false: '#3A3A3C', true: '#4A90D9' }}
+              trackColor={{ false: '#3A3A3C', true: accent }}
               thumbColor="#fff"
             />
           </View>
@@ -507,6 +510,59 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
         )}
+
+        {/* Theme Picker */}
+        <View style={styles.settingsCard}>
+          <Text style={styles.sectionTitle}>🎨 App Theme</Text>
+          <Text style={[styles.settingDescription, { marginBottom: 16 }]}>
+            Choose a color palette for your LinkLoop experience
+          </Text>
+          <View style={styles.themeGrid}>
+            {palettes.map((p) => {
+              const isActive = palette.id === p.id;
+              const displayColor = isMember ? p.member : p.warrior;
+              const displayDark = isMember ? p.memberDark : p.warriorDark;
+              return (
+                <TouchableOpacity
+                  key={p.id}
+                  style={[
+                    styles.themeOption,
+                    isActive && { borderColor: displayColor, borderWidth: 2 },
+                  ]}
+                  onPress={() => setTheme(p.id)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.themeColorRow}>
+                    <View style={[styles.themeColorDot, { backgroundColor: displayColor }]} />
+                    <View style={[styles.themeColorDot, { backgroundColor: displayDark }]} />
+                  </View>
+                  <Text style={[
+                    styles.themeOptionLabel,
+                    isActive && { color: displayColor, fontWeight: '700' },
+                  ]}>
+                    {p.name}
+                  </Text>
+                  {isActive && (
+                    <Text style={[styles.themeActiveCheck, { color: displayColor }]}>✓</Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          {/* Preview */}
+          <View style={[styles.themePreview, { borderColor: accent }]}>
+            <Text style={styles.themePreviewLabel}>Preview</Text>
+            <View style={styles.themePreviewRow}>
+              <View style={[styles.themePreviewBtn, { backgroundColor: accent }]}>
+                <Text style={styles.themePreviewBtnText}>Button</Text>
+              </View>
+              <View style={[styles.themePreviewBadge, { borderColor: accent }]}>
+                <Text style={[styles.themePreviewBadgeText, { color: accent }]}>Badge</Text>
+              </View>
+              <View style={[styles.themePreviewDot, { backgroundColor: accent }]} />
+            </View>
+          </View>
+        </View>
 
         {/* App Info */}
         <View style={styles.settingsCard}>
@@ -622,4 +678,34 @@ const styles = StyleSheet.create({
   nameCancelBtn: { paddingHorizontal: 10, paddingVertical: 6, marginLeft: 4 },
   nameCancelBtnText: { color: '#888', fontSize: 13 },
   thresholdInput: { backgroundColor: '#2C2C2E', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 18, fontWeight: 'bold', color: '#fff', textAlign: 'center', width: 70, borderWidth: 1, borderColor: '#4A90D9' },
+
+  // Theme Picker
+  themeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 },
+  themeOption: {
+    width: '47%',
+    backgroundColor: '#2C2C2E',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#3A3A3C',
+    position: 'relative',
+  },
+  themeColorRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+  themeColorDot: { width: 24, height: 24, borderRadius: 12 },
+  themeOptionLabel: { fontSize: 13, color: '#A0A0A0', fontWeight: '500' },
+  themeActiveCheck: { position: 'absolute', top: 10, right: 12, fontSize: 16, fontWeight: 'bold' },
+  themePreview: {
+    backgroundColor: '#2C2C2E',
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  themePreviewLabel: { fontSize: 12, color: '#888', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1 },
+  themePreviewRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  themePreviewBtn: { paddingHorizontal: 20, paddingVertical: 8, borderRadius: 8 },
+  themePreviewBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  themePreviewBadge: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, borderWidth: 1.5 },
+  themePreviewBadgeText: { fontSize: 12, fontWeight: '600' },
+  themePreviewDot: { width: 16, height: 16, borderRadius: 8 },
 });

@@ -3,13 +3,16 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, AppState, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { alertsAPI, glucoseAPI } from '../services/api';
 
 const AUTO_REFRESH_MS = 5 * 60 * 1000; // 5 minutes
 
 export default function HomeScreen({ navigation }) {
   const { user, circleRemoved, clearCircleRemoved, checkAuth } = useAuth();
+  const { getAccent, getGradient } = useTheme();
   const isMember = user?.role === 'member';
+  const accent = getAccent(isMember);
   const lowThreshold = user?.settings?.lowThreshold ?? 70;
   const highThreshold = user?.settings?.highThreshold ?? 180;
 
@@ -85,10 +88,10 @@ export default function HomeScreen({ navigation }) {
   const onRefresh = () => { setRefreshing(true); loadData(); };
 
   const getGlucoseColor = (value) => {
-    if (!value) return '#4A90D9';
+    if (!value) return accent;
     if (value < lowThreshold) return '#FF6B6B';
     if (value > highThreshold) return '#FFA500';
-    return '#4A90D9';
+    return accent;
   };
 
   const getGlucoseStatus = (value) => {
@@ -110,11 +113,11 @@ export default function HomeScreen({ navigation }) {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#4A90D9']} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[accent]} />}
     >
       {/* Compact Hero */}
       <LinearGradient
-        colors={isMember ? ['#34C759', '#2A9E47'] : ['#4A90D9', '#3A7BC8']}
+        colors={getGradient(isMember)}
         style={styles.hero}
       >
         <Text style={styles.heroTitle}>{'\u221E'} LinkLoop</Text>
@@ -199,10 +202,10 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.statsCard}>
           <Text style={styles.statsTitle}>Today's Overview</Text>
           {loading ? (
-            <ActivityIndicator size="small" color="#4A90D9" style={{ paddingVertical: 20 }} />
+            <ActivityIndicator size="small" color={accent} style={{ paddingVertical: 20 }} />
           ) : stats && stats.count > 0 ? (
             <View style={styles.statsRow}>
-              <StatBox label="Time in Range" value={stats.timeInRange + '%'} color="#4A90D9" />
+              <StatBox label="Time in Range" value={stats.timeInRange + '%'} color={accent} />
               <StatBox label="Avg Glucose" value={'' + stats.average} color="#FFA500" />
               <StatBox label="Low Events" value={'' + stats.low} color="#FF6B6B" />
               <StatBox label="High Events" value={'' + (stats.high || 0)} color="#FFA500" />

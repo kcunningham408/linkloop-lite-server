@@ -5,10 +5,14 @@ import {
 } from 'react-native';
 import { chatAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 export default function ChatScreen({ route, navigation }) {
   const { circleId, memberName, memberEmoji, relationship } = route.params;
   const { user } = useAuth();
+  const { getAccent } = useTheme();
+  const accent = getAccent(user?.role === 'member');
+
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(true);
@@ -181,11 +185,11 @@ export default function ChatScreen({ route, navigation }) {
         )}
         <View style={[
           styles.bubble,
-          isMe ? styles.bubbleMe : styles.bubbleOther,
+          isMe ? [styles.bubbleMe, { backgroundColor: accent }] : styles.bubbleOther,
           msg._temp && styles.bubbleSending,
         ]}>
           {!isMe && (
-            <Text style={styles.senderName}>{msg.senderName || memberName}</Text>
+            <Text style={[styles.senderName, { color: accent }]}>{msg.senderName || memberName}</Text>
           )}
           <Text style={[styles.msgText, isMe ? styles.msgTextMe : styles.msgTextOther]}>
             {getMessageTypeIcon(msg.type)}{msg.text}
@@ -202,7 +206,7 @@ export default function ChatScreen({ route, navigation }) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4A90D9" />
+          <ActivityIndicator size="large" color={accent} />
           <Text style={styles.loadingText}>Loading messages...</Text>
         </View>
       </SafeAreaView>
@@ -221,7 +225,7 @@ export default function ChatScreen({ route, navigation }) {
           <Text style={styles.chatBannerEmoji}>{memberEmoji}</Text>
           <View>
             <Text style={styles.chatBannerName}>{memberName}</Text>
-            <Text style={styles.chatBannerRole}>{relationship || 'Care Circle Member'}</Text>
+            <Text style={[styles.chatBannerRole, { color: accent }]}>{relationship || 'Care Circle Member'}</Text>
           </View>
         </View>
 
@@ -236,7 +240,7 @@ export default function ChatScreen({ route, navigation }) {
           onEndReached={loadOlderMessages}
           onEndReachedThreshold={0.3}
           ListFooterComponent={loadingMore ? (
-            <ActivityIndicator size="small" color="#4A90D9" style={{ padding: 10 }} />
+            <ActivityIndicator size="small" color={accent} style={{ padding: 10 }} />
           ) : null}
           ListEmptyComponent={
             <View style={styles.emptyChat}>
@@ -262,7 +266,7 @@ export default function ChatScreen({ route, navigation }) {
             returnKeyType="default"
           />
           <TouchableOpacity
-            style={[styles.sendButton, !text.trim() && styles.sendButtonDisabled]}
+            style={[styles.sendButton, { backgroundColor: accent }, !text.trim() && styles.sendButtonDisabled]}
             onPress={handleSend}
             disabled={!text.trim() || sending}
           >

@@ -7,6 +7,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 // Import context
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 
 // Import screens
 import HealthDisclaimer from './components/HealthDisclaimer';
@@ -28,10 +29,11 @@ const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
 function MainTabs() {
+  const { palette } = useTheme();
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarActiveTintColor: '#4A90D9',
+        tabBarActiveTintColor: palette.warrior,
         tabBarInactiveTintColor: '#888',
         tabBarStyle: styles.tabBar,
         headerStyle: {
@@ -106,10 +108,11 @@ function MainTabs() {
 
 // Loop Member tab nav — sees the warrior's CGM data, can chat & get alerts
 function LoopMemberTabs() {
+  const { palette } = useTheme();
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarActiveTintColor: '#34C759',
+        tabBarActiveTintColor: palette.member,
         tabBarInactiveTintColor: '#888',
         tabBarStyle: styles.tabBar,
         headerStyle: {
@@ -274,13 +277,15 @@ function AppNavigator() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <NavigationContainer>
-        <StatusBar style="light" backgroundColor="#4A90D9" />
-        <AppNavigator />
-        <HealthDisclaimer />
-      </NavigationContainer>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <NavigationContainer>
+          <StatusBar style="light" backgroundColor="#4A90D9" />
+          <AppNavigator />
+          <HealthDisclaimer />
+        </NavigationContainer>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
