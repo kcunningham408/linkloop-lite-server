@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import ScreenHeader from '../components/ScreenHeader';
 import { alertsAPI, glucoseAPI } from '../services/api';
 
 const SEVERITY_CONFIG = {
@@ -331,12 +332,10 @@ export default function AlertsScreen({ navigation }) {
       }
     >
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>🔔 Notifications</Text>
-        <Text style={styles.headerSubtitle}>
-          Acknowledge notifications to keep your circle in the loop
-        </Text>
-      </View>
+      <ScreenHeader
+        title="🔔 Notifications"
+        subtitle="Acknowledge notifications to keep your circle in the loop"
+      />
 
       <View style={styles.content}>
         {/* Manual Check Button — subtle, for testing */}
@@ -596,11 +595,6 @@ export default function AlertsScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#111111' },
-
-  // Header
-  header: { backgroundColor: '#1C1C1E', padding: 20, paddingTop: 30 },
-  headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#fff', marginBottom: 8 },
-  headerSubtitle: { fontSize: 14, color: '#A0A0A0' },
 
   content: { padding: 16 },
 

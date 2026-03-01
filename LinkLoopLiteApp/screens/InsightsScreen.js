@@ -3,6 +3,7 @@ import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, Toucha
 
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import ScreenHeader from '../components/ScreenHeader';
 import { insightsAPI } from '../services/api';
 
 const TIME_RANGES = [
@@ -159,10 +160,10 @@ export default function InsightsScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[accent]} />}
     >
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>✨ AI Insights</Text>
-        <Text style={styles.headerSubtitle}>Pattern analysis & trend notifications powered by AI</Text>
-      </View>
+      <ScreenHeader
+        title="✨ AI Insights"
+        subtitle="Pattern analysis & trend notifications powered by AI"
+      />
 
       <View style={styles.content}>
         {/* Daily Motivation Card — always visible */}
@@ -424,9 +425,6 @@ function SummaryPill({ label, value, color }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#111111' },
-  header: { backgroundColor: '#1C1C1E', padding: 25, paddingTop: 30 },
-  headerTitle: { fontSize: 26, fontWeight: 'bold', color: '#fff', marginBottom: 8 },
-  headerSubtitle: { fontSize: 14, color: '#A0A0A0' },
   content: { padding: 20 },
 
   // Daily motivation

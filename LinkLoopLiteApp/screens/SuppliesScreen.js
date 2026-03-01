@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Modal, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import ScreenHeader from '../components/ScreenHeader';
 import { suppliesAPI } from '../services/api';
 
 const SUPPLY_CATEGORIES = [
@@ -94,10 +95,10 @@ export default function SuppliesScreen() {
       style={styles.container}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[accent]} />}
     >
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Supply Tracker</Text>
-        <Text style={styles.headerSubtitle}>Keep track of your T1D supplies and never run out</Text>
-      </View>
+      <ScreenHeader
+        title="Supply Tracker"
+        subtitle="Keep track of your T1D supplies and never run out"
+      />
 
       <View style={styles.content}>
         {/* Supply Summary */}
@@ -275,9 +276,6 @@ export default function SuppliesScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#111111' },
-  header: { backgroundColor: '#1C1C1E', padding: 20, paddingTop: 30 },
-  headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#fff', marginBottom: 8 },
-  headerSubtitle: { fontSize: 14, color: '#A0A0A0' },
   content: { padding: 20 },
   summaryCard: { backgroundColor: '#1C1C1E', borderRadius: 12, padding: 20, marginBottom: 20, borderWidth: 1, borderColor: '#2C2C2E' },
   summaryTitle: { fontSize: 16, fontWeight: 'bold', color: '#fff', marginBottom: 15, textAlign: 'center' },

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Alert, Linking, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import ScreenHeader from '../components/ScreenHeader';
 import { circleAPI, glucoseAPI, usersAPI } from '../services/api';
 
 const APP_VERSION = Constants.expoConfig?.version || Constants.manifest?.version || '1.1.0';
@@ -181,10 +182,10 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profile & Settings</Text>
-        <Text style={styles.headerSubtitle}>Manage your account and app preferences</Text>
-      </View>
+      <ScreenHeader
+        title="Profile & Settings"
+        subtitle="Manage your account and app preferences"
+      />
 
       <View style={styles.content}>
         {/* Profile Card */}
@@ -638,9 +639,6 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#111111' },
-  header: { backgroundColor: '#1C1C1E', padding: 20, paddingTop: 30 },
-  headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#fff', marginBottom: 8 },
-  headerSubtitle: { fontSize: 14, color: '#A0A0A0' },
   content: { padding: 20 },
   profileCard: { backgroundColor: '#1C1C1E', borderRadius: 12, padding: 25, alignItems: 'center', marginBottom: 20, borderWidth: 1, borderColor: '#2C2C2E' },
   avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#4A90D9', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },

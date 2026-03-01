@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Clipboard, Linking, Modal, Platform, RefreshControl, ScrollView, Share, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import ScreenHeader from '../components/ScreenHeader';
 import { alertsAPI, circleAPI } from '../services/api';
 
 // TODO: Replace with actual App Store / Play Store URLs when live
@@ -199,14 +200,12 @@ export default function CareCircleScreen() {
       style={styles.container}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[accent]} />}
     >
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>{isMember ? 'Care Circle' : 'Your Care Circle'}</Text>
-        <Text style={styles.headerSubtitle}>
-          {isMember
-            ? 'You\'re part of a Care Circle — here\'s who else is in the loop'
-            : 'Share your glucose data and updates with trusted caregivers'}
-        </Text>
-      </View>
+      <ScreenHeader
+        title={isMember ? 'Care Circle' : 'Your Care Circle'}
+        subtitle={isMember
+          ? "You're part of a Care Circle — here's who else is in the loop"
+          : 'Share your glucose data and updates with trusted caregivers'}
+      />
 
       <View style={styles.content}>
         {/* Notifications Banner */}
@@ -517,9 +516,6 @@ export default function CareCircleScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#111111' },
-  header: { backgroundColor: '#1C1C1E', padding: 20, paddingTop: 30 },
-  headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#fff', marginBottom: 8 },
-  headerSubtitle: { fontSize: 14, color: '#A0A0A0' },
   content: { padding: 20 },
   alertBanner: { backgroundColor: '#1C1C1E', borderRadius: 14, padding: 16, flexDirection: 'row', alignItems: 'center', marginBottom: 20, borderWidth: 1, borderColor: '#2C2C2E' },
   alertBannerActive: { borderColor: '#FF6B6B', borderWidth: 2, backgroundColor: '#2A1A1A' },

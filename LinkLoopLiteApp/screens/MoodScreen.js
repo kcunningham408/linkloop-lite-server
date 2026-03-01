@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import ScreenHeader from '../components/ScreenHeader';
 import { moodAPI } from '../services/api';
 
 const MOOD_OPTIONS = [
@@ -141,10 +142,10 @@ export default function MoodScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[accent]} />}
       >
         {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>How Are You Feeling?</Text>
-          <Text style={styles.headerSubtitle}>Track your mood alongside your glucose — AI will learn your patterns</Text>
-        </View>
+        <ScreenHeader
+          title="How Are You Feeling?"
+          subtitle="Track your mood alongside your glucose — AI will learn your patterns"
+        />
 
         <View style={styles.content}>
           {/* Mood Picker */}
@@ -345,15 +346,6 @@ export default function MoodScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#111111' },
-  header: {
-    backgroundColor: '#1C1C1E',
-    padding: 20,
-    paddingTop: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2C2C2E',
-  },
-  headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#fff', marginBottom: 6 },
-  headerSubtitle: { fontSize: 14, color: '#A0A0A0', lineHeight: 20 },
 
   content: { padding: 20 },
 
