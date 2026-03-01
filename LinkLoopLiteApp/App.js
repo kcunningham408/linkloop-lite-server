@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -50,7 +51,9 @@ function MainTabs() {
         options={{
           title: 'LinkLoop',
           tabBarLabel: 'Home',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>🏠</Text>,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'home' : 'home-outline'} size={22} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -59,7 +62,9 @@ function MainTabs() {
         options={{
           title: 'My Glucose',
           tabBarLabel: 'CGM',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>📊</Text>,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'pulse' : 'pulse-outline'} size={22} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -68,7 +73,9 @@ function MainTabs() {
         options={{
           title: 'Care Circle',
           tabBarLabel: 'Circle',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>👥</Text>,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'people' : 'people-outline'} size={22} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -77,7 +84,9 @@ function MainTabs() {
         options={{
           title: 'My Supplies',
           tabBarLabel: 'Supplies',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>📦</Text>,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'medkit' : 'medkit-outline'} size={22} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -86,7 +95,9 @@ function MainTabs() {
         options={{
           title: 'My Profile',
           tabBarLabel: 'Profile',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>⚙️</Text>,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'settings' : 'settings-outline'} size={22} color={color} />
+          ),
         }}
       />
     </Tab.Navigator>
@@ -118,7 +129,9 @@ function LoopMemberTabs() {
         options={{
           title: 'Their Loop',
           tabBarLabel: 'Loop',
-          tabBarIcon: () => <Text style={{ fontSize: 20 }}>∞</Text>,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'infinite' : 'infinite-outline'} size={24} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -127,7 +140,9 @@ function LoopMemberTabs() {
         options={{
           title: 'Live Glucose',
           tabBarLabel: 'Glucose',
-          tabBarIcon: () => <Text style={{ fontSize: 20 }}>📊</Text>,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'pulse' : 'pulse-outline'} size={22} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -136,7 +151,9 @@ function LoopMemberTabs() {
         options={{
           title: 'CGM Alerts',
           tabBarLabel: 'Alerts',
-          tabBarIcon: () => <Text style={{ fontSize: 20 }}>🔔</Text>,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'notifications' : 'notifications-outline'} size={22} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -145,7 +162,9 @@ function LoopMemberTabs() {
         options={{
           title: 'My Profile',
           tabBarLabel: 'Profile',
-          tabBarIcon: () => <Text style={{ fontSize: 20 }}>👤</Text>,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'person' : 'person-outline'} size={22} color={color} />
+          ),
         }}
       />
     </Tab.Navigator>
