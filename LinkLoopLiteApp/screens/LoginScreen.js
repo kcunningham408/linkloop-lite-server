@@ -10,9 +10,9 @@ import {
     View,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import { circleAPI, pingServer } from '../services/api';
+import { authAPI, circleAPI, pingServer } from '../services/api';
 
-// mode: 'landing' | 'login' | 'register' | 'join'
+// mode: 'landing' | 'login' | 'register' | 'join' | 'forgot' | 'reset'
 export default function LoginScreen() {
   const [mode, setMode] = useState('landing');
   const [loginMethod, setLoginMethod] = useState('email');
@@ -22,11 +22,16 @@ export default function LoginScreen() {
   const [inviteCode, setInviteCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [resetCode, setResetCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [resetIdentifier, setResetIdentifier] = useState('');
 
   const nameRef = useRef(null);
   const identifierRef = useRef(null);
   const passwordRef = useRef(null);
   const inviteRef = useRef(null);
+  const resetCodeRef = useRef(null);
+  const newPasswordRef = useRef(null);
 
   const { login, register } = useAuth();
 
@@ -42,6 +47,9 @@ export default function LoginScreen() {
     setInviteCode('');
     setShowPassword(false);
     setLoginMethod('email');
+    setResetCode('');
+    setNewPassword('');
+    if (newMode !== 'reset') setResetIdentifier('');
   };
 
   const handleSubmit = async () => {
@@ -87,12 +95,54 @@ export default function LoginScreen() {
       } finally {
         setIsLoading(false);
       }
+
+    } else if (mode === 'forgot') {
+      if (!identifier) {
+        Alert.alert('Error', 'Please enter your email or phone number');
+        return;
+      }
+      setIsLoading(true);
+      try {
+        await authAPI.forgotPassword(identifier);
+        setResetIdentifier(identifier);
+        setMode('reset');
+        Alert.alert('Code Sent', 'Check your email for a 6-digit reset code. (In development, the code is returned in the response.)');
+      } catch (err) {
+        Alert.alert('Error', err.message || 'Could not send reset code');
+      } finally {
+        setIsLoading(false);
+      }
+
+    } else if (mode === 'reset') {
+      if (!resetCode || !newPassword) {
+        Alert.alert('Error', 'Please enter the reset code and a new password');
+        return;
+      }
+      if (newPassword.length < 6) {
+        Alert.alert('Error', 'Password must be at least 6 characters');
+        return;
+      }
+      setIsLoading(true);
+      try {
+        const data = await authAPI.resetPassword(resetIdentifier, resetCode.trim(), newPassword);
+        if (data.token) {
+          // Auto-login
+          await login(resetIdentifier, newPassword);
+        }
+        Alert.alert('Success', 'Your password has been reset!');
+      } catch (err) {
+        Alert.alert('Reset Failed', err.message || 'Invalid code or something went wrong');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
   const isJoin = mode === 'join';
   const isRegister = mode === 'register';
   const isLogin = mode === 'login';
+  const isForgot = mode === 'forgot';
+  const isReset = mode === 'reset';
 
   // ── Hero section shown when no form is active (landing) ──────────
   const renderHero = () => (
@@ -132,7 +182,7 @@ export default function LoginScreen() {
 
       {/* Form title */}
       <Text style={styles.formTitle}>
-        {isLogin ? 'Welcome back' : isRegister ? 'Create your account' : 'Join a Care Circle'}
+        {isLogin ? 'Welcome back' : isRegister ? 'Create your account' : isForgot ? 'Forgot Password' : isReset ? 'Reset Password' : 'Join a Care Circle'}
       </Text>
       {isLogin && (
         <Text style={styles.formSubtitle}>Sign in to your LinkLoop account</Text>
@@ -142,6 +192,12 @@ export default function LoginScreen() {
       )}
       {isJoin && (
         <Text style={styles.formSubtitle}>Enter your invite code to get connected automatically</Text>
+      )}
+      {isForgot && (
+        <Text style={styles.formSubtitle}>Enter your email or phone and we'll send you a reset code</Text>
+      )}
+      {isReset && (
+        <Text style={styles.formSubtitle}>Enter the 6-digit code and your new password</Text>
       )}
 
       {/* Invite code — join only */}
@@ -183,59 +239,108 @@ export default function LoginScreen() {
         </View>
       )}
 
-      {/* Email / Phone toggle */}
-      <View style={styles.methodToggle}>
-        <TouchableOpacity
-          style={[styles.methodTab, loginMethod === 'email' && styles.methodTabActive]}
-          onPress={() => { setLoginMethod('email'); setIdentifier(''); }}
-        >
-          <Text style={[styles.methodTabText, loginMethod === 'email' && styles.methodTabActiveText]}>Email</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.methodTab, loginMethod === 'phone' && styles.methodTabActive]}
-          onPress={() => { setLoginMethod('phone'); setIdentifier(''); }}
-        >
-          <Text style={[styles.methodTabText, loginMethod === 'phone' && styles.methodTabActiveText]}>Phone</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>{loginMethod === 'email' ? 'Email' : 'Phone Number'}</Text>
-        <TextInput
-          ref={identifierRef}
-          style={styles.input}
-          placeholder={loginMethod === 'email' ? 'your@email.com' : '(555) 123-4567'}
-          placeholderTextColor="#555"
-          value={identifier}
-          onChangeText={setIdentifier}
-          keyboardType={loginMethod === 'email' ? 'email-address' : 'phone-pad'}
-          autoCapitalize="none"
-          returnKeyType="next"
-          blurOnSubmit={false}
-          onSubmitEditing={() => passwordRef.current?.focus()}
-        />
-      </View>
-
-      <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Password</Text>
-        <View style={styles.passwordRow}>
-          <TextInput
-            ref={passwordRef}
-            style={styles.passwordInput}
-            placeholder="Password"
-            placeholderTextColor="#555"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!showPassword}
-            returnKeyType="go"
-            onSubmitEditing={handleSubmit}
-          />
-          <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPassword(!showPassword)}>
-            <Text style={styles.eyeBtnText}>{showPassword ? 'Hide' : 'Show'}</Text>
+      {/* Email / Phone toggle — not shown on reset mode */}
+      {!isReset && (
+        <View style={styles.methodToggle}>
+          <TouchableOpacity
+            style={[styles.methodTab, loginMethod === 'email' && styles.methodTabActive]}
+            onPress={() => { setLoginMethod('email'); setIdentifier(''); }}
+          >
+            <Text style={[styles.methodTabText, loginMethod === 'email' && styles.methodTabActiveText]}>Email</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.methodTab, loginMethod === 'phone' && styles.methodTabActive]}
+            onPress={() => { setLoginMethod('phone'); setIdentifier(''); }}
+          >
+            <Text style={[styles.methodTabText, loginMethod === 'phone' && styles.methodTabActiveText]}>Phone</Text>
           </TouchableOpacity>
         </View>
-        {!isLogin && <Text style={styles.hint}>At least 6 characters</Text>}
-      </View>
+      )}
+
+      {!isReset && (
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>{loginMethod === 'email' ? 'Email' : 'Phone Number'}</Text>
+          <TextInput
+            ref={identifierRef}
+            style={styles.input}
+            placeholder={loginMethod === 'email' ? 'your@email.com' : '(555) 123-4567'}
+            placeholderTextColor="#555"
+            value={identifier}
+            onChangeText={setIdentifier}
+            keyboardType={loginMethod === 'email' ? 'email-address' : 'phone-pad'}
+            autoCapitalize="none"
+            returnKeyType={isForgot ? 'go' : 'next'}
+            blurOnSubmit={isForgot}
+            onSubmitEditing={() => isForgot ? handleSubmit() : passwordRef.current?.focus()}
+          />
+        </View>
+      )}
+
+      {/* Password — login, register, join only */}
+      {!isForgot && !isReset && (
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Password</Text>
+          <View style={styles.passwordRow}>
+            <TextInput
+              ref={passwordRef}
+              style={styles.passwordInput}
+              placeholder="Password"
+              placeholderTextColor="#555"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              returnKeyType="go"
+              onSubmitEditing={handleSubmit}
+            />
+            <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPassword(!showPassword)}>
+              <Text style={styles.eyeBtnText}>{showPassword ? 'Hide' : 'Show'}</Text>
+            </TouchableOpacity>
+          </View>
+          {!isLogin && <Text style={styles.hint}>At least 6 characters</Text>}
+        </View>
+      )}
+
+      {/* Reset code + new password — reset mode only */}
+      {isReset && (
+        <>
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>6-Digit Reset Code</Text>
+            <TextInput
+              ref={resetCodeRef}
+              style={[styles.input, { textAlign: 'center', letterSpacing: 6, fontSize: 22, fontWeight: '800' }]}
+              placeholder="000000"
+              placeholderTextColor="#555"
+              value={resetCode}
+              onChangeText={setResetCode}
+              keyboardType="number-pad"
+              maxLength={6}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => newPasswordRef.current?.focus()}
+            />
+          </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>New Password</Text>
+            <View style={styles.passwordRow}>
+              <TextInput
+                ref={newPasswordRef}
+                style={styles.passwordInput}
+                placeholder="New password"
+                placeholderTextColor="#555"
+                value={newPassword}
+                onChangeText={setNewPassword}
+                secureTextEntry={!showPassword}
+                returnKeyType="go"
+                onSubmitEditing={handleSubmit}
+              />
+              <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPassword(!showPassword)}>
+                <Text style={styles.eyeBtnText}>{showPassword ? 'Hide' : 'Show'}</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.hint}>At least 6 characters</Text>
+          </View>
+        </>
+      )}
 
       {/* Submit */}
       <TouchableOpacity
@@ -250,18 +355,25 @@ export default function LoginScreen() {
           <ActivityIndicator color="#fff" />
         ) : (
           <Text style={styles.submitBtnText}>
-            {isLogin ? 'Sign In' : isRegister ? 'Create Account' : 'Join Circle'}
+            {isLogin ? 'Sign In' : isRegister ? 'Create Account' : isForgot ? 'Send Reset Code' : isReset ? 'Reset Password' : 'Join Circle'}
           </Text>
         )}
       </TouchableOpacity>
 
       {/* Sign up / sign in crosslinks */}
       {isLogin && (
-        <TouchableOpacity onPress={() => resetFields('register')} style={styles.crossLink}>
-          <Text style={styles.crossLinkText}>
-            New here?{'  '}<Text style={styles.crossLinkBold}>Create a free account</Text>
-          </Text>
-        </TouchableOpacity>
+        <>
+          <TouchableOpacity onPress={() => resetFields('forgot')} style={styles.crossLink}>
+            <Text style={styles.crossLinkText}>
+              <Text style={styles.crossLinkBold}>Forgot Password?</Text>
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => resetFields('register')} style={styles.crossLink}>
+            <Text style={styles.crossLinkText}>
+              New here?{'  '}<Text style={styles.crossLinkBold}>Create a free account</Text>
+            </Text>
+          </TouchableOpacity>
+        </>
       )}
       {isRegister && (
         <TouchableOpacity onPress={() => resetFields('login')} style={styles.crossLink}>
@@ -291,7 +403,7 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* Show small top logo only when a form is open */}
-          {(isLogin || isRegister || isJoin) && (
+          {(isLogin || isRegister || isJoin || isForgot || isReset) && (
             <View style={styles.topLogo}>
               <Text style={styles.topLogoSymbol}>∞</Text>
               <Text style={styles.topLogoText}>LinkLoop</Text>
@@ -299,7 +411,7 @@ export default function LoginScreen() {
           )}
 
           {/* Landing CTAs or form */}
-          {isLogin || isRegister || isJoin ? renderForm() : renderHero()}
+          {isLogin || isRegister || isJoin || isForgot || isReset ? renderForm() : renderHero()}
         </ScrollView>
       </LinearGradient>
     </KeyboardAvoidingView>

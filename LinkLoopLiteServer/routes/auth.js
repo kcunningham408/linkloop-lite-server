@@ -1,5 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const User = require('../models/User');
 
 const router = express.Router();
@@ -143,6 +144,98 @@ router.post('/login', async (req, res) => {
     });
   } catch (err) {
     console.error('Login error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   POST /api/auth/forgot-password
+// @desc    Generate a 6-digit reset code (returned in response — in production, email it)
+// @access  Public
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email, phone } = req.body;
+    if (!email && !phone) {
+      return res.status(400).json({ message: 'Email or phone number is required' });
+    }
+
+    let user;
+    if (email) {
+      user = await User.findOne({ email: email.toLowerCase().trim() });
+    } else {
+      const normalizedPhone = normalizePhone(phone);
+      if (normalizedPhone) user = await User.findOne({ phone: normalizedPhone });
+    }
+
+    if (!user) {
+      // Don't reveal if account exists — always return success
+      return res.json({ message: 'If an account exists, a reset code has been sent.' });
+    }
+
+    // Generate 6-digit code
+    const resetCode = crypto.randomInt(100000, 999999).toString();
+    user.resetToken = resetCode;
+    user.resetTokenExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    await user.save();
+
+    // In production, you'd email/text this code. For now, return it in the response.
+    // TODO: Integrate email service (SendGrid, SES, etc.)
+    console.log(`[Auth] Password reset code for ${user.email || user.phone}: ${resetCode}`);
+
+    res.json({
+      message: 'If an account exists, a reset code has been sent.',
+      // Remove this line before production — it's here for dev/testing only
+      _devResetCode: process.env.NODE_ENV !== 'production' ? resetCode : undefined,
+    });
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   POST /api/auth/reset-password
+// @desc    Reset password using the 6-digit code
+// @access  Public
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email, phone, resetCode, newPassword } = req.body;
+    if (!resetCode || !newPassword) {
+      return res.status(400).json({ message: 'Reset code and new password are required' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    let user;
+    if (email) {
+      user = await User.findOne({ email: email.toLowerCase().trim() });
+    } else if (phone) {
+      const normalizedPhone = normalizePhone(phone);
+      if (normalizedPhone) user = await User.findOne({ phone: normalizedPhone });
+    }
+
+    if (!user || user.resetToken !== resetCode) {
+      return res.status(400).json({ message: 'Invalid or expired reset code' });
+    }
+
+    if (!user.resetTokenExpiry || user.resetTokenExpiry < new Date()) {
+      return res.status(400).json({ message: 'Reset code has expired. Please request a new one.' });
+    }
+
+    user.password = newPassword; // will be hashed by pre-save hook
+    user.resetToken = null;
+    user.resetTokenExpiry = null;
+    await user.save();
+
+    // Auto-login: return a fresh token
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+
+    res.json({
+      message: 'Password reset successfully',
+      token,
+      user: userResponse(user),
+    });
+  } catch (err) {
+    console.error('Reset password error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });

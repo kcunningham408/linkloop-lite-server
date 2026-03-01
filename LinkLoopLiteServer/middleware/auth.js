@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
 module.exports = function(req, res, next) {
   const authHeader = req.header('Authorization');
@@ -17,6 +18,10 @@ module.exports = function(req, res, next) {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
+
+    // Touch lastActive (fire-and-forget, don't block the request)
+    User.findByIdAndUpdate(decoded.userId, { lastActive: new Date() }).catch(() => {});
+
     next();
   } catch (err) {
     res.status(401).json({ message: 'Token is not valid' });

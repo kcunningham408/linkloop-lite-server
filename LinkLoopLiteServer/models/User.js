@@ -36,6 +36,11 @@ const userSchema = new mongoose.Schema({
     ref: 'User',
     default: null
   },
+  // Optional display name the member uses for their warrior (e.g. "Shayla", "My Daughter")
+  warriorDisplayName: {
+    type: String,
+    default: null
+  },
   profileEmoji: {
     type: String,
     default: '😊'
@@ -43,6 +48,7 @@ const userSchema = new mongoose.Schema({
   settings: {
     lowThreshold: { type: Number, default: 70 },
     highThreshold: { type: Number, default: 180 },
+    highAlertDelay: { type: Number, default: 0 },  // minutes glucose must stay above highThreshold before alerting (0 = immediate)
     shareRealTimeGlucose: { type: Boolean, default: true },
     lowAlerts: { type: Boolean, default: true },
     highAlerts: { type: Boolean, default: true }
@@ -85,6 +91,20 @@ const userSchema = new mongoose.Schema({
     alertResolved:   { type: Boolean, default: true },  // warrior resolved an alert
     newMessages:     { type: Boolean, default: true },  // 1-on-1 chat messages
     groupMessages:   { type: Boolean, default: true },  // group Care Circle messages
+  },
+  // Last time the user opened the app / made an API call
+  lastActive: {
+    type: Date,
+    default: null
+  },
+  // Password reset
+  resetToken: {
+    type: String,
+    default: null
+  },
+  resetTokenExpiry: {
+    type: Date,
+    default: null
   },
   createdAt: {
     type: Date,

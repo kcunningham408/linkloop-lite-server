@@ -123,6 +123,34 @@ export const authAPI = {
   logout: async () => {
     await clearToken();
   },
+
+  forgotPassword: async (identifier) => {
+    const isPhone = /^\+?\d[\d\s\-()]{8,}$/.test(identifier.replace(/\s/g, ''));
+    const body = isPhone ? { phone: identifier } : { email: identifier };
+    return apiRequest('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  },
+
+  resetPassword: async (identifier, resetCode, newPassword) => {
+    const isPhone = /^\+?\d[\d\s\-()]{8,}$/.test(identifier.replace(/\s/g, ''));
+    const body = { resetCode, newPassword };
+    if (isPhone) body.phone = identifier;
+    else body.email = identifier;
+
+    const data = await apiRequest('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+    if (data.token) {
+      await setToken(data.token);
+    }
+    if (data.user) {
+      await setCachedUser(data.user);
+    }
+    return data;
+  },
 };
 
 // ============ USER API ============
@@ -146,6 +174,27 @@ export const userAPI = {
 
   deleteAccount: async () => {
     return apiRequest('/users/me', {
+      method: 'DELETE',
+    });
+  },
+};
+
+// ============ NOTES API ============
+
+export const notesAPI = {
+  add: async (text, noteTime = null) => {
+    return apiRequest('/notes', {
+      method: 'POST',
+      body: JSON.stringify({ text, noteTime }),
+    });
+  },
+
+  getAll: async (hours = 24) => {
+    return apiRequest(`/notes?hours=${hours}`);
+  },
+
+  remove: async (id) => {
+    return apiRequest(`/notes/${id}`, {
       method: 'DELETE',
     });
   },
@@ -176,6 +225,11 @@ export const glucoseAPI = {
   // Loop Member: fetch the linked warrior's glucose data (readings + stats + latest)
   getMemberView: async (ownerId, hours = 24) => {
     return apiRequest(`/glucose/member-view/${ownerId}?hours=${hours}`);
+  },
+
+  // Export glucose data as CSV
+  exportCSV: async (days = 30) => {
+    return apiRequest(`/glucose/export?days=${days}`);
   },
 };
 
@@ -211,6 +265,21 @@ export const circleAPI = {
     return apiRequest(`/circle/${memberId}`, {
       method: 'DELETE',
     });
+  },
+
+  getMyMembership: async () => {
+    return apiRequest('/circle/my-membership');
+  },
+
+  pauseMyAlerts: async (paused) => {
+    return apiRequest('/circle/my-status', {
+      method: 'PUT',
+      body: JSON.stringify({ paused }),
+    });
+  },
+
+  getRoster: async () => {
+    return apiRequest('/circle/roster');
   },
 };
 
@@ -301,6 +370,13 @@ export const alertsAPI = {
   resolve: async (alertId) => {
     return apiRequest(`/alerts/${alertId}/resolve`, {
       method: 'POST',
+    });
+  },
+
+  snooze: async (alertId, minutes = 30) => {
+    return apiRequest(`/alerts/${alertId}/snooze`, {
+      method: 'POST',
+      body: JSON.stringify({ minutes }),
     });
   },
 };
@@ -430,6 +506,13 @@ export const moodAPI = {
   remove: async (id) => {
     return apiRequest(`/mood/${id}`, {
       method: 'DELETE',
+    });
+  },
+
+  update: async (id, updates) => {
+    return apiRequest(`/mood/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
     });
   },
 };

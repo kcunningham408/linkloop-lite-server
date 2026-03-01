@@ -16,9 +16,9 @@ import ChatScreen from './screens/ChatScreen';
 import DexcomConnectScreen from './screens/DexcomConnectScreen';
 import GroupChatScreen from './screens/GroupChatScreen';
 import HomeScreen from './screens/HomeScreen';
-import MessagesScreen from './screens/MessagesScreen';
 import InsightsScreen from './screens/InsightsScreen';
 import LoginScreen from './screens/LoginScreen';
+import MessagesScreen from './screens/MessagesScreen';
 import MoodScreen from './screens/MoodScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import SuppliesScreen from './screens/SuppliesScreen';
@@ -128,6 +128,15 @@ function LoopMemberTabs() {
           title: 'Live Glucose',
           tabBarLabel: 'Glucose',
           tabBarIcon: () => <Text style={{ fontSize: 20 }}>📊</Text>,
+        }}
+      />
+      <Tab.Screen
+        name="Alerts"
+        component={AlertsScreen}
+        options={{
+          title: 'CGM Alerts',
+          tabBarLabel: 'Alerts',
+          tabBarIcon: () => <Text style={{ fontSize: 20 }}>🔔</Text>,
         }}
       />
       <Tab.Screen

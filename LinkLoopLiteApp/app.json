@@ -2,7 +2,7 @@
   "expo": {
     "name": "LinkLoop",
     "slug": "linkloop-lite",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "owner": "kcunningham408",
     "description": "T1D glucose tracking with Dexcom CGM integration, Care Circle sharing, and AI-powered insights.",
     "githubUrl": "https://github.com/kcunningham408/linkloop",

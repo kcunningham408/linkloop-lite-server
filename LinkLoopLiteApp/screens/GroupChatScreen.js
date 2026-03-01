@@ -1,10 +1,15 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  StyleSheet, Text, View, FlatList, TextInput, TouchableOpacity,
-  KeyboardAvoidingView, Platform, ActivityIndicator, SafeAreaView
+    ActivityIndicator,
+    FlatList,
+    KeyboardAvoidingView, Platform,
+    SafeAreaView,
+    StyleSheet, Text,
+    TextInput, TouchableOpacity,
+    View
 } from 'react-native';
-import { chatAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { chatAPI } from '../services/api';
 
 export default function GroupChatScreen({ navigation }) {
   const { user } = useAuth();

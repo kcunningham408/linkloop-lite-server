@@ -33,6 +33,7 @@ export default function CareCircleScreen() {
   const [newRelationship, setNewRelationship] = useState('parent');
   const [saving, setSaving] = useState(false);
   const [activeAlertCount, setActiveAlertCount] = useState(0);
+  const [roster, setRoster] = useState([]);
 
   // Real sharing settings — seeded from the server-stored user settings
   const [shareGlucose, setShareGlucose] = useState(user?.settings?.shareRealTimeGlucose ?? true);
@@ -52,15 +53,21 @@ export default function CareCircleScreen() {
 
   const loadMembers = useCallback(async () => {
     try {
-      const data = await circleAPI.getMembers();
-      setMembers(data);
+      if (isMember) {
+        // Members see the roster instead
+        const rosterData = await circleAPI.getRoster();
+        setRoster(rosterData);
+      } else {
+        const data = await circleAPI.getMembers();
+        setMembers(data);
+      }
     } catch (err) {
       console.log('Load circle error:', err);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [isMember]);
 
   const loadBadges = useCallback(async () => {
     try {
@@ -376,6 +383,38 @@ export default function CareCircleScreen() {
               <Text style={styles.actionButtonIcon}>🔗</Text>
               <Text style={styles.actionButtonPrimaryText}>Join a Circle</Text>
             </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Circle Roster — Members see who else is in the circle */}
+        {isMember && user?.linkedOwnerId && (
+          <View style={styles.membersSection}>
+            <Text style={styles.sectionTitle}>Circle Members ({roster.length})</Text>
+            {loading ? (
+              <ActivityIndicator size="large" color="#4A90D9" style={{ paddingVertical: 40 }} />
+            ) : roster.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyEmoji}>👥</Text>
+                <Text style={styles.emptyTitle}>No other members</Text>
+                <Text style={styles.emptyText}>You're the only member in this Care Circle right now.</Text>
+              </View>
+            ) : (
+              roster.map((member, idx) => (
+                <View key={idx} style={[styles.memberCard, member.isYou && { borderColor: '#4A90D9' }]}>
+                  <View style={styles.memberCardTop}>
+                    <Text style={styles.memberEmoji}>{member.emoji || '👤'}</Text>
+                    <View style={styles.memberInfo}>
+                      <Text style={styles.memberName}>
+                        {member.name}{member.isYou ? ' (You)' : ''}
+                      </Text>
+                      <Text style={styles.memberRelationship}>
+                        {RELATIONSHIPS.find(r => r.value === member.relationship)?.label || 'Circle Member'}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              ))
+            )}
           </View>
         )}
 

@@ -6,7 +6,7 @@ const Supply = require('../models/Supply');
 // GET /api/supplies - Get all supplies for user
 router.get('/', auth, async (req, res) => {
   try {
-    const supplies = await Supply.find({ userId: req.user._id }).sort({ createdAt: -1 });
+    const supplies = await Supply.find({ userId: req.user.userId }).sort({ createdAt: -1 });
     res.json(supplies);
   } catch (err) {
     console.error('Get supplies error:', err);
@@ -24,7 +24,7 @@ router.post('/', auth, async (req, res) => {
     }
 
     const supply = new Supply({
-      userId: req.user._id,
+      userId: req.user.userId,
       name,
       emoji: emoji || '📦',
       category: category || 'other',
@@ -44,7 +44,7 @@ router.post('/', auth, async (req, res) => {
 // PUT /api/supplies/:id - Update a supply
 router.put('/:id', auth, async (req, res) => {
   try {
-    const supply = await Supply.findOne({ _id: req.params.id, userId: req.user._id });
+    const supply = await Supply.findOne({ _id: req.params.id, userId: req.user.userId });
     if (!supply) {
       return res.status(404).json({ message: 'Supply not found' });
     }
@@ -68,7 +68,7 @@ router.put('/:id', auth, async (req, res) => {
 // DELETE /api/supplies/:id - Delete a supply
 router.delete('/:id', auth, async (req, res) => {
   try {
-    const supply = await Supply.findOneAndDelete({ _id: req.params.id, userId: req.user._id });
+    const supply = await Supply.findOneAndDelete({ _id: req.params.id, userId: req.user.userId });
     if (!supply) {
       return res.status(404).json({ message: 'Supply not found' });
     }

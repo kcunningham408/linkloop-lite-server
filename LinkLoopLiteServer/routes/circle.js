@@ -97,6 +97,32 @@ router.post('/join', auth, async (req, res) => {
   }
 });
 
+// @route   PUT /api/circle/my-status
+// @desc    Member pauses/unpauses their own alert notifications
+// @access  Private (member only)
+// ⚠️  Must be registered BEFORE the /:id wildcard route below
+router.put('/my-status', auth, async (req, res) => {
+  try {
+    const { paused } = req.body;
+    const membership = await CareCircle.findOne({
+      memberId: req.user.userId,
+      status: { $in: ['active', 'paused'] }
+    });
+
+    if (!membership) {
+      return res.status(404).json({ message: 'No active circle membership found' });
+    }
+
+    membership.status = paused ? 'paused' : 'active';
+    await membership.save();
+
+    res.json({ message: paused ? 'Alerts paused' : 'Alerts resumed', status: membership.status });
+  } catch (err) {
+    console.error('Pause membership error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // @route   PUT /api/circle/:id
 router.put('/:id', auth, async (req, res) => {
   try {
@@ -114,6 +140,65 @@ router.put('/:id', auth, async (req, res) => {
     res.json({ message: 'Member updated', member });
   } catch (err) {
     console.error('Update circle member error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   GET /api/circle/my-membership
+// @desc    Member gets their own membership info (status, permissions, warrior info)
+// @access  Private (member only)
+router.get('/my-membership', auth, async (req, res) => {
+  try {
+    const membership = await CareCircle.findOne({
+      memberId: req.user.userId,
+      status: { $in: ['active', 'paused'] }
+    }).populate('ownerId', 'name profileEmoji');
+
+    if (!membership) {
+      return res.status(404).json({ message: 'No circle membership found' });
+    }
+
+    res.json({
+      id: membership._id,
+      status: membership.status,
+      relationship: membership.relationship,
+      permissions: membership.permissions,
+      warrior: membership.ownerId ? {
+        name: membership.ownerId.name,
+        emoji: membership.ownerId.profileEmoji,
+      } : null,
+    });
+  } catch (err) {
+    console.error('Get membership error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   GET /api/circle/roster
+// @desc    Member sees who else is in the warrior's circle (read-only)
+// @access  Private (member only)
+router.get('/roster', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select('linkedOwnerId role');
+    if (!user || user.role !== 'member' || !user.linkedOwnerId) {
+      return res.status(403).json({ message: 'Only circle members can view the roster' });
+    }
+
+    const members = await CareCircle.find({
+      ownerId: user.linkedOwnerId,
+      status: { $in: ['active', 'paused'] },
+    }).populate('memberId', 'name profileEmoji');
+
+    const roster = members.map(m => ({
+      name: m.memberId?.name || m.memberName,
+      emoji: m.memberId?.profileEmoji || m.memberEmoji,
+      relationship: m.relationship,
+      isYou: m.memberId?._id.toString() === req.user.userId,
+    }));
+
+    res.json(roster);
+  } catch (err) {
+    console.error('Get roster error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });

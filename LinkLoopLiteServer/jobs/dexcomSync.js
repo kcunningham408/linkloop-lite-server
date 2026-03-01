@@ -195,6 +195,7 @@ async function syncUser(user) {
     }
 
     user.dexcom.lastSync = endDate;
+    user.lastActive = endDate; // track overall last sync as activity
     await user.save();
 
   } catch (err) {

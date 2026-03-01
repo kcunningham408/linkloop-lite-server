@@ -82,6 +82,13 @@ const alertSchema = new mongoose.Schema({
     type: Date,
     default: () => new Date(Date.now() + 2 * 60 * 60 * 1000) // 2 hours
   },
+  // Snooze: who snoozed and until when
+  snoozedBy: [{
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    userName: String,
+    snoozedUntil: Date,
+    snoozedAt: { type: Date, default: Date.now }
+  }],
   createdAt: {
     type: Date,
     default: Date.now

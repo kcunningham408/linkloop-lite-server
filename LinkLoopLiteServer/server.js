@@ -6,6 +6,7 @@ const axios = require('axios');
 require('dotenv').config();
 
 const { startDexcomSyncJob } = require('./jobs/dexcomSync');
+const { startDailyJobs } = require('./jobs/dailyJobs');
 
 const app = express();
 
@@ -31,6 +32,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/linkloop'
       // Index may not exist or already dropped — that's fine
     }
     startDexcomSyncJob();
+    startDailyJobs();
   })
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
@@ -46,6 +48,8 @@ app.use('/api/supplies', require('./routes/supplies'));
 app.use('/api/dexcom', require('./routes/dexcom'));
 app.use('/api/nightscout', require('./routes/nightscout'));
 app.use('/api/mood', require('./routes/mood'));
+app.use('/api/achievements', require('./routes/achievements'));
+app.use('/api/notes', require('./routes/notes'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

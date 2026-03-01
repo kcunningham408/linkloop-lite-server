@@ -2,7 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, AppState, Dimensions, Modal, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import { dexcomAPI, glucoseAPI, nightscoutAPI, alertsAPI } from '../services/api';
+import { alertsAPI, dexcomAPI, glucoseAPI, nightscoutAPI, notesAPI } from '../services/api';
 
 const AUTO_REFRESH_MS = 5 * 60 * 1000; // 5 minutes — matches Dexcom G7 update interval
 
@@ -46,6 +46,12 @@ export default function CGMScreen({ navigation }) {
   const [nsSecret, setNsSecret] = useState('');
   const [nsConnecting, setNsConnecting] = useState(false);
 
+  // Notes
+  const [notes, setNotes] = useState([]);
+  const [showNoteModal, setShowNoteModal] = useState(false);
+  const [newNoteText, setNewNoteText] = useState('');
+  const [noteSaving, setNoteSaving] = useState(false);
+
   const loadData = useCallback(async () => {
     try {
       if (isMember && user?.linkedOwnerId) {
@@ -72,6 +78,11 @@ export default function CGMScreen({ navigation }) {
         if (shareStatusData.status === 'fulfilled') setShareStatus(shareStatusData.value);
         if (nsStatusData.status === 'fulfilled') setNsStatus(nsStatusData.value);
       }
+      // Load notes for the timeline
+      try {
+        const notesData = await notesAPI.getAll(24);
+        setNotes(Array.isArray(notesData) ? notesData : []);
+      } catch (e) { /* notes are optional */ }
     } catch (err) {
       console.log('CGM load error:', err);
     } finally {
@@ -216,6 +227,31 @@ export default function CGMScreen({ navigation }) {
     );
   };
 
+  const handleAddNote = async () => {
+    if (!newNoteText.trim()) return;
+    setNoteSaving(true);
+    try {
+      await notesAPI.add(newNoteText.trim());
+      setNewNoteText('');
+      setShowNoteModal(false);
+      loadData();
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Could not save note');
+    } finally {
+      setNoteSaving(false);
+    }
+  };
+
+  const handleDeleteNote = (id) => {
+    Alert.alert('Delete Note', 'Remove this note?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+        try { await notesAPI.remove(id); loadData(); }
+        catch (err) { Alert.alert('Error', 'Could not delete note'); }
+      }},
+    ]);
+  };
+
   const getGlucoseColor = (value) => {
     if (!value) return '#4A90D9';
     if (value < lowThreshold) return '#FF6B6B';
@@ -353,6 +389,31 @@ export default function CGMScreen({ navigation }) {
             </View>
           ) : (
             <Text style={styles.noDataText}>Log readings to see your stats</Text>
+          )}
+        </View>
+
+        {/* Notes Timeline */}
+        <View style={styles.notesContainer}>
+          <View style={styles.notesHeader}>
+            <Text style={styles.sectionTitle}>📝 Notes</Text>
+            <TouchableOpacity style={styles.addNoteBtn} onPress={() => setShowNoteModal(true)}>
+              <Text style={styles.addNoteBtnText}>+ Add Note</Text>
+            </TouchableOpacity>
+          </View>
+          {notes.length > 0 ? (
+            notes.slice(0, 5).map((n) => (
+              <TouchableOpacity key={n._id} style={styles.noteCard} onLongPress={() => handleDeleteNote(n._id)}>
+                <View style={styles.noteHeader}>
+                  <Text style={styles.noteAuthor}>{n.authorEmoji || '📝'} {n.authorName}</Text>
+                  <Text style={styles.noteTime}>
+                    {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </Text>
+                </View>
+                <Text style={styles.noteText}>{n.text}</Text>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text style={styles.noNotesText}>No notes today — add one to share with your circle</Text>
           )}
         </View>
 
@@ -545,6 +606,37 @@ export default function CGMScreen({ navigation }) {
         </View>
       </Modal>
 
+      {/* Add Note Modal */}
+      <Modal visible={showNoteModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>📝 Add a Note</Text>
+            <Text style={{ fontSize: 13, color: '#A0A0A0', textAlign: 'center', marginBottom: 16, lineHeight: 19 }}>
+              Notes appear on the glucose timeline and are visible to your Care Circle.
+            </Text>
+            <TextInput
+              style={[styles.input, { minHeight: 80, textAlignVertical: 'top' }]}
+              placeholder="e.g. Had pizza for dinner, feeling tired..."
+              placeholderTextColor="#555"
+              value={newNoteText}
+              onChangeText={setNewNoteText}
+              multiline
+              maxLength={500}
+              autoFocus
+            />
+            <Text style={{ fontSize: 11, color: '#555', textAlign: 'right', marginTop: 4, marginBottom: 12 }}>{newNoteText.length}/500</Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.cancelButton} onPress={() => { setShowNoteModal(false); setNewNoteText(''); }}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveButton} onPress={handleAddNote} disabled={noteSaving || !newNoteText.trim()}>
+                {noteSaving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveButtonText}>Save Note</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </ScrollView>
   );
 }
@@ -635,4 +727,16 @@ const styles = StyleSheet.create({
   cancelButtonText: { fontSize: 16, color: '#A0A0A0', fontWeight: '600' },
   saveButton: { flex: 1, paddingVertical: 14, borderRadius: 10, backgroundColor: '#4A90D9', alignItems: 'center' },
   saveButtonText: { fontSize: 16, color: '#fff', fontWeight: 'bold' },
+
+  // Notes
+  notesContainer: { marginBottom: 20 },
+  notesHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  addNoteBtn: { backgroundColor: '#1A2235', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: '#4A90D9' },
+  addNoteBtnText: { color: '#4A90D9', fontSize: 13, fontWeight: '600' },
+  noteCard: { backgroundColor: '#1C1C1E', borderRadius: 10, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#2C2C2E' },
+  noteHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  noteAuthor: { fontSize: 13, color: '#4A90D9', fontWeight: '600' },
+  noteTime: { fontSize: 11, color: '#666' },
+  noteText: { fontSize: 14, color: '#D0D0D0', lineHeight: 20 },
+  noNotesText: { fontSize: 13, color: '#666', textAlign: 'center', paddingVertical: 15 },
 });

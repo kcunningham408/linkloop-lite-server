@@ -2,7 +2,7 @@ import Constants from 'expo-constants';
 import { useEffect, useState } from 'react';
 import { Alert, Linking, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import { usersAPI } from '../services/api';
+import { circleAPI, glucoseAPI, usersAPI } from '../services/api';
 
 const APP_VERSION = Constants.expoConfig?.version || Constants.manifest?.version || '1.1.0';
 
@@ -19,11 +19,27 @@ export default function ProfileScreen() {
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState(user?.name || '');
   const [savingName, setSavingName] = useState(false);
+  const [editingWarriorName, setEditingWarriorName] = useState(false);
+  const [newWarriorName, setNewWarriorName] = useState(user?.warriorDisplayName || '');
+  const [savingWarriorName, setSavingWarriorName] = useState(false);
+  const [lowThreshold, setLowThreshold] = useState(String(user?.settings?.lowThreshold ?? 70));
+  const [highThreshold, setHighThreshold] = useState(String(user?.settings?.highThreshold ?? 180));
+  const [highAlertDelay, setHighAlertDelay] = useState(String(user?.settings?.highAlertDelay ?? 0));
+  const [savingThresholds, setSavingThresholds] = useState(false);
+  const [alertsPaused, setAlertsPaused] = useState(false);
+  const [pauseLoading, setPauseLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     // Load push preferences from user object
     if (user?.pushPreferences) {
       setPushPrefs(prev => ({ ...prev, ...user.pushPreferences }));
+    }
+    // Load membership status for members (pause state)
+    if (isMember) {
+      circleAPI.getMyMembership().then(data => {
+        if (data?.status === 'paused') setAlertsPaused(true);
+      }).catch(() => {});
     }
   }, []);
 
@@ -78,6 +94,85 @@ export default function ProfileScreen() {
       Alert.alert('Error', err.message || 'Could not update name');
     } finally {
       setSavingName(false);
+    }
+  };
+
+  const handleSaveWarriorName = async () => {
+    setSavingWarriorName(true);
+    try {
+      await updateUser({ warriorDisplayName: newWarriorName.trim() || null });
+      setEditingWarriorName(false);
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Could not update warrior name');
+    } finally {
+      setSavingWarriorName(false);
+    }
+  };
+
+  const handleSaveThresholds = async () => {
+    const low = parseInt(lowThreshold);
+    const high = parseInt(highThreshold);
+    const delay = parseInt(highAlertDelay) || 0;
+    if (isNaN(low) || isNaN(high)) {
+      Alert.alert('Error', 'Please enter valid numbers for both thresholds.');
+      return;
+    }
+    if (low < 40 || low > 120) {
+      Alert.alert('Error', 'Low threshold should be between 40 and 120 mg/dL.');
+      return;
+    }
+    if (high < 120 || high > 400) {
+      Alert.alert('Error', 'High threshold should be between 120 and 400 mg/dL.');
+      return;
+    }
+    if (low >= high) {
+      Alert.alert('Error', 'Low threshold must be less than high threshold.');
+      return;
+    }
+    if (delay < 0 || delay > 120) {
+      Alert.alert('Error', 'High alert delay should be between 0 and 120 minutes.');
+      return;
+    }
+    setSavingThresholds(true);
+    try {
+      await updateUser({ settings: { lowThreshold: low, highThreshold: high, highAlertDelay: delay } });
+      Alert.alert('Saved', 'Your alert settings have been updated.');
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Could not save thresholds');
+    } finally {
+      setSavingThresholds(false);
+    }
+  };
+
+  const handleTogglePauseAlerts = async () => {
+    const newVal = !alertsPaused;
+    setAlertsPaused(newVal);
+    setPauseLoading(true);
+    try {
+      await circleAPI.pauseMyAlerts(newVal);
+    } catch (err) {
+      setAlertsPaused(!newVal); // revert
+      Alert.alert('Error', 'Could not update pause status');
+    } finally {
+      setPauseLoading(false);
+    }
+  };
+
+  const handleExportData = async () => {
+    setExporting(true);
+    try {
+      const data = await glucoseAPI.exportCSV(30);
+      const { Share } = require('react-native');
+      await Share.share({
+        message: data.csv,
+        title: `LinkLoop Glucose Export (${data.count} readings)`,
+      });
+    } catch (err) {
+      if (err.message !== 'User did not share') {
+        Alert.alert('Error', err.message || 'Could not export data');
+      }
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -149,6 +244,117 @@ export default function ProfileScreen() {
               </View>
             </View>
           </View>
+
+          {/* Warrior Display Name — only visible to Loop Members */}
+          {isMember && (
+            <View style={styles.settingItem}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingIcon}>💙</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.settingTitle}>Warrior Name</Text>
+                  <Text style={styles.settingDescription}>Customize how your warrior's name appears</Text>
+                  {editingWarriorName ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                      <TextInput
+                        style={[styles.nameInput]}
+                        value={newWarriorName}
+                        onChangeText={setNewWarriorName}
+                        placeholder="e.g. Shayla, My Daughter"
+                        placeholderTextColor="#666"
+                        autoFocus
+                        returnKeyType="done"
+                        onSubmitEditing={handleSaveWarriorName}
+                      />
+                      <TouchableOpacity onPress={handleSaveWarriorName} disabled={savingWarriorName} style={styles.nameSaveBtn}>
+                        <Text style={styles.nameSaveBtnText}>{savingWarriorName ? '...' : 'Save'}</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => { setEditingWarriorName(false); setNewWarriorName(user?.warriorDisplayName || ''); }} style={styles.nameCancelBtn}>
+                        <Text style={styles.nameCancelBtnText}>Cancel</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <TouchableOpacity onPress={() => setEditingWarriorName(true)}>
+                      <Text style={[styles.settingValue, { color: '#4A90D9' }]}>{user?.warriorDisplayName || 'Use default name'} ✏️</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            </View>
+          )}
+        </View>
+
+        {/* Alert Thresholds */}
+        <View style={styles.settingsCard}>
+          <Text style={styles.sectionTitle}>🎯 Alert Thresholds</Text>
+          <Text style={[styles.settingDescription, { marginBottom: 14 }]}>
+            {isMember
+              ? 'Set your personal alert levels. You\'ll only get push notifications when glucose crosses YOUR thresholds.'
+              : 'Set your low and high glucose alert levels. Circle members can also set their own thresholds independently.'}
+          </Text>
+
+          <View style={styles.settingItem}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingIcon}>📉</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.settingTitle}>Low Alert (mg/dL)</Text>
+                <Text style={styles.settingDescription}>Get alerted when glucose drops below this</Text>
+              </View>
+            </View>
+            <TextInput
+              style={styles.thresholdInput}
+              value={lowThreshold}
+              onChangeText={setLowThreshold}
+              keyboardType="number-pad"
+              maxLength={3}
+              selectTextOnFocus
+            />
+          </View>
+
+          <View style={styles.settingItem}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingIcon}>📈</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.settingTitle}>High Alert (mg/dL)</Text>
+                <Text style={styles.settingDescription}>Get alerted when glucose goes above this</Text>
+              </View>
+            </View>
+            <TextInput
+              style={styles.thresholdInput}
+              value={highThreshold}
+              onChangeText={setHighThreshold}
+              keyboardType="number-pad"
+              maxLength={3}
+              selectTextOnFocus
+            />
+          </View>
+
+          <View style={styles.settingItem}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingIcon}>⏱️</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.settingTitle}>High Alert Delay (min)</Text>
+                <Text style={styles.settingDescription}>Wait this many minutes above your high threshold before alerting. Set to 0 for immediate. Lows always alert immediately.</Text>
+              </View>
+            </View>
+            <TextInput
+              style={styles.thresholdInput}
+              value={highAlertDelay}
+              onChangeText={setHighAlertDelay}
+              keyboardType="number-pad"
+              maxLength={3}
+              selectTextOnFocus
+              placeholder="0"
+              placeholderTextColor="#666"
+            />
+          </View>
+
+          <TouchableOpacity
+            style={[styles.nameSaveBtn, { alignSelf: 'flex-end', marginTop: 10, paddingHorizontal: 20, paddingVertical: 10 }]}
+            onPress={handleSaveThresholds}
+            disabled={savingThresholds}
+          >
+            <Text style={styles.nameSaveBtnText}>{savingThresholds ? 'Saving...' : 'Save Alert Settings'}</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Push Notification Preferences */}
@@ -253,6 +459,54 @@ export default function ProfileScreen() {
             />
           </View>
         </View>
+
+        {/* Pause Alerts — Members only */}
+        {isMember && (
+          <View style={styles.settingsCard}>
+            <Text style={styles.sectionTitle}>⏸️ Pause Alerts</Text>
+            <View style={styles.settingItem}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingIcon}>🔇</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.settingTitle}>Pause My Alerts</Text>
+                  <Text style={styles.settingDescription}>
+                    {alertsPaused
+                      ? 'Your alerts are paused. You won\'t receive glucose notifications.'
+                      : 'Temporarily stop receiving glucose alerts from this circle.'}
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={alertsPaused}
+                onValueChange={handleTogglePauseAlerts}
+                disabled={pauseLoading}
+                trackColor={{ false: '#3A3A3C', true: '#FF9800' }}
+                thumbColor="#fff"
+              />
+            </View>
+          </View>
+        )}
+
+        {/* Export Data — Warriors only */}
+        {!isMember && (
+          <View style={styles.settingsCard}>
+            <Text style={styles.sectionTitle}>📤 Export Data</Text>
+            <TouchableOpacity
+              style={[styles.settingItem, { justifyContent: 'center' }]}
+              onPress={handleExportData}
+              disabled={exporting}
+            >
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingIcon}>📊</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.settingTitle}>{exporting ? 'Exporting...' : 'Export Glucose Data (CSV)'}</Text>
+                  <Text style={styles.settingDescription}>Download last 30 days of glucose readings</Text>
+                </View>
+              </View>
+              <Text style={styles.chevron}>›</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* App Info */}
         <View style={styles.settingsCard}>
@@ -367,4 +621,5 @@ const styles = StyleSheet.create({
   nameSaveBtnText: { color: '#fff', fontSize: 13, fontWeight: '600' },
   nameCancelBtn: { paddingHorizontal: 10, paddingVertical: 6, marginLeft: 4 },
   nameCancelBtnText: { color: '#888', fontSize: 13 },
+  thresholdInput: { backgroundColor: '#2C2C2E', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 18, fontWeight: 'bold', color: '#fff', textAlign: 'center', width: 70, borderWidth: 1, borderColor: '#4A90D9' },
 });

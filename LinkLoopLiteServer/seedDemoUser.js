@@ -28,7 +28,7 @@ async function seed() {
         email: demoEmail,
         password: demoPassword,
         name: demoName,
-        role: 't1d'
+        role: 'warrior'
       });
       await user.save();
       console.log('Created demo user');

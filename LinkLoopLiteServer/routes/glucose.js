@@ -2,6 +2,7 @@ const express = require('express');
 const auth = require('../middleware/auth');
 const GlucoseReading = require('../models/GlucoseReading');
 const CareCircle = require('../models/CareCircle');
+const User = require('../models/User');
 
 const router = express.Router();
 
@@ -104,6 +105,45 @@ router.get('/stats', auth, async (req, res) => {
   }
 });
 
+// ─── Glucose Export ──────────────────────────────────────────────────────────
+// @route   GET /api/glucose/export
+// @desc    Export glucose readings as CSV (for doctor visits)
+// @access  Private
+router.get('/export', auth, async (req, res) => {
+  try {
+    const { days = 30 } = req.query;
+    const since = new Date();
+    since.setDate(since.getDate() - parseInt(days));
+
+    const readings = await GlucoseReading.find({
+      userId: req.user.userId,
+      timestamp: { $gte: since },
+    }).sort({ timestamp: 1 });
+
+    // Build CSV
+    const header = 'Date,Time,Glucose (mg/dL),Trend,Source,Notes';
+    const rows = readings.map(r => {
+      const d = new Date(r.timestamp);
+      const date = d.toLocaleDateString('en-US');
+      const time = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      const notes = (r.notes || '').replace(/,/g, ';').replace(/\n/g, ' ');
+      return `${date},${time},${r.value},${r.trend || ''},${r.source || ''},${notes}`;
+    });
+
+    const csv = [header, ...rows].join('\n');
+
+    res.json({
+      csv,
+      count: readings.length,
+      days: parseInt(days),
+      generated: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.error('Export glucose error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // ─── Loop Member View ────────────────────────────────────────────────────────
 // Loop Members can read their linked warrior's glucose data.
 // Verifies the caller has an active CareCircle entry for this owner.
@@ -152,11 +192,20 @@ router.get('/member-view/:ownerId', auth, async (req, res) => {
       max: Math.max(...values),
     };
 
+    // Get the warrior's actual name + activity info
+    const owner = await User.findById(ownerId).select('name lastActive dexcom.lastSync dexcomShare.lastSync nightscout.lastSync');
+
+    // Pick the most recent sync across all CGM sources
+    const syncDates = [owner?.dexcom?.lastSync, owner?.dexcomShare?.lastSync, owner?.nightscout?.lastSync].filter(Boolean);
+    const lastCGMSync = syncDates.length > 0 ? new Date(Math.max(...syncDates.map(d => new Date(d).getTime()))) : null;
+
     res.json({
       readings,
       latest: readings[0] || null,
       stats,
-      ownerName: membership.memberName, // the name the warrior gave when inviting
+      ownerName: owner?.name || 'Warrior',
+      lastActive: owner?.lastActive || null,
+      lastCGMSync,
     });
   } catch (err) {
     console.error('Member view glucose error:', err);

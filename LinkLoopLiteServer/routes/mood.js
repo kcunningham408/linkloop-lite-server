@@ -121,6 +121,35 @@ router.get('/stats', auth, async (req, res) => {
   }
 });
 
+// @route   PUT /api/mood/:id
+// @desc    Update a mood entry
+// @access  Private
+router.put('/:id', auth, async (req, res) => {
+  try {
+    const { emoji, label, note } = req.body;
+
+    const update = {};
+    if (emoji) update.emoji = emoji;
+    if (label) update.label = label;
+    if (note !== undefined) update.note = note?.trim() || undefined;
+
+    const entry = await MoodEntry.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.userId },
+      { $set: update },
+      { new: true }
+    );
+
+    if (!entry) {
+      return res.status(404).json({ message: 'Entry not found' });
+    }
+
+    res.json(entry);
+  } catch (err) {
+    console.error('Update mood error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // @route   DELETE /api/mood/:id
 // @desc    Delete a mood entry
 // @access  Private

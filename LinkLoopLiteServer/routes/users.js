@@ -26,6 +26,7 @@ router.get('/me', auth, async (req, res) => {
       name: user.name,
       role: user.role,
       linkedOwnerId: user.linkedOwnerId ? user.linkedOwnerId.toString() : null,
+      warriorDisplayName: user.warriorDisplayName || null,
       profileEmoji: user.profileEmoji,
       settings: user.settings,
       pushPreferences: user.pushPreferences,
@@ -40,7 +41,7 @@ router.get('/me', auth, async (req, res) => {
 // @route   PUT /api/users/me
 router.put('/me', auth, async (req, res) => {
   try {
-    const { name, profileEmoji, settings, pushPreferences } = req.body;
+    const { name, profileEmoji, settings, pushPreferences, warriorDisplayName } = req.body;
 
     const user = await User.findById(req.user.userId);
     if (!user) {
@@ -51,6 +52,7 @@ router.put('/me', auth, async (req, res) => {
     if (profileEmoji) user.profileEmoji = profileEmoji;
     if (settings) user.settings = { ...user.settings, ...settings };
     if (pushPreferences) user.pushPreferences = { ...user.pushPreferences, ...pushPreferences };
+    if (warriorDisplayName !== undefined) user.warriorDisplayName = warriorDisplayName || null;
 
     await user.save();
 
@@ -62,6 +64,8 @@ router.put('/me', auth, async (req, res) => {
         phone: user.phone || null,
         name: user.name,
         role: user.role,
+        linkedOwnerId: user.linkedOwnerId ? user.linkedOwnerId.toString() : null,
+        warriorDisplayName: user.warriorDisplayName || null,
         profileEmoji: user.profileEmoji,
         settings: user.settings,
         pushPreferences: user.pushPreferences,

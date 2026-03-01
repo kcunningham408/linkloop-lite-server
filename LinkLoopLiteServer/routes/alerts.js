@@ -208,6 +208,43 @@ router.post('/:id/acknowledge', auth, async (req, res) => {
   }
 });
 
+// @route   POST /api/alerts/:id/snooze
+// @desc    Snooze an alert for N minutes (default 30)
+// @access  Private
+router.post('/:id/snooze', auth, async (req, res) => {
+  try {
+    const alert = await Alert.findById(req.params.id);
+    if (!alert) return res.status(404).json({ message: 'Alert not found' });
+
+    const userId = req.user.userId;
+    const isOwner = alert.userId.toString() === userId;
+    const isNotified = alert.notifiedMembers.some(m => m.userId.toString() === userId);
+    if (!isOwner && !isNotified) {
+      return res.status(403).json({ message: 'You are not involved in this alert' });
+    }
+
+    const { minutes = 30 } = req.body;
+    const snoozeMins = Math.min(Math.max(parseInt(minutes) || 30, 5), 120); // 5–120 min
+    const snoozedUntil = new Date(Date.now() + snoozeMins * 60 * 1000);
+
+    const user = await User.findById(userId).select('name');
+
+    // Remove existing snooze entry for this user, then add fresh one
+    alert.snoozedBy = (alert.snoozedBy || []).filter(s => s.userId.toString() !== userId);
+    alert.snoozedBy.push({
+      userId,
+      userName: user?.name || 'Someone',
+      snoozedUntil,
+    });
+    await alert.save();
+
+    res.json({ message: `Alert snoozed for ${snoozeMins} minutes`, snoozedUntil });
+  } catch (err) {
+    console.error('Snooze alert error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // @route   POST /api/alerts/:id/resolve
 // @desc    Resolve/close an alert
 // @access  Private

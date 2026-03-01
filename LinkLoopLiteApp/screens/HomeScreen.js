@@ -19,6 +19,7 @@ export default function HomeScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeAlertCount, setActiveAlertCount] = useState(0);
+  const [lastCGMSync, setLastCGMSync] = useState(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -27,7 +28,8 @@ export default function HomeScreen({ navigation }) {
           const data = await glucoseAPI.getMemberView(user.linkedOwnerId, 24);
           setLatestGlucose(data.latest || null);
           setStats(data.stats || null);
-          if (data.ownerName) setWarriorName(data.ownerName);
+          if (data.ownerName) setWarriorName(user?.warriorDisplayName || data.ownerName);
+          if (data.lastCGMSync) setLastCGMSync(data.lastCGMSync);
         } catch (memberErr) {
           // If the member-view call fails (e.g. removed from circle), refresh profile
           // The server will return updated role/linkedOwnerId
@@ -124,6 +126,20 @@ export default function HomeScreen({ navigation }) {
               : (user?.name ? 'Welcome back, ' + user.name : 'Stay Connected, Stay in Range')}
           </Text>
         </View>
+        {isMember && lastCGMSync && (
+          <View style={styles.syncBadge}>
+            <Text style={styles.syncBadgeText}>
+              {'🩸 CGM synced ' + (() => {
+                const mins = Math.floor((Date.now() - new Date(lastCGMSync).getTime()) / 60000);
+                if (mins < 1) return 'just now';
+                if (mins < 60) return mins + 'm ago';
+                const hrs = Math.floor(mins / 60);
+                if (hrs < 24) return hrs + 'h ago';
+                return Math.floor(hrs / 24) + 'd ago';
+              })()}
+            </Text>
+          </View>
+        )}
       </LinearGradient>
 
       <View style={styles.content}>
@@ -306,6 +322,8 @@ const styles = StyleSheet.create({
   heroBadge: { backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, flexDirection: 'row', alignItems: 'center' },
   heroBadgeEmoji: { fontSize: 18, marginRight: 8 },
   heroBadgeText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  syncBadge: { marginTop: 8, backgroundColor: 'rgba(255,255,255,0.12)', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 12 },
+  syncBadgeText: { color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: '500' },
   content: { padding: 16 },
 
   // Glucose Card

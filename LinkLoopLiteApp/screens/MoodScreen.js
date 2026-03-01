@@ -1,7 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
-  StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput,
-  RefreshControl, ActivityIndicator, Alert, KeyboardAvoidingView, Platform
+    ActivityIndicator, Alert, KeyboardAvoidingView,
+    Modal,
+    Platform,
+    RefreshControl,
+    ScrollView,
+    StyleSheet, Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { moodAPI } from '../services/api';
 
@@ -24,6 +31,10 @@ export default function MoodScreen() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [editEntry, setEditEntry] = useState(null);
+  const [editMood, setEditMood] = useState(null);
+  const [editNote, setEditNote] = useState('');
+  const [editSaving, setEditSaving] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -78,6 +89,31 @@ export default function MoodScreen() {
         }
       }
     ]);
+  };
+
+  const openEdit = (entry) => {
+    const mood = MOOD_OPTIONS.find(m => m.label === entry.label) || { emoji: entry.emoji, label: entry.label, display: entry.label };
+    setEditEntry(entry);
+    setEditMood(mood);
+    setEditNote(entry.note || '');
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editEntry || !editMood) return;
+    setEditSaving(true);
+    try {
+      await moodAPI.update(editEntry._id, {
+        emoji: editMood.emoji,
+        label: editMood.label,
+        note: editNote.trim(),
+      });
+      setEditEntry(null);
+      loadData();
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Could not update entry');
+    } finally {
+      setEditSaving(false);
+    }
   };
 
   const timeAgo = (timestamp) => {
@@ -223,6 +259,7 @@ export default function MoodScreen() {
               <TouchableOpacity
                 key={entry._id}
                 style={styles.entryCard}
+                onPress={() => openEdit(entry)}
                 onLongPress={() => handleDelete(entry._id)}
               >
                 <View style={styles.entryHeader}>
@@ -242,10 +279,59 @@ export default function MoodScreen() {
           )}
 
           {entries.length > 0 && (
-            <Text style={styles.longPressHint}>Long press any entry to delete</Text>
+            <Text style={styles.longPressHint}>Tap to edit · Long press to delete</Text>
           )}
         </View>
       </ScrollView>
+
+      {/* Edit Mood Modal */}
+      <Modal visible={!!editEntry} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>✏️ Edit Mood Entry</Text>
+
+            <View style={styles.editMoodGrid}>
+              {MOOD_OPTIONS.map((mood) => (
+                <TouchableOpacity
+                  key={mood.label}
+                  style={[
+                    styles.moodOption,
+                    editMood?.label === mood.label && styles.moodOptionSelected,
+                    { width: '23%', marginBottom: 8 },
+                  ]}
+                  onPress={() => setEditMood(mood)}
+                >
+                  <Text style={styles.moodEmoji}>{mood.emoji}</Text>
+                  <Text style={[
+                    styles.moodLabel,
+                    editMood?.label === mood.label && styles.moodLabelSelected,
+                  ]}>{mood.display}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={styles.editNoteLabel}>📝 Note</Text>
+            <TextInput
+              style={styles.editNoteInput}
+              placeholder="Optional note..."
+              placeholderTextColor="#666"
+              value={editNote}
+              onChangeText={setEditNote}
+              multiline
+              maxLength={500}
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.cancelButton} onPress={() => setEditEntry(null)}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveButton} onPress={handleSaveEdit} disabled={editSaving}>
+                {editSaving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveButtonText}>Save</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -407,4 +493,17 @@ const styles = StyleSheet.create({
     marginTop: 5,
     marginBottom: 30,
   },
+
+  // Edit Modal
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: '#1C1C1E', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 25, paddingBottom: 40 },
+  modalTitle: { fontSize: 20, fontWeight: 'bold', color: '#fff', marginBottom: 20, textAlign: 'center' },
+  editMoodGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 15 },
+  editNoteLabel: { fontSize: 14, color: '#A0A0A0', marginBottom: 8 },
+  editNoteInput: { backgroundColor: '#111', borderRadius: 12, padding: 15, color: '#fff', fontSize: 15, minHeight: 70, textAlignVertical: 'top', borderWidth: 1, borderColor: '#2C2C2E', marginBottom: 20 },
+  modalButtons: { flexDirection: 'row', gap: 12 },
+  cancelButton: { flex: 1, paddingVertical: 14, borderRadius: 10, backgroundColor: '#2C2C2E', alignItems: 'center' },
+  cancelButtonText: { fontSize: 16, color: '#A0A0A0', fontWeight: '600' },
+  saveButton: { flex: 1, paddingVertical: 14, borderRadius: 10, backgroundColor: '#4A90D9', alignItems: 'center' },
+  saveButtonText: { fontSize: 16, color: '#fff', fontWeight: 'bold' },
 });

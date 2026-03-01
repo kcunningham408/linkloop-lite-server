@@ -1,10 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
-  StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput,
-  Modal, RefreshControl, ActivityIndicator, Alert as RNAlert, Vibration
+    ActivityIndicator,
+    Modal, RefreshControl,
+    Alert as RNAlert,
+    ScrollView,
+    StyleSheet, Text,
+    TextInput,
+    TouchableOpacity,
+    Vibration,
+    View
 } from 'react-native';
-import { alertsAPI, glucoseAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { alertsAPI, glucoseAPI } from '../services/api';
 
 const SEVERITY_CONFIG = {
   critical: { color: '#FF6B6B', bg: '#2A1A1A', icon: '🔴', label: 'HIGH PRIORITY' },
@@ -129,6 +136,29 @@ export default function AlertsScreen({ navigation }) {
         },
       ]
     );
+  };
+
+  const handleSnooze = (alert) => {
+    RNAlert.alert(
+      '😴 Snooze Alert',
+      'How long would you like to snooze this alert?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: '15 min', onPress: () => doSnooze(alert._id, 15) },
+        { text: '30 min', onPress: () => doSnooze(alert._id, 30) },
+        { text: '60 min', onPress: () => doSnooze(alert._id, 60) },
+      ]
+    );
+  };
+
+  const doSnooze = async (alertId, minutes) => {
+    try {
+      await alertsAPI.snooze(alertId, minutes);
+      RNAlert.alert('😴 Snoozed', `Alert snoozed for ${minutes} minutes`);
+      loadAlerts();
+    } catch (err) {
+      RNAlert.alert('Error', err.message || 'Could not snooze alert');
+    }
   };
 
   const openDetail = async (alert) => {
@@ -256,6 +286,15 @@ export default function AlertsScreen({ navigation }) {
             <View style={styles.ackedBadge}>
               <Text style={styles.ackedBadgeText}>✅ You acknowledged</Text>
             </View>
+          )}
+
+          {alert.status === 'active' && (
+            <TouchableOpacity
+              style={styles.snoozeButton}
+              onPress={() => handleSnooze(alert)}
+            >
+              <Text style={styles.snoozeButtonText}>😴 Snooze</Text>
+            </TouchableOpacity>
           )}
 
           {alert.status === 'active' && isOwner && (
@@ -692,6 +731,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   resolveButtonText: { color: '#4CAF50', fontSize: 14, fontWeight: '700' },
+  snoozeButton: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#FF9800',
+    alignItems: 'center',
+  },
+  snoozeButtonText: { color: '#FF9800', fontSize: 13, fontWeight: '600' },
 
   // Empty state
   emptyState: { alignItems: 'center', paddingVertical: 40 },
