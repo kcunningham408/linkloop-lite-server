@@ -352,8 +352,24 @@ export default function AlertsScreen({ navigation }) {
       />
 
       <View style={styles.content}>
-        {/* Manual Check Button — subtle, for testing */}
+        {/* Alert Settings shortcut — jumps to Profile tab */}
         <FadeIn delay={stagger(0, 100)}>
+        <TouchableOpacity
+          style={styles.settingsButton}
+          onPress={() => { haptic.light(); navigation.navigate('Profile'); }}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.settingsButtonIcon}>⚙️</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.settingsButtonText}>Alert Settings</Text>
+            <Text style={styles.settingsButtonSub}>Set thresholds, delays & notification preferences</Text>
+          </View>
+          <Text style={styles.settingsChevron}>›</Text>
+        </TouchableOpacity>
+        </FadeIn>
+
+        {/* Manual Check Button — subtle, for testing */}
+        <FadeIn delay={stagger(1, 100)}>
         <TouchableOpacity style={styles.checkButton} onPress={handleTriggerCheck}>
           <Text style={styles.checkButtonIcon}>📡</Text>
           <View>
@@ -363,7 +379,7 @@ export default function AlertsScreen({ navigation }) {
         </TouchableOpacity>
         </FadeIn>
 
-        <FadeIn delay={stagger(1, 100)}>
+        <FadeIn delay={stagger(2, 100)}>
         {/* Filter Tabs */}
         <View style={styles.filterRow}>
           {[
@@ -635,6 +651,27 @@ const styles = StyleSheet.create({
   checkButtonIcon: { fontSize: TYPE.xxl, marginRight: 12 },
   checkButtonText: { fontSize: TYPE.md, fontWeight: TYPE.semibold, color: '#A0A0A0' },
   checkButtonSub: { fontSize: 11, color: '#666', marginTop: 1 },
+
+  // Settings shortcut button
+  settingsButton: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 14,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#2C2C2E',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  settingsButtonIcon: { fontSize: TYPE.xxl, marginRight: 12 },
+  settingsButtonText: { fontSize: TYPE.md, fontWeight: TYPE.semibold, color: '#E0E0E0' },
+  settingsButtonSub: { fontSize: 11, color: '#666', marginTop: 1 },
+  settingsChevron: { fontSize: 24, color: '#555', marginLeft: 8 },
 
   // Filter
   filterRow: { flexDirection: 'row', marginBottom: 16, gap: 6 },
