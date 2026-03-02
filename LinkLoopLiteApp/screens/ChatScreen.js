@@ -176,7 +176,7 @@ export default function ChatScreen({ route, navigation }) {
         <View style={styles.ackMsgContainer}>
           <Text style={styles.ackMsgIcon}>✅</Text>
           <View style={styles.ackMsgContent}>
-            <Text style={styles.ackMsgLabel}>
+            <Text style={styles.ackMsgLabel} numberOfLines={1}>
               {msg.senderName || 'Someone'} acknowledged
             </Text>
             <Text style={styles.ackMsgText}>{msg.text}</Text>
@@ -252,8 +252,8 @@ export default function ChatScreen({ route, navigation }) {
             <Text style={styles.chatBannerEmoji}>{memberEmoji}</Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.chatBannerName}>{memberName}</Text>
-            <Text style={[styles.chatBannerRole, { color: accent }]}>{relationship || 'Care Circle Member'}</Text>
+            <Text style={styles.chatBannerName} numberOfLines={1}>{memberName}</Text>
+            <Text style={[styles.chatBannerRole, { color: accent }]} numberOfLines={1}>{relationship || 'Care Circle Member'}</Text>
           </View>
         </LinearGradient>
 

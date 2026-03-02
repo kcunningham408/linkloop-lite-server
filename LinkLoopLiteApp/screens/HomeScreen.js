@@ -184,7 +184,7 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.heroTitle}>{'\u221E'} LinkLoop</Text>
           <View style={styles.heroBadge}>
             <Text style={styles.heroBadgeEmoji}>{isMember ? '\uD83D\uDC41\uFE0F' : '\uD83E\uDE7A'}</Text>
-            <Text style={styles.heroBadgeText}>
+            <Text style={styles.heroBadgeText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
               {isMember
                 ? 'Watching ' + (warriorName || 'your warrior') + "'s loop"
                 : user?.name ? 'Welcome back, ' + user.name : 'Stay Connected, Stay in Range'}
@@ -370,9 +370,9 @@ const styles = StyleSheet.create({
   /* Hero */
   hero: { padding: 24, alignItems: 'center', paddingTop: 35, paddingBottom: 30, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.04)' },
   heroTitle: { fontSize: TYPE.h1, fontWeight: TYPE.bold, color: '#fff', marginBottom: 10 },
-  heroBadge: { backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, flexDirection: 'row', alignItems: 'center' },
+  heroBadge: { backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, flexDirection: 'row', alignItems: 'center', maxWidth: '100%' },
   heroBadgeEmoji: { fontSize: TYPE.xl, marginRight: 8 },
-  heroBadgeText: { color: '#fff', fontSize: TYPE.md, fontWeight: TYPE.semibold },
+  heroBadgeText: { color: '#fff', fontSize: TYPE.md, fontWeight: TYPE.semibold, flexShrink: 1 },
   syncBadge: { marginTop: 8, backgroundColor: 'rgba(255,255,255,0.10)', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 12 },
   syncBadgeText: { color: 'rgba(255,255,255,0.85)', fontSize: TYPE.sm, fontWeight: TYPE.medium },
 

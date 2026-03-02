@@ -170,7 +170,7 @@ export default function MoodScreen() {
                 <Text style={[
                   styles.moodLabel,
                   selectedMood?.label === mood.label && [styles.moodLabelSelected, { color: accent }],
-                ]}>{mood.display}</Text>
+                ]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{mood.display}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -282,10 +282,10 @@ export default function MoodScreen() {
                 <View style={styles.entryHeader}>
                   <Text style={styles.entryEmoji}>{entry.emoji}</Text>
                   <View style={styles.entryInfo}>
-                    <Text style={styles.entryLabel}>
+                    <Text style={styles.entryLabel} numberOfLines={1}>
                       {MOOD_OPTIONS.find(m => m.label === entry.label)?.display || entry.label}
                     </Text>
-                    <Text style={styles.entryTime}>{timeAgo(entry.timestamp)}</Text>
+                    <Text style={styles.entryTime} numberOfLines={1}>{timeAgo(entry.timestamp)}</Text>
                   </View>
                 </View>
                 {entry.note ? (

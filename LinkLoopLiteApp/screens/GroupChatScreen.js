@@ -171,7 +171,7 @@ export default function GroupChatScreen({ navigation }) {
         <View style={styles.ackMsgContainer}>
           <Text style={styles.ackMsgIcon}>✅</Text>
           <View style={styles.ackMsgContent}>
-            <Text style={styles.ackMsgLabel}>{msg.senderName || 'Someone'} acknowledged</Text>
+            <Text style={styles.ackMsgLabel} numberOfLines={1}>{msg.senderName || 'Someone'} acknowledged</Text>
             <Text style={styles.ackMsgText}>{msg.text}</Text>
             <Text style={styles.ackMsgTime}>{formatTime(msg.createdAt)}</Text>
           </View>

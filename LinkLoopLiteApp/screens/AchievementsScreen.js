@@ -196,10 +196,10 @@ export default function AchievementsScreen() {
                       <Text style={[
                         styles.badgeTitle,
                         !badge.unlocked && styles.badgeTitleLocked,
-                      ]}>
+                      ]} numberOfLines={2}>
                         {badge.title}
                       </Text>
-                      <Text style={styles.badgeDesc}>{badge.description}</Text>
+                      <Text style={styles.badgeDesc} numberOfLines={3}>{badge.description}</Text>
                       {badge.unlocked && badge.unlockedAt && (
                         <Text style={[styles.badgeDate, { color: accent }]}>
                           {new Date(badge.unlockedAt).toLocaleDateString()}

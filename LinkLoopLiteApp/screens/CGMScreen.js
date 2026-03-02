@@ -308,12 +308,12 @@ export default function CGMScreen({ navigation }) {
       <BloomBackground accent={glucoseColor} secondary={accent} variant="hero" contentStyle={styles.headerGradient}>
         {isMember && (
           <View style={styles.memberPill}>
-            <Text style={styles.memberPillText}>👁 Watching {warriorName || 'your warrior'}'s loop</Text>
+            <Text style={styles.memberPillText} numberOfLines={1}>👁 Watching {warriorName || 'your warrior'}'s loop</Text>
           </View>
         )}
         {isStale && (
           <View style={styles.staleBanner}>
-            <Text style={styles.staleBannerText}>
+            <Text style={styles.staleBannerText} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>
               ⚠️ Data is {minsOld} min old — {isMember ? 'warrior may be offline' : 'app may be in background'}
             </Text>
           </View>
@@ -417,7 +417,7 @@ export default function CGMScreen({ navigation }) {
               notes.slice(0, 5).map((n) => (
                 <TouchableOpacity key={n._id} style={styles.noteCard} onLongPress={() => handleDeleteNote(n._id)}>
                   <View style={styles.noteRow}>
-                    <Text style={[styles.noteAuthor, { color: accent }]}>{n.authorEmoji || '📝'} {n.authorName}</Text>
+                    <Text style={[styles.noteAuthor, { color: accent }]} numberOfLines={1}>{n.authorEmoji || '📝'} {n.authorName}</Text>
                     <Text style={styles.noteTime}>
                       {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </Text>
@@ -442,7 +442,7 @@ export default function CGMScreen({ navigation }) {
                 <Text style={styles.deviceEmoji}>📱</Text>
                 <View style={styles.deviceInfo}>
                   <Text style={styles.deviceName}>Manual Entry</Text>
-                  <Text style={[styles.deviceStatus, { color: accent }]}>
+                  <Text style={[styles.deviceStatus, { color: accent }]} numberOfLines={1}>
                     {currentGlucose ? 'Last log: ' + new Date(currentGlucose.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No data yet'}
                   </Text>
                 </View>
@@ -457,7 +457,7 @@ export default function CGMScreen({ navigation }) {
                     <Text style={styles.deviceEmoji}>🩸</Text>
                     <View style={styles.deviceInfo}>
                       <Text style={styles.deviceName}>Dexcom CGM · Live</Text>
-                      <Text style={[styles.deviceStatus, { color: '#00D4AA' }]}>
+                      <Text style={[styles.deviceStatus, { color: '#00D4AA' }]} numberOfLines={1}>
                         {shareStatus.lastSync
                           ? '⚡ Last sync: ' + new Date(shareStatus.lastSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                           : `⚡ Connected as ${shareStatus.username}`}
@@ -496,7 +496,7 @@ export default function CGMScreen({ navigation }) {
                     <Text style={styles.deviceEmoji}>🌐</Text>
                     <View style={styles.deviceInfo}>
                       <Text style={styles.deviceName}>Nightscout · Live</Text>
-                      <Text style={[styles.deviceStatus, { color: '#9B59B6' }]}>
+                      <Text style={[styles.deviceStatus, { color: '#9B59B6' }]} numberOfLines={1}>
                         {nsStatus.lastSync
                           ? '⚡ Last sync: ' + new Date(nsStatus.lastSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                           : '⚡ Connected'}
@@ -623,7 +623,7 @@ const styles = StyleSheet.create({
 
   /* Hero gradient */
   headerGradient: { padding: 24, alignItems: 'center', paddingTop: 30, paddingBottom: 35 },
-  memberPill: { backgroundColor: 'rgba(0,0,0,0.25)', paddingHorizontal: 14, paddingVertical: 5, borderRadius: 20, marginBottom: 12 },
+  memberPill: { backgroundColor: 'rgba(0,0,0,0.25)', paddingHorizontal: 14, paddingVertical: 5, borderRadius: 20, marginBottom: 12, maxWidth: '90%' },
   memberPillText: { fontSize: 13, color: '#fff', opacity: 0.9 },
   staleBanner: { backgroundColor: 'rgba(255,165,0,0.20)', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 7, marginBottom: 10, borderWidth: 1, borderColor: 'rgba(255,165,0,0.45)' },
   staleBannerText: { fontSize: 13, color: '#FFA500', fontWeight: TYPE.semibold, textAlign: 'center' },
@@ -655,8 +655,8 @@ const styles = StyleSheet.create({
   addNoteBtnText: { fontSize: 13, fontWeight: TYPE.semibold },
   noteCard: { backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
   noteRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
-  noteAuthor: { fontSize: 13, fontWeight: TYPE.semibold },
-  noteTime: { fontSize: 11, color: '#666' },
+  noteAuthor: { fontSize: 13, fontWeight: TYPE.semibold, flex: 1, marginRight: 8 },
+  noteTime: { fontSize: 11, color: '#666', flexShrink: 0 },
   noteText: { fontSize: TYPE.md, color: '#D0D0D0', lineHeight: 20 },
   noNotesText: { fontSize: 13, color: '#666', textAlign: 'center', paddingVertical: 15 },
 

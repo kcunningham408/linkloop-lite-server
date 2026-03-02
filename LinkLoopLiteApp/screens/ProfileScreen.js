@@ -211,8 +211,8 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <Text style={styles.heroName}>{user?.name || 'LinkLoop User'}</Text>
-        <Text style={styles.heroEmail}>{user?.email || ''}</Text>
+        <Text style={styles.heroName} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{user?.name || 'LinkLoop User'}</Text>
+        <Text style={styles.heroEmail} numberOfLines={1}>{user?.email || ''}</Text>
 
         {/* Role badge */}
         <View style={styles.heroBadge}>
@@ -226,16 +226,16 @@ export default function ProfileScreen() {
           {memberSince && (
             <View style={styles.heroStat}>
               <Text style={styles.heroStatLabel}>Joined</Text>
-              <Text style={styles.heroStatValue}>{memberSince}</Text>
+              <Text style={styles.heroStatValue} numberOfLines={1}>{memberSince}</Text>
             </View>
           )}
           <View style={styles.heroStat}>
             <Text style={styles.heroStatLabel}>Role</Text>
-            <Text style={styles.heroStatValue}>{isMember ? 'Member' : 'Warrior'}</Text>
+            <Text style={styles.heroStatValue} numberOfLines={1}>{isMember ? 'Member' : 'Warrior'}</Text>
           </View>
           <View style={styles.heroStat}>
             <Text style={styles.heroStatLabel}>Version</Text>
-            <Text style={styles.heroStatValue}>v{APP_VERSION}</Text>
+            <Text style={styles.heroStatValue} numberOfLines={1}>v{APP_VERSION}</Text>
           </View>
         </View>
       </LinkLoopBanner>
@@ -579,7 +579,7 @@ export default function ProfileScreen() {
                   <Text style={[
                     styles.themeOptionLabel,
                     isActive && { color: displayColor, fontWeight: TYPE.bold },
-                  ]}>
+                  ]} numberOfLines={1}>
                     {p.name}
                   </Text>
                   {isActive && (
@@ -745,7 +745,7 @@ const styles = StyleSheet.create({
   },
   heroStat: { alignItems: 'center', flex: 1 },
   heroStatLabel: { fontSize: TYPE.xs, color: 'rgba(255,255,255,0.6)', fontWeight: TYPE.medium, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.5 },
-  heroStatValue: { fontSize: TYPE.md, color: '#fff', fontWeight: TYPE.bold },
+  heroStatValue: { fontSize: TYPE.md, color: '#fff', fontWeight: TYPE.bold, textAlign: 'center' },
 
   settingsCard: { borderRadius: 12, padding: 20, marginBottom: 20 },
   sectionTitle: { fontSize: TYPE.xl, fontWeight: TYPE.bold, color: '#fff', marginBottom: 15 },

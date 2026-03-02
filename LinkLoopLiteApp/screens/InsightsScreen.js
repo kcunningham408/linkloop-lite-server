@@ -319,9 +319,9 @@ export default function InsightsScreen() {
                       <Text style={styles.insightIcon}>{insight.icon}</Text>
                       <View style={styles.insightBody}>
                         <View style={styles.insightTitleRow}>
-                          <Text style={styles.insightTitle}>{insight.title}</Text>
+                          <Text style={styles.insightTitle} numberOfLines={1}>{insight.title}</Text>
                           <View style={[styles.typeBadge, { backgroundColor: colors.badge + '20' }]}>
-                            <Text style={[styles.typeBadgeText, { color: colors.badge }]}>
+                            <Text style={[styles.typeBadgeText, { color: colors.badge }]} numberOfLines={1}>
                               {TYPE_LABELS[insight.type] || 'Info'}
                             </Text>
                           </View>
@@ -388,9 +388,9 @@ export default function InsightsScreen() {
                       <Text style={styles.trendIcon}>{trend.icon}</Text>
                       <View style={styles.trendBody}>
                         <View style={styles.trendTitleRow}>
-                          <Text style={styles.trendTitle}>{trend.title}</Text>
+                          <Text style={styles.trendTitle} numberOfLines={1}>{trend.title}</Text>
                           <View style={[styles.categoryBadge, { backgroundColor: colors.badge + '15' }]}>
-                            <Text style={[styles.categoryBadgeText, { color: colors.badge }]}>
+                            <Text style={[styles.categoryBadgeText, { color: colors.badge }]} numberOfLines={1}>
                               {catIcon} {trend.category}
                             </Text>
                           </View>
@@ -428,8 +428,8 @@ export default function InsightsScreen() {
 function SummaryPill({ label, value, color }) {
   return (
     <View style={styles.summaryPill}>
-      <Text style={[styles.summaryValue, { color }]}>{value}</Text>
-      <Text style={styles.summaryLabel}>{label}</Text>
+      <Text style={[styles.summaryValue, { color }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{value}</Text>
+      <Text style={styles.summaryLabel} numberOfLines={1}>{label}</Text>
     </View>
   );
 }

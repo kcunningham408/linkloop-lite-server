@@ -226,7 +226,7 @@ export default function AlertsScreen({ navigation }) {
         {/* Header */}
         <View style={styles.alertCardHeader}>
           <View style={styles.alertTypeRow}>
-            <Text style={styles.alertTypeText}>{alertType}</Text>
+            <Text style={styles.alertTypeText} numberOfLines={1}>{alertType}</Text>
             <View style={[styles.severityBadge, { backgroundColor: severity.bg }]}>
               <Text style={[styles.severityText, { color: severity.color }]}>
                 {severity.icon} {severity.label}
@@ -689,8 +689,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-  alertTypeRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 },
-  alertTypeText: { fontSize: 15, fontWeight: TYPE.bold, color: '#fff' },
+  alertTypeRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, marginRight: 8 },
+  alertTypeText: { fontSize: 15, fontWeight: TYPE.bold, color: '#fff', flexShrink: 1 },
   severityBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
   severityText: { fontSize: TYPE.xs, fontWeight: TYPE.extrabold, letterSpacing: 0.3 },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
@@ -890,8 +890,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  detailAckName: { fontSize: TYPE.md, fontWeight: TYPE.bold, color: '#4CAF50' },
-  detailAckTime: { fontSize: 11, color: '#666' },
+  detailAckName: { fontSize: TYPE.md, fontWeight: TYPE.bold, color: '#4CAF50', flex: 1, marginRight: 8 },
+  detailAckTime: { fontSize: 11, color: '#666', flexShrink: 0 },
   detailAckMsg: {
     fontSize: 13,
     color: '#A0A0A0',

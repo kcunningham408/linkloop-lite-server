@@ -149,8 +149,8 @@ export default function SuppliesScreen() {
               <TouchableOpacity key={supply._id} style={styles.supplyCard} onLongPress={() => handleDeleteSupply(supply._id, supply.name)}>
                 <Text style={styles.supplyEmoji}>{supply.emoji}</Text>
                 <View style={styles.supplyInfo}>
-                  <Text style={styles.supplyName}>{supply.name}</Text>
-                  <Text style={styles.supplyQuantity}>{supply.quantity} {supply.unit} remaining</Text>
+                  <Text style={styles.supplyName} numberOfLines={1}>{supply.name}</Text>
+                  <Text style={styles.supplyQuantity} numberOfLines={1}>{supply.quantity} {supply.unit} remaining</Text>
                 </View>
                 <View style={styles.supplyStatus}>
                   <View style={[styles.statusBadge, { backgroundColor: status.bg }]}>
@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
   supplyInfo: { flex: 1 },
   supplyName: { fontSize: TYPE.lg, fontWeight: TYPE.semibold, color: '#fff', marginBottom: 4 },
   supplyQuantity: { fontSize: 13, color: '#A0A0A0' },
-  supplyStatus: { alignItems: 'flex-end' },
+  supplyStatus: { alignItems: 'flex-end', flexShrink: 0, marginLeft: 8 },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, marginBottom: 4 },
   statusText: { fontSize: TYPE.sm, fontWeight: TYPE.semibold },
   daysLeft: { fontSize: 11, color: '#888' },

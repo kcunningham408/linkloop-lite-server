@@ -268,8 +268,8 @@ export default function CareCircleScreen() {
                 <View style={styles.memberCardTop}>
                   <Text style={styles.memberEmoji}>{member.memberEmoji}</Text>
                   <View style={styles.memberInfo}>
-                    <Text style={styles.memberName}>{member.memberName}</Text>
-                    <Text style={styles.memberRelationship}>
+                    <Text style={styles.memberName} numberOfLines={1}>{member.memberName}</Text>
+                    <Text style={styles.memberRelationship} numberOfLines={1}>
                       {RELATIONSHIPS.find(r => r.value === member.relationship)?.label || 'Circle Member'}
                     </Text>
                   </View>
@@ -326,7 +326,7 @@ export default function CareCircleScreen() {
                 <View style={styles.pendingCard}>
                   <Text style={styles.memberEmoji}>{member.memberEmoji}</Text>
                   <View style={styles.memberInfo}>
-                    <Text style={styles.memberName}>{member.memberName}</Text>
+                    <Text style={styles.memberName} numberOfLines={1}>{member.memberName}</Text>
                     <Text style={{ fontSize: 13, color: '#FFA500', fontStyle: 'italic', marginBottom: 6 }}>Waiting to join…</Text>
                     {member.inviteCode ? (
                       <TouchableOpacity
@@ -432,7 +432,7 @@ export default function CareCircleScreen() {
                 <GlassCard accent={accent} glow style={{ marginBottom: 20 }}>
                   <View style={styles.warriorHero}>
                     <Text style={styles.warriorHeroEmoji}>{warrior.emoji || '💪'}</Text>
-                    <Text style={styles.warriorHeroName}>{warrior.name}'s Circle</Text>
+                    <Text style={styles.warriorHeroName} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{warrior.name}'s Circle</Text>
                     <Text style={styles.warriorHeroSub}>You're supporting {warrior.name} as part of their T1D care team</Text>
                     <View style={[styles.warriorBadge, { backgroundColor: accent + '20', borderColor: accent + '40' }]}>
                       <Text style={[styles.warriorBadgeText, { color: accent }]}>💪 T1D Warrior</Text>
@@ -464,7 +464,7 @@ export default function CareCircleScreen() {
                     <Text style={styles.rosterEmoji}>{member.emoji || '👤'}</Text>
                     <View style={styles.rosterInfo}>
                       <View style={styles.rosterNameRow}>
-                        <Text style={styles.rosterName}>
+                        <Text style={styles.rosterName} numberOfLines={1}>
                           {member.name}
                         </Text>
                         {member.isYou && (
