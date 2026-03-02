@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LinkLoop — LinkedIn Banner</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    width:1584px; height:396px; overflow:hidden;
+    background:#0A0A0F;
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;
+  }
+
+  .banner {
+    width:1584px; height:396px; position:relative; overflow:hidden;
+    background:
+      radial-gradient(ellipse 600px 400px at 20% 40%, rgba(74,144,217,0.18) 0%, transparent 70%),
+      radial-gradient(ellipse 500px 350px at 55% 60%, rgba(52,199,89,0.12) 0%, transparent 65%),
+      radial-gradient(ellipse 400px 300px at 80% 30%, rgba(155,89,182,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 300px 200px at 40% 80%, rgba(74,144,217,0.05) 0%, transparent 50%),
+      #0A0A0F;
+  }
+
+  /* ── Gradient blobs ── */
+  .blob {
+    position:absolute; border-radius:50%; z-index:1;
+    filter: blur(90px);
+  }
+  .blob.blue {
+    width:420px; height:360px;
+    top:-60px; left:80px;
+    background: rgba(74,144,217,0.14);
+  }
+  .blob.green {
+    width:380px; height:320px;
+    top:40px; right:200px;
+    background: rgba(52,199,89,0.10);
+  }
+  .blob.purple {
+    width:280px; height:240px;
+    bottom:-40px; left:40%;
+    background: rgba(155,89,182,0.06);
+  }
+  .blob.accent-right {
+    width:300px; height:260px;
+    top:-20px; right:-40px;
+    background: rgba(74,144,217,0.08);
+  }
+
+  /* ── Glass card behind chain link ── */
+  .glass-card {
+    position:absolute; z-index:3;
+    width:200px; height:200px; border-radius:50%;
+    top:50%; left:160px; transform:translateY(-50%);
+    background: rgba(255,255,255,0.015);
+    border:1px solid rgba(255,255,255,0.04);
+    box-shadow: inset 0 0 40px rgba(74,144,217,0.03);
+  }
+
+  /* ── Chain links SVG ── */
+  .loop-svg {
+    position:absolute; z-index:5;
+    width:140px; height:140px;
+    top:50%; left:160px; transform:translate(-50%, -50%) translateX(100px);
+    filter: drop-shadow(0 0 30px rgba(74,144,217,0.35)) drop-shadow(0 0 60px rgba(52,199,89,0.12));
+  }
+
+  /* ── Main wordmark ── */
+  .wordmark {
+    position:absolute; z-index:10;
+    left:380px; top:72px;
+    font-size:72px; font-weight:900; letter-spacing:-3px; line-height:1;
+    background: linear-gradient(135deg, #7BB3FF 0%, #4A90D9 35%, #34C759 100%);
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  }
+
+  /* ── Tagline ── */
+  .tagline {
+    position:absolute; z-index:10;
+    left:384px; top:152px;
+    font-size:15px; font-weight:700;
+    color:rgba(255,255,255,0.20);
+    letter-spacing:10px; text-transform:uppercase;
+  }
+
+  /* ── Shayla's name — personalized ── */
+  .shayla {
+    position:absolute; z-index:10;
+    left:384px; top:202px;
+    font-size:22px; font-weight:800; letter-spacing:-0.5px;
+    background: linear-gradient(135deg, #34C759 0%, #5FE89D 60%, #7BB3FF 100%);
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .shayla-role {
+    position:absolute; z-index:10;
+    left:384px; top:232px;
+    font-size:12px; font-weight:600;
+    color:rgba(255,255,255,0.14);
+    letter-spacing:3px; text-transform:uppercase;
+  }
+
+  /* ── Floating glucose reading — right area ── */
+  .float-reading {
+    position:absolute; top:50px; right:220px; z-index:8;
+    background:rgba(255,255,255,0.025); border:1px solid rgba(76,175,80,0.12);
+    border-radius:16px; padding:12px 18px; text-align:center;
+    box-shadow:0 0 20px rgba(76,175,80,0.04);
+  }
+  .float-reading .val {
+    font-size:28px; font-weight:900; color:#4CAF50; line-height:1;
+  }
+  .float-reading .unit {
+    font-size:9px; font-weight:700; color:rgba(255,255,255,0.20);
+    margin-top:3px; letter-spacing:1.5px;
+  }
+
+  /* ── Second glucose pill — far right ── */
+  .float-reading-2 {
+    position:absolute; top:160px; right:80px; z-index:8;
+    background:rgba(255,255,255,0.02); border:1px solid rgba(74,144,217,0.10);
+    border-radius:14px; padding:10px 16px; text-align:center;
+    box-shadow:0 0 15px rgba(74,144,217,0.03);
+    opacity:0.6;
+  }
+  .float-reading-2 .val {
+    font-size:22px; font-weight:900; color:#4A90D9; line-height:1;
+  }
+  .float-reading-2 .unit {
+    font-size:8px; font-weight:700; color:rgba(255,255,255,0.15);
+    margin-top:2px; letter-spacing:1px;
+  }
+
+  /* ── Trend arrows ── */
+  .trend-1 {
+    position:absolute; top:56px; right:148px; z-index:8;
+    font-size:26px; color:rgba(76,175,80,0.25);
+  }
+  .trend-2 {
+    position:absolute; top:172px; right:38px; z-index:8;
+    font-size:20px; color:rgba(74,144,217,0.18);
+    opacity:0.6;
+  }
+
+  /* ── Care circle dots ── */
+  .circle-dots {
+    position:absolute; right:340px; top:50%; transform:translateY(-50%); z-index:8;
+    display:flex; flex-direction:column; gap:10px;
+    opacity:0.55;
+  }
+  .circle-dot {
+    width:12px; height:12px; border-radius:50%;
+    border:1.5px solid rgba(255,255,255,0.08);
+    position:relative;
+  }
+  .circle-dot::after {
+    content:''; position:absolute; inset:2.5px; border-radius:50%;
+  }
+  .circle-dot.on::after { background:#4CAF50; box-shadow:0 0 6px #4CAF50; }
+  .circle-dot.warn::after { background:#FFA500; box-shadow:0 0 6px #FFA500; }
+  .circle-dot.off::after { background:rgba(255,255,255,0.12); }
+
+  /* ── Feature pills — scattered right side ── */
+  .pill {
+    position:absolute; z-index:7;
+    background:rgba(255,255,255,0.02);
+    border:1px solid rgba(255,255,255,0.05);
+    border-radius:20px; padding:6px 14px;
+    font-size:10px; font-weight:700; letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:rgba(255,255,255,0.12);
+  }
+  .pill-1 { right:420px; bottom:50px; }
+  .pill-2 { right:280px; bottom:48px; }
+  .pill-3 { right:120px; bottom:52px; }
+
+  /* ── Ambient grid dots ── */
+  .grid-dots {
+    position:absolute; inset:0; z-index:2;
+  }
+  .grid-dot {
+    position:absolute; width:2px; height:2px; border-radius:50%;
+    background:rgba(255,255,255,0.04);
+  }
+
+  /* ── Horizontal scan line (subtle) ── */
+  .scan-line {
+    position:absolute; z-index:6;
+    left:0; right:0; top:50%;
+    height:1px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(74,144,217,0.08) 20%,
+      rgba(52,199,89,0.06) 50%,
+      rgba(155,89,182,0.04) 80%,
+      transparent 100%
+    );
+  }
+
+  /* ── Bottom edge glow ── */
+  .edge-glow {
+    position:absolute; z-index:9;
+    bottom:0; left:0; right:0; height:2px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(74,144,217,0.30) 25%,
+      rgba(52,199,89,0.25) 50%,
+      rgba(155,89,182,0.15) 75%,
+      transparent 100%
+    );
+  }
+
+  /* ── Top edge glow ── */
+  .edge-glow-top {
+    position:absolute; z-index:9;
+    top:0; left:0; right:0; height:1px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(74,144,217,0.10) 30%,
+      rgba(52,199,89,0.08) 60%,
+      transparent 100%
+    );
+  }
+
+  /* ── VibeCMD ── */
+  .vibecmd {
+    position:absolute; bottom:16px; left:24px; z-index:12;
+    display:flex; align-items:center; gap:5px;
+  }
+  .vibecmd .td { width:5px; height:5px; border-radius:50%; }
+  .vibecmd .dr { background:#ff5f57; }
+  .vibecmd .dy { background:#febc2e; }
+  .vibecmd .dg { background:#28c840; }
+  .vibecmd span {
+    font-size:10px; font-weight:700;
+    color:rgba(0,255,136,0.35);
+    letter-spacing:2px;
+    font-family:'SF Mono','Fira Code',monospace;
+  }
+
+  /* ── Right-side fade ── */
+  .fade-right {
+    position:absolute; z-index:6;
+    top:0; right:0; bottom:0; width:200px;
+    background: linear-gradient(90deg, transparent 0%, rgba(10,10,15,0.4) 100%);
+  }
+
+  /* ── Left-side subtle vignette ── */
+  .fade-left {
+    position:absolute; z-index:6;
+    top:0; left:0; bottom:0; width:60px;
+    background: linear-gradient(270deg, transparent 0%, rgba(10,10,15,0.3) 100%);
+  }
+</style>
+</head>
+<body>
+<div class="banner">
+  <!-- Gradient blobs -->
+  <div class="blob blue"></div>
+  <div class="blob green"></div>
+  <div class="blob purple"></div>
+  <div class="blob accent-right"></div>
+
+  <!-- Glass card backdrop -->
+  <div class="glass-card"></div>
+
+  <!-- Chain links logo -->
+  <svg class="loop-svg" viewBox="0 0 280 280" fill="none">
+    <defs>
+      <linearGradient id="b" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#7BB3FF"/>
+        <stop offset="50%" stop-color="#4A90D9"/>
+        <stop offset="100%" stop-color="#3A7BC8"/>
+      </linearGradient>
+      <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#5FE89D"/>
+        <stop offset="50%" stop-color="#34C759"/>
+        <stop offset="100%" stop-color="#2A9E47"/>
+      </linearGradient>
+      <filter id="gl">
+        <feGaussianBlur stdDeviation="3" result="blur"/>
+        <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+      </filter>
+    </defs>
+    <g filter="url(#gl)"><rect x="44" y="82" width="120" height="116" rx="58" ry="58" stroke="url(#b)" stroke-width="16" fill="none"/></g>
+    <g filter="url(#gl)"><rect x="116" y="82" width="120" height="116" rx="58" ry="58" stroke="url(#g)" stroke-width="16" fill="none"/></g>
+    <rect x="128" y="74" width="20" height="24" fill="#0A0A0F" opacity="0.95" rx="2"/>
+    <rect x="128" y="182" width="20" height="24" fill="#0A0A0F" opacity="0.95" rx="2"/>
+    <line x1="128" y1="194" x2="148" y2="194" stroke="url(#g)" stroke-width="16" stroke-linecap="round"/>
+    <line x1="128" y1="86" x2="148" y2="86" stroke="url(#b)" stroke-width="16" stroke-linecap="round"/>
+  </svg>
+
+  <!-- Wordmark -->
+  <div class="wordmark">LinkLoop</div>
+  <div class="tagline">Care · Track · Connect</div>
+
+  <!-- Shayla -->
+  <div class="shayla">Shayla's Care Circle</div>
+  <div class="shayla-role">T1D Warrior · Connected</div>
+
+  <!-- Floating glucose readings -->
+  <div class="float-reading">
+    <div class="val">112</div>
+    <div class="unit">MG/DL</div>
+  </div>
+  <div class="trend-1">↗</div>
+
+  <div class="float-reading-2">
+    <div class="val">98</div>
+    <div class="unit">MG/DL</div>
+  </div>
+  <div class="trend-2">→</div>
+
+  <!-- Care circle dots -->
+  <div class="circle-dots">
+    <div class="circle-dot on"></div>
+    <div class="circle-dot on"></div>
+    <div class="circle-dot on"></div>
+    <div class="circle-dot warn"></div>
+    <div class="circle-dot off"></div>
+  </div>
+
+  <!-- Feature pills -->
+  <div class="pill pill-1">Insights</div>
+  <div class="pill pill-2">Alerts</div>
+  <div class="pill pill-3">CGM Data</div>
+
+  <!-- Scan line -->
+  <div class="scan-line"></div>
+
+  <!-- Grid dots -->
+  <div class="grid-dots">
+    <div class="grid-dot" style="left:5%;  top:12%"></div>
+    <div class="grid-dot" style="left:12%; top:85%"></div>
+    <div class="grid-dot" style="left:25%; top:8%"></div>
+    <div class="grid-dot" style="left:35%; top:90%"></div>
+    <div class="grid-dot" style="left:48%; top:15%"></div>
+    <div class="grid-dot" style="left:55%; top:88%"></div>
+    <div class="grid-dot" style="left:65%; top:10%"></div>
+    <div class="grid-dot" style="left:72%; top:92%"></div>
+    <div class="grid-dot" style="left:82%; top:8%"></div>
+    <div class="grid-dot" style="left:90%; top:86%"></div>
+    <div class="grid-dot" style="left:95%; top:18%"></div>
+    <div class="grid-dot" style="left:8%;  top:50%"></div>
+    <div class="grid-dot" style="left:92%; top:45%"></div>
+    <div class="grid-dot" style="left:42%; top:5%"></div>
+    <div class="grid-dot" style="left:58%; top:95%"></div>
+  </div>
+
+  <!-- Edge glows -->
+  <div class="edge-glow"></div>
+  <div class="edge-glow-top"></div>
+
+  <!-- Fades -->
+  <div class="fade-right"></div>
+  <div class="fade-left"></div>
+
+  <!-- VibeCMD -->
+  <div class="vibecmd">
+    <div class="td dr"></div>
+    <div class="td dy"></div>
+    <div class="td dg"></div>
+    <span>VibeCMD</span>
+  </div>
+</div>
+</body>
+</html>
