@@ -347,8 +347,8 @@ export default function HomeScreen({ navigation }) {
 /* ─── Quick Action Button ─── */
 function QuickAction({ emoji, label, onPress, badge, accent }) {
   return (
-    <TouchableOpacity activeOpacity={0.7} onPress={() => { haptic.light(); onPress(); }} style={{ flex: 1, marginHorizontal: 4 }}>
-      <GlassCard accent={accent} style={{ alignItems: 'center', paddingVertical: 14, paddingHorizontal: 4 }}>
+    <TouchableOpacity activeOpacity={0.7} onPress={() => { haptic.light(); onPress(); }} style={{ flex: 1, marginHorizontal: 3 }}>
+      <GlassCard accent={accent} style={{ alignItems: 'center', paddingVertical: 14, paddingHorizontal: 2 }}>
         <View style={styles.quickActionInner}>
           <Text style={styles.quickActionEmoji}>{emoji}</Text>
           {badge ? (
@@ -357,7 +357,7 @@ function QuickAction({ emoji, label, onPress, badge, accent }) {
             </View>
           ) : null}
         </View>
-        <Text style={styles.quickActionLabel}>{label}</Text>
+        <Text style={styles.quickActionLabel} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{label}</Text>
       </GlassCard>
     </TouchableOpacity>
   );
@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
   quickActionEmoji: { fontSize: TYPE.h2 },
   quickActionBadge: { position: 'absolute', top: -6, right: -10, backgroundColor: '#FF6B6B', borderRadius: 10, minWidth: 18, height: 18, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4 },
   quickActionBadgeText: { fontSize: TYPE.xs, fontWeight: TYPE.bold, color: '#fff' },
-  quickActionLabel: { fontSize: TYPE.sm, color: '#B0B0B0', fontWeight: TYPE.semibold },
+  quickActionLabel: { fontSize: TYPE.sm, color: '#B0B0B0', fontWeight: TYPE.semibold, textAlign: 'center' },
 
   /* Disclaimer */
   disclaimerRow: { flexDirection: 'row', alignItems: 'flex-start' },
