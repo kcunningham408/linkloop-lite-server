@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, AppState, Dimensions, RefreshControl, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import BloomBackground from '../components/BloomBackground';
 import GlassCard from '../components/GlassCard';
 import GlucoseRing from '../components/GlucoseRing';
 import StatArc from '../components/StatArc';
@@ -179,7 +180,7 @@ export default function HomeScreen({ navigation }) {
     >
       {/* ─── Hero gradient header ─── */}
       <FadeIn delay={0} slideY={0}>
-        <LinearGradient colors={getGradient(isMember)} style={styles.hero}>
+        <BloomBackground accent={accent} secondary={getGradient(isMember)[1] || accent} variant="hero" contentStyle={styles.hero}>
           <Text style={styles.heroTitle}>{'\u221E'} LinkLoop</Text>
           <View style={styles.heroBadge}>
             <Text style={styles.heroBadgeEmoji}>{isMember ? '\uD83D\uDC41\uFE0F' : '\uD83E\uDE7A'}</Text>
@@ -203,7 +204,7 @@ export default function HomeScreen({ navigation }) {
               </Text>
             </View>
           )}
-        </LinearGradient>
+        </BloomBackground>
       </FadeIn>
 
       <View style={styles.content}>
@@ -367,7 +368,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0A0A0F' },
 
   /* Hero */
-  hero: { padding: 24, alignItems: 'center', paddingTop: 35, paddingBottom: 30 },
+  hero: { padding: 24, alignItems: 'center', paddingTop: 35, paddingBottom: 30, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.04)' },
   heroTitle: { fontSize: TYPE.h1, fontWeight: TYPE.bold, color: '#fff', marginBottom: 10 },
   heroBadge: { backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, flexDirection: 'row', alignItems: 'center' },
   heroBadgeEmoji: { fontSize: TYPE.xl, marginRight: 8 },

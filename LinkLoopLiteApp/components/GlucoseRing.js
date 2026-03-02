@@ -9,6 +9,15 @@ import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient as SVGGradient, Stop } from 'react-native-svg';
 import TYPE from '../config/typography';
 
+/** Map trend words → arrow glyphs so the ring always shows a compact symbol */
+const TREND_ARROWS = {
+  rising_fast: '↑↑',
+  rising:      '↑',
+  stable:      '→',
+  falling:     '↓',
+  falling_fast:'↓↓',
+};
+
 const RING_SIZE = 180;
 const STROKE_WIDTH = 8;
 const RADIUS = (RING_SIZE - STROKE_WIDTH) / 2;
@@ -97,8 +106,10 @@ export default function GlucoseRing({
       </View>
       {/* Trend arrow - positioned to the right of the ring */}
       {value ? (
-        <View style={styles.trendContainer}>
-          <Text style={[styles.trend, { color }]}>{trend}</Text>
+        <View style={[styles.trendContainer, { right: -(size * 0.16), top: size * 0.32 }]}>
+          <Text style={[styles.trend, { color, fontSize: Math.max(18, size * 0.18) }]}>
+            {TREND_ARROWS[trend] || trend}
+          </Text>
         </View>
       ) : null}
     </View>
@@ -140,11 +151,8 @@ const styles = StyleSheet.create({
   },
   trendContainer: {
     position: 'absolute',
-    right: -30,
-    top: '35%',
   },
   trend: {
-    fontSize: 36,
     fontWeight: TYPE.bold,
   },
 });

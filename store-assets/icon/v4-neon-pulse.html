@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>V4 — Neon Pulse</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { width:1024px; height:1024px; overflow:hidden; background:#0A0A0F; font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif; }
+  .icon {
+    width:1024px; height:1024px; position:relative; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+    background:
+      radial-gradient(circle at 50% 45%, rgba(74,144,217,0.22) 0%, transparent 40%),
+      radial-gradient(circle at 50% 45%, rgba(52,199,89,0.08) 0%, transparent 50%),
+      #0A0A0F;
+  }
+  /* Pulsing glow rings */
+  .glow-ring {
+    position:absolute; border-radius:50%; z-index:2;
+  }
+  .glow-ring.r1 { width:700px; height:700px; border:1px solid rgba(74,144,217,0.06); }
+  .glow-ring.r2 { width:560px; height:560px; border:1px solid rgba(74,144,217,0.10); }
+  .glow-ring.r3 { width:420px; height:420px; border:1.5px solid rgba(74,144,217,0.15); box-shadow:0 0 40px rgba(74,144,217,0.08); }
+
+  /* Main chain link — heavy neon glow */
+  .loop-svg {
+    width:340px; height:340px; z-index:10;
+    filter: drop-shadow(0 0 40px rgba(74,144,217,0.5)) drop-shadow(0 0 80px rgba(74,144,217,0.25)) drop-shadow(0 0 120px rgba(52,199,89,0.15));
+  }
+  /* Glucose pulse line across the middle */
+  .pulse-line {
+    position:absolute; z-index:8; top:50%; left:0; right:0;
+    transform:translateY(-50%);
+    opacity:0.25;
+  }
+  /* Wordmark */
+  .wordmark {
+    position:absolute; bottom:105px; z-index:12;
+    font-size:68px; font-weight:900; letter-spacing:-2px;
+    color:#fff;
+  }
+  .wordmark .link { color:#7BB3FF; }
+  .wordmark .loop { color:#5FE89D; }
+  /* Sub */
+  .sub {
+    position:absolute; bottom:68px; z-index:12;
+    font-size:14px; font-weight:600; color:rgba(255,255,255,0.2);
+    letter-spacing:5px; text-transform:uppercase;
+  }
+  /* VibeCMD */
+  .vibecmd {
+    position:absolute; bottom:28px; left:32px; z-index:20;
+    display:flex; align-items:center; gap:6px;
+  }
+  .vibecmd .td { width:6px; height:6px; border-radius:50%; }
+  .vibecmd .dr { background:#ff5f57; }
+  .vibecmd .dy { background:#febc2e; }
+  .vibecmd .dg { background:#28c840; }
+  .vibecmd span { font-size:11px; font-weight:700; color:rgba(0,255,136,0.4); letter-spacing:2px; font-family:'SF Mono',monospace; }
+</style>
+</head>
+<body>
+<div class="icon">
+  <div class="glow-ring r1"></div>
+  <div class="glow-ring r2"></div>
+  <div class="glow-ring r3"></div>
+
+  <!-- Glucose pulse line behind the links -->
+  <svg class="pulse-line" width="1024" height="80" viewBox="0 0 1024 80">
+    <polyline points="0,40 200,40 280,40 340,15 380,65 420,30 460,50 500,40 600,40 1024,40"
+              stroke="rgba(74,144,217,0.6)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Glow behind -->
+    <polyline points="0,40 200,40 280,40 340,15 380,65 420,30 460,50 500,40 600,40 1024,40"
+              stroke="rgba(74,144,217,0.15)" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+
+  <svg class="loop-svg" viewBox="0 0 280 280" fill="none">
+    <defs>
+      <linearGradient id="b" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#9CC8FF"/><stop offset="50%" stop-color="#4A90D9"/><stop offset="100%" stop-color="#3A7BC8"/>
+      </linearGradient>
+      <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#7AFFC0"/><stop offset="50%" stop-color="#34C759"/><stop offset="100%" stop-color="#2A9E47"/>
+      </linearGradient>
+      <filter id="gl"><feGaussianBlur stdDeviation="3" result="blur"/><feComposite in="SourceGraphic" in2="blur" operator="over"/></filter>
+    </defs>
+    <g filter="url(#gl)"><rect x="44" y="82" width="120" height="116" rx="58" ry="58" stroke="url(#b)" stroke-width="16" fill="none"/></g>
+    <g filter="url(#gl)"><rect x="116" y="82" width="120" height="116" rx="58" ry="58" stroke="url(#g)" stroke-width="16" fill="none"/></g>
+    <rect x="128" y="74" width="20" height="24" fill="#0A0A0F" opacity="0.95" rx="2"/>
+    <rect x="128" y="182" width="20" height="24" fill="#0A0A0F" opacity="0.95" rx="2"/>
+    <line x1="128" y1="194" x2="148" y2="194" stroke="url(#g)" stroke-width="16" stroke-linecap="round"/>
+    <line x1="128" y1="86" x2="148" y2="86" stroke="url(#b)" stroke-width="16" stroke-linecap="round"/>
+  </svg>
+
+  <div class="wordmark"><span class="link">Link</span><span class="loop">Loop</span></div>
+  <div class="sub">Glucose Tracking</div>
+
+  <div class="vibecmd">
+    <div class="td dr"></div><div class="td dy"></div><div class="td dg"></div>
+    <span>VibeCMD</span>
+  </div>
+</div>
+</body>
+</html>

@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
 /**
- * Unified screen header with themed accent gradient bar.
+ * Unified screen header with themed bloom-gradient glow bar.
  *
  * Props:
  *   title    – string (required)
@@ -21,13 +21,17 @@ export default function ScreenHeader({ title, subtitle, children }) {
 
   return (
     <View style={styles.wrapper}>
-      {/* Accent gradient bar */}
-      <LinearGradient
-        colors={[accent, gradient[1] || accent]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.accentBar}
-      />
+      {/* Bloom-style gradient glow bar */}
+      <View style={styles.glowBarWrap}>
+        <LinearGradient
+          colors={[accent, gradient[1] || accent]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.accentBar}
+        />
+        {/* Bloom glow underneath the bar */}
+        <View style={[styles.bloomGlow, { backgroundColor: accent }]} />
+      </View>
 
       <View style={styles.content}>
         <Text style={styles.title}>{title}</Text>
@@ -40,14 +44,26 @@ export default function ScreenHeader({ title, subtitle, children }) {
 
 const styles = StyleSheet.create({
   wrapper: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: '#0A0A0F',
     borderBottomWidth: 1,
-    borderBottomColor: '#2C2C2E',
+    borderBottomColor: 'rgba(255,255,255,0.04)',
     overflow: 'hidden',
+  },
+  glowBarWrap: {
+    position: 'relative',
   },
   accentBar: {
     height: 3,
     width: '100%',
+  },
+  bloomGlow: {
+    position: 'absolute',
+    top: 0,
+    left: '10%',
+    right: '10%',
+    height: 20,
+    opacity: 0.15,
+    borderRadius: 20,
   },
   content: {
     paddingHorizontal: 20,

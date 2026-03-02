@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { width: 1024px; height: 1024px; overflow: hidden; background: #0A0A0F; }
+
+  .icon {
+    width: 1024px;
+    height: 1024px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* deep radial glow behind the main element */
+    background:
+      radial-gradient(circle at 50% 42%, rgba(74,144,217,0.18) 0%, transparent 55%),
+      radial-gradient(circle at 30% 70%, rgba(123,179,255,0.07) 0%, transparent 45%),
+      radial-gradient(circle at 72% 65%, rgba(52,199,89,0.06) 0%, transparent 40%),
+      #0A0A0F;
+  }
+
+  /* Subtle grid texture overlay */
+  .icon::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 48px 48px;
+    z-index: 1;
+  }
+
+  /* Outer glass ring (large) */
+  .glass-ring-outer {
+    position: absolute;
+    width: 640px;
+    height: 640px;
+    border-radius: 50%;
+    border: 2px solid rgba(74,144,217,0.12);
+    background: rgba(255,255,255,0.015);
+    backdrop-filter: blur(2px);
+    z-index: 2;
+  }
+
+  /* Middle glass ring */
+  .glass-ring-mid {
+    position: absolute;
+    width: 520px;
+    height: 520px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(74,144,217,0.08);
+    background: rgba(255,255,255,0.01);
+    z-index: 2;
+  }
+
+  /* The main link-loop SVG icon */
+  .loop-container {
+    position: relative;
+    z-index: 10;
+    width: 420px;
+    height: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Glassmorphism card behind the loop */
+    background: rgba(255,255,255,0.03);
+    border: 1.5px solid rgba(74,144,217,0.15);
+    border-radius: 50%;
+    box-shadow:
+      0 0 80px rgba(74,144,217,0.15),
+      0 0 160px rgba(74,144,217,0.06),
+      inset 0 0 60px rgba(74,144,217,0.04);
+  }
+
+  /* SVG chain-link loop */
+  .loop-svg {
+    width: 280px;
+    height: 280px;
+    filter: drop-shadow(0 0 30px rgba(74,144,217,0.4)) drop-shadow(0 0 60px rgba(74,144,217,0.15));
+  }
+
+  /* Accent glucose arc - top-right decorative */
+  .glucose-arc {
+    position: absolute;
+    top: 80px;
+    right: 80px;
+    width: 180px;
+    height: 180px;
+    z-index: 3;
+    opacity: 0.5;
+  }
+
+  /* Small floating glass card - bottom-left decorative */
+  .float-card-bl {
+    position: absolute;
+    bottom: 130px;
+    left: 80px;
+    width: 140px;
+    height: 48px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(74,144,217,0.15);
+    border-radius: 14px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 10px;
+    box-shadow: 0 0 24px rgba(74,144,217,0.06);
+  }
+  .float-card-bl .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #4CAF50;
+    box-shadow: 0 0 10px #4CAF50;
+    flex-shrink: 0;
+  }
+  .float-card-bl .bar-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+  }
+  .float-card-bl .bar {
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.12);
+  }
+  .float-card-bl .bar:first-child { width: 80%; }
+  .float-card-bl .bar:last-child { width: 50%; }
+
+  /* Small floating glass card - top-left */
+  .float-card-tl {
+    position: absolute;
+    top: 140px;
+    left: 100px;
+    width: 100px;
+    height: 100px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(52,199,89,0.12);
+    border-radius: 20px;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-shadow: 0 0 20px rgba(52,199,89,0.05);
+  }
+  .float-card-tl .mini-value {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    font-size: 28px;
+    font-weight: 900;
+    color: #4CAF50;
+    line-height: 1;
+  }
+  .float-card-tl .mini-label {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* Bottom-right - heart pulse decorative */
+  .float-card-br {
+    position: absolute;
+    bottom: 120px;
+    right: 100px;
+    width: 110px;
+    height: 60px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,107,107,0.12);
+    border-radius: 16px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 20px rgba(255,107,107,0.04);
+    overflow: hidden;
+  }
+
+  /* Word mark at the bottom */
+  .wordmark {
+    position: absolute;
+    bottom: 52px;
+    z-index: 12;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    font-size: 52px;
+    font-weight: 900;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, #4A90D9, #7BB3FF, #4A90D9);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+  }
+
+  /* Top badge */
+  .top-badge {
+    position: absolute;
+    top: 52px;
+    z-index: 12;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    letter-spacing: 4px;
+  }
+
+  /* Tiny sparkle dots */
+  .sparkle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(74,144,217,0.4);
+    z-index: 4;
+  }
+  .sparkle:nth-child(1) { top: 200px; right: 220px; width: 5px; height: 5px; background: rgba(74,144,217,0.5); }
+  .sparkle:nth-child(2) { bottom: 260px; left: 250px; width: 3px; height: 3px; background: rgba(123,179,255,0.4); }
+  .sparkle:nth-child(3) { top: 320px; left: 160px; width: 4px; height: 4px; background: rgba(52,199,89,0.35); }
+  .sparkle:nth-child(4) { bottom: 200px; right: 180px; width: 3px; height: 3px; background: rgba(255,255,255,0.2); }
+</style>
+</head>
+<body>
+<div class="icon">
+  <!-- Decorative sparkles -->
+  <div class="sparkle"></div>
+  <div class="sparkle"></div>
+  <div class="sparkle"></div>
+  <div class="sparkle"></div>
+
+  <!-- Top badge -->
+  <div class="top-badge">T1D Glucose Tracker</div>
+
+  <!-- Glass rings -->
+  <div class="glass-ring-outer"></div>
+  <div class="glass-ring-mid"></div>
+
+  <!-- Main loop container with glassmorphism -->
+  <div class="loop-container">
+    <!-- Chain-link loop SVG -->
+    <svg class="loop-svg" viewBox="0 0 280 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="linkBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#7BB3FF" />
+          <stop offset="50%" stop-color="#4A90D9" />
+          <stop offset="100%" stop-color="#3A7BC8" />
+        </linearGradient>
+        <linearGradient id="linkGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#5FE89D" />
+          <stop offset="50%" stop-color="#34C759" />
+          <stop offset="100%" stop-color="#2A9E47" />
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+      </defs>
+
+      <!-- Link 1 (left, blue) - chain link shape -->
+      <g filter="url(#glow)">
+        <rect x="44" y="82" width="120" height="116" rx="58" ry="58"
+              stroke="url(#linkBlue)" stroke-width="16" fill="none"
+              stroke-linecap="round" />
+      </g>
+
+      <!-- Link 2 (right, green) - chain link shape, interlocking -->
+      <g filter="url(#glow)">
+        <rect x="116" y="82" width="120" height="116" rx="58" ry="58"
+              stroke="url(#linkGreen)" stroke-width="16" fill="none"
+              stroke-linecap="round" />
+      </g>
+
+      <!-- Overlap masking - hide green link's left side where it goes "behind" blue -->
+      <!-- Top crossover: green behind blue -->
+      <rect x="128" y="74" width="20" height="24" fill="#0A0A0F" opacity="0.95" rx="2" />
+      <!-- Bottom crossover: green in front of blue (so we hide blue) -->
+      <rect x="128" y="182" width="20" height="24" fill="#0A0A0F" opacity="0.95" rx="2" />
+
+      <!-- Re-draw green segments at crossovers for proper interlocking -->
+      <!-- Bottom: green goes IN FRONT of blue -->
+      <line x1="128" y1="194" x2="148" y2="194" stroke="url(#linkGreen)" stroke-width="16" stroke-linecap="round" />
+
+      <!-- Top: blue goes IN FRONT of green -->
+      <line x1="128" y1="86" x2="148" y2="86" stroke="url(#linkBlue)" stroke-width="16" stroke-linecap="round" />
+
+      <!-- Small glucose drop icon centered below the interlock -->
+      <g transform="translate(140, 140)">
+        <circle r="8" fill="none" stroke="rgba(74,144,217,0.3)" stroke-width="2" />
+        <circle r="3" fill="#4A90D9" opacity="0.8" />
+      </g>
+    </svg>
+  </div>
+
+  <!-- Decorative glucose arc (top-right) -->
+  <svg class="glucose-arc" viewBox="0 0 180 180">
+    <circle cx="90" cy="90" r="75" stroke="rgba(255,255,255,0.04)" stroke-width="6" fill="none" />
+    <circle cx="90" cy="90" r="75" stroke="url(#arcGrad)" stroke-width="6" fill="none"
+            stroke-dasharray="330" stroke-dashoffset="90" stroke-linecap="round"
+            transform="rotate(-90 90 90)" />
+    <defs>
+      <linearGradient id="arcGrad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#4CAF50" stop-opacity="0.6" />
+        <stop offset="100%" stop-color="#4A90D9" stop-opacity="0.3" />
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <!-- Floating glass card - bottom-left (status indicator) -->
+  <div class="float-card-bl">
+    <div class="dot"></div>
+    <div class="bar-group">
+      <div class="bar"></div>
+      <div class="bar"></div>
+    </div>
+  </div>
+
+  <!-- Floating glass card - top-left (glucose reading) -->
+  <div class="float-card-tl">
+    <div class="mini-value">112</div>
+    <div class="mini-label">mg/dL</div>
+  </div>
+
+  <!-- Floating glass card - bottom-right (heartbeat) -->
+  <div class="float-card-br">
+    <svg width="90" height="32" viewBox="0 0 90 32">
+      <polyline points="0,16 18,16 24,6 30,26 36,12 42,20 48,16 90,16"
+                stroke="rgba(255,107,107,0.5)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  </div>
+
+  <!-- Wordmark -->
+  <div class="wordmark">LinkLoop</div>
+</div>
+</body>
+</html>

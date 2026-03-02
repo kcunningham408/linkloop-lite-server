@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LinkLoop — App Feature Renders</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #050508; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: #fff; padding: 60px 20px; }
+  h1 { text-align: center; font-size: 42px; font-weight: 900; margin-bottom: 8px; background: linear-gradient(135deg, #4A90D9, #7BB3FF); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .page-sub { text-align: center; color: #888; font-size: 16px; margin-bottom: 60px; }
+  .renders-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 60px; max-width: 1600px; margin: 0 auto; }
+  .render-block { display: flex; flex-direction: column; align-items: center; }
+  .render-label { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 6px; text-align: center; }
+  .render-desc { font-size: 13px; color: #888; margin-bottom: 20px; text-align: center; max-width: 320px; }
+
+  .phone { width: 300px; height: 620px; background: #0A0A0F; border-radius: 40px; border: 3px solid #222; overflow: hidden; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(74,144,217,0.08); }
+  .phone::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 120px; height: 28px; background: #111; border-radius: 0 0 16px 16px; z-index: 100; }
+  .phone-scroll { height: 100%; overflow: hidden; display: flex; flex-direction: column; }
+
+  .tab-bar { position: absolute; bottom: 12px; left: 16px; right: 16px; height: 54px; background: rgba(30,30,35,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 27px; display: flex; align-items: center; justify-content: space-around; z-index: 50; border: 1px solid rgba(255,255,255,0.08); }
+  .tab-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .tab-icon { font-size: 18px; }
+  .tab-label { font-size: 9px; color: #666; font-weight: 600; }
+  .tab-label.active { color: #4A90D9; }
+
+  .glass-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 16px; margin: 0 16px 12px; }
+  .glass-card.glow-green { border-color: rgba(76,175,80,0.25); box-shadow: 0 0 20px rgba(76,175,80,0.1); }
+  .glass-card.glow-red { border-color: rgba(255,107,107,0.25); box-shadow: 0 0 20px rgba(255,107,107,0.1); }
+  .glass-card.glow-blue { border-color: rgba(74,144,217,0.2); box-shadow: 0 0 20px rgba(74,144,217,0.08); }
+
+  .section-label { font-size: 9px; color: #999; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 10px; }
+  .hero-gradient { background: linear-gradient(180deg, #1a3a5c 0%, #0f2540 100%); padding: 40px 20px 24px; text-align: center; }
+  .hero-gradient.member { background: linear-gradient(180deg, #2d1a4a 0%, #1a0f30 100%); }
+  .hero-title { font-size: 22px; font-weight: 900; color: #fff; }
+  .hero-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.15); padding: 6px 14px; border-radius: 16px; margin-top: 10px; font-size: 12px; color: #fff; font-weight: 600; }
+
+  .glucose-ring-wrap { display: flex; align-items: center; gap: 16px; }
+  .glucose-ring { width: 120px; height: 120px; border-radius: 50%; position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .glucose-ring .ring-track { position: absolute; inset: 0; border-radius: 50%; border: 6px solid rgba(255,255,255,0.06); }
+  .glucose-ring .ring-fill { position: absolute; inset: 0; border-radius: 50%; border: 6px solid transparent; }
+  .glucose-ring .ring-fill.green { border-top-color: #4CAF50; border-right-color: #4CAF50; border-bottom-color: #4CAF50; border-left-color: transparent; transform: rotate(-45deg); }
+  .glucose-ring .ring-fill.orange { border-top-color: #FFA500; border-right-color: #FFA500; border-bottom-color: transparent; border-left-color: transparent; transform: rotate(-45deg); }
+  .glucose-ring .ring-fill.red { border-top-color: #FF6B6B; border-right-color: transparent; border-bottom-color: transparent; border-left-color: transparent; transform: rotate(-45deg); }
+  .ring-value { font-size: 32px; font-weight: 900; color: #fff; z-index: 2; }
+  .ring-trend { font-size: 18px; position: absolute; bottom: 22px; z-index: 2; }
+  .ring-meta { flex: 1; }
+  .status-pill { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 800; margin-bottom: 8px; }
+  .status-pill.green { background: rgba(76,175,80,0.15); color: #4CAF50; }
+  .status-pill.orange { background: rgba(255,165,0,0.15); color: #FFA500; }
+  .status-pill.red { background: rgba(255,107,107,0.15); color: #FF6B6B; }
+  .ring-time { font-size: 13px; color: #888; margin-bottom: 3px; }
+  .ring-hint { font-size: 10px; color: #555; }
+
+  .arcs-row { display: flex; justify-content: space-between; gap: 4px; }
+  .stat-arc { display: flex; flex-direction: column; align-items: center; flex: 1; }
+  .arc-circle { width: 48px; height: 48px; border-radius: 50%; border: 4px solid rgba(255,255,255,0.06); position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 6px; }
+  .arc-circle::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 4px solid transparent; }
+  .arc-circle.green::after { border-top-color: #4CAF50; border-right-color: #4CAF50; border-bottom-color: #4CAF50; transform: rotate(20deg); }
+  .arc-circle.orange::after { border-top-color: #FFA500; border-right-color: #FFA500; transform: rotate(-45deg); }
+  .arc-circle.red::after { border-top-color: #FF6B6B; transform: rotate(-90deg); }
+  .arc-value { font-size: 12px; font-weight: 800; color: #fff; z-index: 2; }
+  .arc-label { font-size: 9px; color: #888; font-weight: 600; }
+
+  .chart-area { width: 100%; height: 100px; background: linear-gradient(180deg, rgba(74,144,217,0.08) 0%, transparent 100%); border-radius: 12px; position: relative; overflow: hidden; margin: 8px 0; }
+  .chart-svg { width: 100%; height: 100%; }
+  .range-band { position: absolute; left: 0; right: 0; background: rgba(76,175,80,0.06); border-top: 1px dashed rgba(76,175,80,0.15); border-bottom: 1px dashed rgba(76,175,80,0.15); }
+
+  .quick-actions { display: flex; gap: 8px; margin: 0 16px 12px; }
+  .quick-action { flex: 1; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 12px 4px; text-align: center; }
+  .qa-emoji { font-size: 20px; margin-bottom: 4px; }
+  .qa-label { font-size: 10px; color: #B0B0B0; font-weight: 600; }
+
+  .member-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; }
+  .member-row + .member-row { border-top: 1px solid rgba(255,255,255,0.05); }
+  .member-avatar { font-size: 28px; width: 42px; text-align: center; }
+  .member-info { flex: 1; }
+  .member-name { font-size: 14px; font-weight: 700; color: #fff; }
+  .member-role { font-size: 11px; color: #888; }
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .status-dot.green { background: #4CAF50; box-shadow: 0 0 8px #4CAF50; }
+  .status-dot.yellow { background: #FFA500; box-shadow: 0 0 8px #FFA500; }
+  .status-dot.red { background: #FF6B6B; box-shadow: 0 0 8px #FF6B6B; }
+
+  .toggle { width: 38px; height: 22px; border-radius: 11px; position: relative; }
+  .toggle.on { background: #4A90D9; }
+  .toggle.off { background: #333; }
+  .toggle::after { content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; background: #fff; top: 2px; }
+  .toggle.on::after { left: 18px; }
+  .toggle.off::after { left: 2px; }
+
+  .insight-card { border-radius: 12px; padding: 14px; margin-bottom: 10px; border-left: 4px solid; display: flex; gap: 10px; }
+  .insight-card.success { background: #1A2E1A; border-left-color: #4CAF50; }
+  .insight-card.warning { background: #2E2A1A; border-left-color: #FFA500; }
+  .insight-card.alert { background: #2E1A1A; border-left-color: #D32F2F; }
+  .insight-icon { font-size: 22px; flex-shrink: 0; }
+  .insight-body { flex: 1; }
+  .insight-title { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 3px; }
+  .insight-summary { font-size: 11px; color: #C0C0C0; line-height: 1.5; }
+  .insight-badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 8px; margin-left: 6px; vertical-align: middle; }
+  .insight-badge.success { background: rgba(76,175,80,0.15); color: #4CAF50; }
+  .insight-badge.warning { background: rgba(255,165,0,0.15); color: #FFA500; }
+  .insight-badge.alert { background: rgba(211,47,47,0.15); color: #D32F2F; }
+
+  .ai-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .ai-badge { background: #4A90D9; color: #fff; font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 8px; margin-left: auto; }
+
+  .login-hero { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 40px 24px; background: linear-gradient(180deg, #0A0A0F 0%, #0f1a2e 50%, #0A0A0F 100%); }
+  .login-logo { font-size: 64px; color: #4A90D9; font-weight: 900; margin-bottom: 4px; }
+  .login-title { font-size: 28px; font-weight: 900; color: #fff; margin-bottom: 12px; }
+  .login-tagline { font-size: 13px; color: #888; text-align: center; line-height: 1.6; margin-bottom: 36px; }
+  .login-btn { width: 100%; padding: 14px; border-radius: 14px; text-align: center; font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+  .login-btn.primary { background: #4A90D9; color: #fff; }
+  .login-btn.secondary { background: transparent; border: 1.5px solid rgba(74,144,217,0.5); color: #4A90D9; }
+  .login-link { font-size: 12px; color: #888; margin-top: 8px; }
+  .login-link span { color: #4A90D9; font-weight: 700; }
+
+  .profile-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+  .profile-item + .profile-item { border-top: 1px solid rgba(255,255,255,0.04); }
+  .profile-emoji { font-size: 22px; width: 32px; text-align: center; }
+  .profile-label { font-size: 13px; color: #fff; font-weight: 600; flex: 1; }
+  .profile-value { font-size: 12px; color: #888; }
+
+  .notif-card { display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.06); }
+  .notif-icon { font-size: 24px; }
+  .notif-body { flex: 1; }
+  .notif-title { font-size: 12px; font-weight: 700; color: #fff; }
+  .notif-text { font-size: 10px; color: #888; margin-top: 2px; }
+  .notif-time { font-size: 9px; color: #555; }
+
+  .warrior-hero { background: linear-gradient(135deg, rgba(74,144,217,0.12), rgba(74,144,217,0.04)); border: 1px solid rgba(74,144,217,0.2); border-radius: 16px; padding: 16px; margin: 0 16px 12px; display: flex; align-items: center; gap: 14px; }
+  .warrior-avatar { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, #4A90D9, #7BB3FF); display: flex; align-items: center; justify-content: center; font-size: 24px; }
+  .warrior-info { flex: 1; }
+  .warrior-name { font-size: 16px; font-weight: 800; color: #fff; }
+  .warrior-role { font-size: 11px; color: #4A90D9; font-weight: 600; margin-top: 2px; }
+
+  .motivation-card { background: #4A90D9; border-radius: 14px; padding: 16px; margin: 0 16px 12px; }
+  .motivation-label { font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.85); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .motivation-text { font-size: 13px; color: #fff; font-style: italic; line-height: 1.5; }
+
+  .range-row { display: flex; background: rgba(255,255,255,0.06); border-radius: 10px; padding: 3px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.06); }
+  .range-tab { flex: 1; text-align: center; padding: 8px; border-radius: 8px; font-size: 12px; color: #A0A0A0; font-weight: 600; }
+  .range-tab.active { background: #4A90D9; color: #fff; }
+
+  .summary-row { display: flex; justify-content: space-between; text-align: center; }
+  .summary-pill { flex: 1; }
+  .summary-value { font-size: 17px; font-weight: 800; margin-bottom: 2px; }
+  .summary-label { font-size: 9px; color: #888; }
+
+  .disclaimer { display: flex; gap: 8px; align-items: flex-start; padding: 12px; margin: 0 16px 80px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; }
+  .disclaimer-text { font-size: 10px; color: #888; line-height: 1.5; flex: 1; }
+
+  .page-footer { text-align: center; color: #444; font-size: 12px; margin-top: 80px; padding-bottom: 40px; }
+</style>
+</head>
+<body>
+
+<h1>∞ LinkLoop</h1>
+<p class="page-sub">App Feature Renders — Real-time T1D glucose sharing for warriors &amp; their circle</p>
+
+<div class="renders-grid">
+
+<!-- ═══ RENDER 1 — HOME SCREEN ═══ -->
+<div class="render-block">
+  <div class="render-label">Home Dashboard</div>
+  <div class="render-desc">Live glucose ring, trend arrow, daily stats, and quick actions — all at a glance</div>
+  <div class="phone" id="render-1">
+    <div class="phone-scroll">
+      <div class="hero-gradient">
+        <div class="hero-title">∞ LinkLoop</div>
+        <div class="hero-badge">🩺 Welcome back, Shayla</div>
+      </div>
+      <div class="glass-card glow-green" style="margin-top:-4px">
+        <div class="section-label">Current Glucose</div>
+        <div class="glucose-ring-wrap">
+          <div class="glucose-ring">
+            <div class="ring-track"></div>
+            <div class="ring-fill green"></div>
+            <div class="ring-value">118</div>
+            <div class="ring-trend">→</div>
+          </div>
+          <div class="ring-meta">
+            <div class="status-pill green">IN RANGE</div>
+            <div class="ring-time">2:34 PM</div>
+            <div class="ring-hint">Tap for details · Hold to share</div>
+          </div>
+        </div>
+      </div>
+      <div class="glass-card">
+        <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:12px">Today's Overview</div>
+        <div class="arcs-row">
+          <div class="stat-arc"><div class="arc-circle green"><span class="arc-value">82%</span></div><div class="arc-label">In Range</div></div>
+          <div class="stat-arc"><div class="arc-circle orange"><span class="arc-value">134</span></div><div class="arc-label">Avg mg/dL</div></div>
+          <div class="stat-arc"><div class="arc-circle red"><span class="arc-value">2</span></div><div class="arc-label">Lows</div></div>
+          <div class="stat-arc"><div class="arc-circle orange"><span class="arc-value">3</span></div><div class="arc-label">Highs</div></div>
+        </div>
+      </div>
+      <div style="margin:0 16px 4px;font-size:14px;font-weight:700;color:#fff">Quick Actions</div>
+      <div class="quick-actions">
+        <div class="quick-action"><div class="qa-emoji">💬</div><div class="qa-label">Messages</div></div>
+        <div class="quick-action"><div class="qa-emoji">✨</div><div class="qa-label">Insights</div></div>
+        <div class="quick-action"><div class="qa-emoji">📝</div><div class="qa-label">Mood</div></div>
+        <div class="quick-action" style="position:relative"><div class="qa-emoji">🔔</div><div style="position:absolute;top:6px;right:14px;background:#FF6B6B;width:14px;height:14px;border-radius:50%;font-size:8px;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center">2</div><div class="qa-label">Alerts</div></div>
+      </div>
+      <div class="disclaimer"><span style="font-size:16px">💚</span><span class="disclaimer-text">LinkLoop is a wellness companion — not a medical device. Always consult your care team.</span></div>
+    </div>
+    <div class="tab-bar">
+      <div class="tab-item"><span class="tab-icon">🏠</span><span class="tab-label active">Home</span></div>
+      <div class="tab-item"><span class="tab-icon">🩸</span><span class="tab-label">CGM</span></div>
+      <div class="tab-item"><span class="tab-icon">👥</span><span class="tab-label">Circle</span></div>
+      <div class="tab-item"><span class="tab-icon">✨</span><span class="tab-label">Insights</span></div>
+      <div class="tab-item"><span class="tab-icon">👤</span><span class="tab-label">Profile</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RENDER 2 — CGM SCREEN ═══ -->
+<div class="render-block">
+  <div class="render-label">CGM Data &amp; Chart</div>
+  <div class="render-desc">Interactive glucose chart with SVG trends, Dexcom sync status, and manual entry</div>
+  <div class="phone" id="render-2">
+    <div class="phone-scroll">
+      <div class="hero-gradient" style="padding-bottom:16px">
+        <div style="font-size:11px;color:rgba(255,255,255,0.7);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">CGM DATA</div>
+        <div class="glucose-ring" style="margin:0 auto">
+          <div class="ring-track"></div>
+          <div class="ring-fill green"></div>
+          <div class="ring-value" style="font-size:28px">142</div>
+          <div class="ring-trend">↑</div>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:rgba(255,255,255,0.6)">Rising · 2 min ago</div>
+      </div>
+      <div class="glass-card">
+        <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:8px">24-Hour Trend</div>
+        <div class="chart-area">
+          <div class="range-band" style="top:25%;bottom:45%"></div>
+          <svg class="chart-svg" viewBox="0 0 260 100" preserveAspectRatio="none">
+            <defs><linearGradient id="cf" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4A90D9" stop-opacity="0.3"/><stop offset="100%" stop-color="#4A90D9" stop-opacity="0"/></linearGradient></defs>
+            <path d="M0,60 C20,55 40,50 60,45 C80,40 100,55 120,58 C140,61 160,35 180,30 C200,25 220,42 240,38 L260,40 L260,100 L0,100 Z" fill="url(#cf)"/>
+            <path d="M0,60 C20,55 40,50 60,45 C80,40 100,55 120,58 C140,61 160,35 180,30 C200,25 220,42 240,38 L260,40" fill="none" stroke="#4A90D9" stroke-width="2.5"/>
+            <circle cx="260" cy="40" r="4" fill="#4A90D9"/>
+          </svg>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:#555;margin-top:4px"><span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span><span>Now</span></div>
+      </div>
+      <div class="glass-card">
+        <div class="arcs-row">
+          <div class="stat-arc"><div class="arc-circle green"><span class="arc-value">79%</span></div><div class="arc-label">In Range</div></div>
+          <div class="stat-arc"><div class="arc-circle orange"><span class="arc-value">138</span></div><div class="arc-label">Average</div></div>
+          <div class="stat-arc"><div class="arc-circle red"><span class="arc-value">68</span></div><div class="arc-label">Low</div></div>
+          <div class="stat-arc"><div class="arc-circle orange"><span class="arc-value">196</span></div><div class="arc-label">High</div></div>
+        </div>
+      </div>
+      <div class="glass-card glow-blue">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:20px">📡</span>
+          <div style="flex:1"><div style="font-size:12px;font-weight:700;color:#fff">Dexcom Share</div><div style="font-size:10px;color:#4CAF50;margin-top:2px">● Connected · Synced 2m ago</div></div>
+          <div style="font-size:10px;color:#4A90D9;font-weight:700">Sync</div>
+        </div>
+      </div>
+      <div style="height:80px"></div>
+    </div>
+    <div class="tab-bar">
+      <div class="tab-item"><span class="tab-icon">🏠</span><span class="tab-label">Home</span></div>
+      <div class="tab-item"><span class="tab-icon">🩸</span><span class="tab-label active">CGM</span></div>
+      <div class="tab-item"><span class="tab-icon">👥</span><span class="tab-label">Circle</span></div>
+      <div class="tab-item"><span class="tab-icon">✨</span><span class="tab-label">Insights</span></div>
+      <div class="tab-item"><span class="tab-icon">👤</span><span class="tab-label">Profile</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RENDER 3 — CARE CIRCLE (WARRIOR) ═══ -->
+<div class="render-block">
+  <div class="render-label">Care Circle</div>
+  <div class="render-desc">Manage your trusted circle — invite members, control permissions, and stay connected</div>
+  <div class="phone" id="render-3">
+    <div class="phone-scroll">
+      <div style="padding:44px 20px 16px">
+        <div style="font-size:22px;font-weight:800;color:#fff">Shayla's Care Circle</div>
+        <div style="font-size:12px;color:#888;margin-top:4px">Share your glucose data with trusted family &amp; caregivers</div>
+      </div>
+      <div class="glass-card" style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px">✅</span>
+        <div style="flex:1"><div style="font-size:12px;font-weight:700;color:#fff">No New Notifications</div><div style="font-size:10px;color:#888">View notification history</div></div>
+        <span style="font-size:18px;color:#888">›</span>
+      </div>
+      <div class="glass-card" style="padding:0">
+        <div style="display:flex;align-items:center;gap:12px;padding:14px 16px">
+          <div style="width:34px;height:34px;border-radius:50%;background:#4A90D9;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;font-weight:700">+</div>
+          <div style="flex:1;font-size:14px;font-weight:700;color:#4A90D9">Add Circle Member</div>
+          <span style="font-size:20px;color:#4A90D9">›</span>
+        </div>
+      </div>
+      <div style="margin:0 16px;font-size:14px;font-weight:700;color:#fff;margin-bottom:8px">Circle Members (4)</div>
+      <div class="glass-card" style="padding:8px 16px">
+        <div class="member-row">
+          <div class="member-avatar">👩</div>
+          <div class="member-info"><div class="member-name">Jessamy</div><div class="member-role">Mom</div></div>
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+            <div style="display:flex;align-items:center;gap:6px"><span style="font-size:10px;color:#888">Glucose</span><div class="toggle on"></div></div>
+            <div style="display:flex;align-items:center;gap:6px"><span style="font-size:10px;color:#888">Low Alert</span><div class="toggle on" style="background:#FF6B6B"></div></div>
+          </div>
+        </div>
+        <div class="member-row">
+          <div class="member-avatar">👨</div>
+          <div class="member-info"><div class="member-name">Kevin</div><div class="member-role">Dad</div></div>
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+            <div style="display:flex;align-items:center;gap:6px"><span style="font-size:10px;color:#888">Glucose</span><div class="toggle on"></div></div>
+            <div style="display:flex;align-items:center;gap:6px"><span style="font-size:10px;color:#888">Low Alert</span><div class="toggle on" style="background:#FF6B6B"></div></div>
+          </div>
+        </div>
+        <div class="member-row">
+          <div class="member-avatar">👧</div>
+          <div class="member-info"><div class="member-name">Kolby</div><div class="member-role">Sister</div></div>
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+            <div style="display:flex;align-items:center;gap:6px"><span style="font-size:10px;color:#888">Glucose</span><div class="toggle on"></div></div>
+            <div style="display:flex;align-items:center;gap:6px"><span style="font-size:10px;color:#888">Low Alert</span><div class="toggle off"></div></div>
+          </div>
+        </div>
+        <div class="member-row">
+          <div class="member-avatar">👴</div>
+          <div class="member-info"><div class="member-name">Grandpa</div><div class="member-role">Grandparent</div></div>
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+            <div style="display:flex;align-items:center;gap:6px"><span style="font-size:10px;color:#888">Glucose</span><div class="toggle on"></div></div>
+            <div style="display:flex;align-items:center;gap:6px"><span style="font-size:10px;color:#888">Low Alert</span><div class="toggle on" style="background:#FF6B6B"></div></div>
+          </div>
+        </div>
+      </div>
+      <div style="margin:8px 16px 4px;font-size:14px;font-weight:700;color:#fff">Sharing Settings</div>
+      <div class="glass-card" style="padding:8px 16px">
+        <div class="profile-item"><span class="profile-emoji">📊</span><span class="profile-label">Share Real-Time Glucose</span><div class="toggle on"></div></div>
+        <div class="profile-item"><span class="profile-emoji">🔴</span><span class="profile-label">Share Low Alerts</span><div class="toggle on" style="background:#FF6B6B"></div></div>
+        <div class="profile-item"><span class="profile-emoji">🟠</span><span class="profile-label">Share High Alerts</span><div class="toggle on" style="background:#FFA500"></div></div>
+      </div>
+      <div style="height:80px"></div>
+    </div>
+    <div class="tab-bar">
+      <div class="tab-item"><span class="tab-icon">🏠</span><span class="tab-label">Home</span></div>
+      <div class="tab-item"><span class="tab-icon">🩸</span><span class="tab-label">CGM</span></div>
+      <div class="tab-item"><span class="tab-icon">👥</span><span class="tab-label active">Circle</span></div>
+      <div class="tab-item"><span class="tab-icon">✨</span><span class="tab-label">Insights</span></div>
+      <div class="tab-item"><span class="tab-icon">👤</span><span class="tab-label">Profile</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RENDER 4 — AI INSIGHTS ═══ -->
+<div class="render-block">
+  <div class="render-label">AI Insights</div>
+  <div class="render-desc">Groq AI analyzes glucose patterns and delivers actionable trend notifications</div>
+  <div class="phone" id="render-4">
+    <div class="phone-scroll">
+      <div style="padding:44px 20px 16px">
+        <div style="font-size:22px;font-weight:800;color:#fff">✨ AI Insights</div>
+        <div style="font-size:12px;color:#888;margin-top:4px">Pattern analysis &amp; trend notifications powered by AI</div>
+      </div>
+      <div class="motivation-card">
+        <div class="motivation-label">✨ Daily Motivation</div>
+        <div class="motivation-text">T1D doesn't define you — but how you handle it says a lot about who you are. 💪</div>
+      </div>
+      <div style="padding:0 16px"><div class="range-row"><div class="range-tab">24h</div><div class="range-tab active">3 Days</div><div class="range-tab">7 Days</div></div></div>
+      <div class="glass-card">
+        <div class="summary-row">
+          <div class="summary-pill"><div class="summary-value" style="color:#666">142</div><div class="summary-label">Readings</div></div>
+          <div class="summary-pill"><div class="summary-value" style="color:#FFA500">134</div><div class="summary-label">Avg</div></div>
+          <div class="summary-pill"><div class="summary-value" style="color:#4CAF50">78%</div><div class="summary-label">TIR</div></div>
+          <div class="summary-pill"><div class="summary-value" style="color:#666">62-248</div><div class="summary-label">Range</div></div>
+        </div>
+      </div>
+      <div class="glass-card glow-blue">
+        <div class="ai-card-header">
+          <span style="font-size:18px">🤖</span>
+          <span style="font-size:14px;font-weight:700;color:#fff;flex:1">AI Analysis</span>
+          <span class="ai-badge">Groq AI</span>
+        </div>
+        <div style="font-size:11px;color:#C0C0C0;line-height:1.6">Shayla's time-in-range over the past 3 days is solid at 78%. I noticed a pattern of post-dinner spikes between 7-9 PM. Consider adjusting evening bolus timing. Morning readings have been consistently strong. 💙</div>
+        <div style="text-align:center;margin-top:10px"><span style="font-size:11px;color:#4A90D9;font-weight:700;border:1px solid rgba(74,144,217,0.4);padding:6px 14px;border-radius:16px">🔄 New Insight</span></div>
+      </div>
+      <div style="padding:0 16px">
+        <div class="insight-card success"><div class="insight-icon">💚</div><div class="insight-body"><div class="insight-title">Great Overnight Control <span class="insight-badge success">✅ Great</span></div><div class="insight-summary">Blood sugar stayed between 80-130 for 8 hours overnight. Strong basal management.</div></div></div>
+        <div class="insight-card warning"><div class="insight-icon">⚡</div><div class="insight-body"><div class="insight-title">Post-Dinner Spike <span class="insight-badge warning">⚠️ Watch</span></div><div class="insight-summary">Glucose rose to 248 mg/dL at 8:15 PM. Consider pre-bolusing 15 min earlier.</div></div></div>
+        <div class="insight-card alert"><div class="insight-icon">📉</div><div class="insight-body"><div class="insight-title">Morning Low <span class="insight-badge alert">🚨 Notable</span></div><div class="insight-summary">Dropped to 62 mg/dL at 6:30 AM. 2nd time this week — discuss with your endo.</div></div></div>
+      </div>
+      <div style="height:80px"></div>
+    </div>
+    <div class="tab-bar">
+      <div class="tab-item"><span class="tab-icon">🏠</span><span class="tab-label">Home</span></div>
+      <div class="tab-item"><span class="tab-icon">🩸</span><span class="tab-label">CGM</span></div>
+      <div class="tab-item"><span class="tab-icon">👥</span><span class="tab-label">Circle</span></div>
+      <div class="tab-item"><span class="tab-icon">✨</span><span class="tab-label active">Insights</span></div>
+      <div class="tab-item"><span class="tab-icon">👤</span><span class="tab-label">Profile</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RENDER 5 — MEMBER VIEW (Jessamy seeing Shayla) ═══ -->
+<div class="render-block">
+  <div class="render-label">Loop Member View</div>
+  <div class="render-desc">Caregivers see the warrior's live glucose, trends, and stats from their own phone</div>
+  <div class="phone" id="render-5">
+    <div class="phone-scroll">
+      <div class="hero-gradient member">
+        <div class="hero-title">∞ LinkLoop</div>
+        <div class="hero-badge">👁️ Watching Shayla's loop</div>
+        <div style="margin-top:8px;background:rgba(255,255,255,0.10);padding:4px 12px;border-radius:10px;display:inline-block"><span style="font-size:11px;color:rgba(255,255,255,0.85)">🩸 CGM synced 2m ago</span></div>
+      </div>
+      <div class="glass-card glow-green" style="margin-top:-4px;border-color:rgba(160,100,220,0.25)">
+        <div class="section-label">Shayla's Glucose</div>
+        <div class="glucose-ring-wrap">
+          <div class="glucose-ring">
+            <div class="ring-track"></div>
+            <div class="ring-fill green"></div>
+            <div class="ring-value">124</div>
+            <div class="ring-trend">→</div>
+          </div>
+          <div class="ring-meta">
+            <div style="display:flex;align-items:center;gap:6px"><div class="status-pill green">IN RANGE</div><div class="status-dot green"></div></div>
+            <div class="ring-time">2:38 PM</div>
+            <div class="ring-hint">Tap for details · Hold to share</div>
+          </div>
+        </div>
+      </div>
+      <div class="glass-card" style="border-color:rgba(160,100,220,0.12)">
+        <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:12px">Today's Overview</div>
+        <div class="arcs-row">
+          <div class="stat-arc"><div class="arc-circle green"><span class="arc-value">85%</span></div><div class="arc-label">In Range</div></div>
+          <div class="stat-arc"><div class="arc-circle orange"><span class="arc-value">128</span></div><div class="arc-label">Avg mg/dL</div></div>
+          <div class="stat-arc"><div class="arc-circle red"><span class="arc-value">1</span></div><div class="arc-label">Lows</div></div>
+          <div class="stat-arc"><div class="arc-circle orange"><span class="arc-value">2</span></div><div class="arc-label">Highs</div></div>
+        </div>
+      </div>
+      <div style="margin:0 16px 4px;font-size:14px;font-weight:700;color:#fff">Quick Actions</div>
+      <div class="quick-actions">
+        <div class="quick-action" style="border-color:rgba(160,100,220,0.15)"><div class="qa-emoji">💬</div><div class="qa-label">Messages</div></div>
+        <div class="quick-action" style="border-color:rgba(160,100,220,0.15)"><div class="qa-emoji">🔔</div><div class="qa-label">Alerts</div></div>
+        <div class="quick-action" style="border-color:rgba(160,100,220,0.15)"><div class="qa-emoji">⚙️</div><div class="qa-label">Profile</div></div>
+      </div>
+      <div class="disclaimer"><span style="font-size:16px">💚</span><span class="disclaimer-text">LinkLoop is a wellness companion — not a medical device. Always consult your care team.</span></div>
+    </div>
+    <div class="tab-bar">
+      <div class="tab-item"><span class="tab-icon">🏠</span><span class="tab-label active" style="color:#A064DC">Home</span></div>
+      <div class="tab-item"><span class="tab-icon">🩸</span><span class="tab-label">CGM</span></div>
+      <div class="tab-item"><span class="tab-icon">👥</span><span class="tab-label">Circle</span></div>
+      <div class="tab-item"><span class="tab-icon">👤</span><span class="tab-label">Profile</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RENDER 6 — LIVE STATUS & ROSTER ═══ -->
+<div class="render-block">
+  <div class="render-label">Live Status &amp; Roster</div>
+  <div class="render-desc">Pulsing status dots show real-time connectivity — green, yellow, or red at a glance</div>
+  <div class="phone" id="render-6">
+    <div class="phone-scroll">
+      <div style="padding:44px 20px 16px">
+        <div style="font-size:22px;font-weight:800;color:#fff">Care Circle</div>
+        <div style="font-size:12px;color:#888;margin-top:4px">You're part of Shayla's Care Circle — here's who's in the loop</div>
+      </div>
+      <div class="warrior-hero">
+        <div class="warrior-avatar">🩺</div>
+        <div class="warrior-info"><div class="warrior-name">Shayla</div><div class="warrior-role">🩺 T1D Warrior</div></div>
+        <div class="status-dot green"></div>
+      </div>
+      <div style="margin:0 16px 4px;font-size:14px;font-weight:700;color:#fff">Circle Roster</div>
+      <div class="glass-card" style="padding:8px 16px">
+        <div class="member-row">
+          <div class="member-avatar">👩</div>
+          <div class="member-info"><div class="member-name">Jessamy</div><div class="member-role">Mom · Joined Jan 12</div></div>
+          <div class="status-dot green"></div>
+        </div>
+        <div class="member-row">
+          <div class="member-avatar">👨</div>
+          <div class="member-info"><div class="member-name">Kevin</div><div class="member-role">Dad · Joined Jan 12</div></div>
+          <div class="status-dot green"></div>
+        </div>
+        <div class="member-row">
+          <div class="member-avatar">👧</div>
+          <div class="member-info"><div class="member-name">Kolby</div><div class="member-role">Sister · Joined Feb 3</div></div>
+          <div class="status-dot yellow"></div>
+        </div>
+        <div class="member-row">
+          <div class="member-avatar">👴</div>
+          <div class="member-info"><div class="member-name">Grandpa</div><div class="member-role">Grandparent · Joined Feb 8</div></div>
+          <div class="status-dot red"></div>
+        </div>
+      </div>
+      <div class="glass-card" style="padding:12px 16px">
+        <div style="font-size:11px;font-weight:700;color:#888;margin-bottom:8px">STATUS KEY</div>
+        <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:#4CAF50"></div><span style="font-size:10px;color:#aaa">&lt; 5 min</span></div>
+          <div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:#FFA500"></div><span style="font-size:10px;color:#aaa">5–15 min</span></div>
+          <div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:#FF6B6B"></div><span style="font-size:10px;color:#aaa">&gt; 15 min</span></div>
+        </div>
+      </div>
+      <div class="glass-card glow-blue">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:22px">💬</span>
+          <div style="flex:1"><div style="font-size:13px;font-weight:700;color:#fff">Group Chat</div><div style="font-size:10px;color:#888;margin-top:2px">Message everyone in the circle</div></div>
+          <span style="font-size:18px;color:#4A90D9">›</span>
+        </div>
+      </div>
+      <div style="height:80px"></div>
+    </div>
+    <div class="tab-bar">
+      <div class="tab-item"><span class="tab-icon">🏠</span><span class="tab-label">Home</span></div>
+      <div class="tab-item"><span class="tab-icon">🩸</span><span class="tab-label">CGM</span></div>
+      <div class="tab-item"><span class="tab-icon">👥</span><span class="tab-label active">Circle</span></div>
+      <div class="tab-item"><span class="tab-icon">👤</span><span class="tab-label">Profile</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RENDER 7 — ALERTS & NOTIFICATIONS ═══ -->
+<div class="render-block">
+  <div class="render-label">Smart Alerts</div>
+  <div class="render-desc">Per-member thresholds, push notifications for lows/highs, and circle join/leave events</div>
+  <div class="phone" id="render-7">
+    <div class="phone-scroll">
+      <div style="padding:44px 20px 16px">
+        <div style="font-size:22px;font-weight:800;color:#fff">🔔 Notifications</div>
+        <div style="font-size:12px;color:#888;margin-top:4px">Glucose alerts &amp; circle activity</div>
+      </div>
+      <div class="glass-card glow-red">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:28px">🚨</span>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:800;color:#FF6B6B">LOW GLUCOSE ALERT</div>
+            <div style="font-size:11px;color:#C0C0C0;margin-top:3px">Shayla's glucose dropped to <strong style="color:#FF6B6B">62 mg/dL ↓↓</strong></div>
+            <div style="font-size:10px;color:#888;margin-top:3px">2 minutes ago</div>
+          </div>
+        </div>
+        <div style="margin-top:10px;text-align:center"><span style="font-size:11px;color:#FF6B6B;font-weight:700;border:1px solid rgba(255,107,107,0.3);padding:6px 20px;border-radius:12px">Acknowledge</span></div>
+      </div>
+      <div style="margin:4px 16px 8px;font-size:13px;font-weight:700;color:#888">Today</div>
+      <div style="padding:0 16px">
+        <div class="notif-card"><div class="notif-icon">🟠</div><div class="notif-body"><div class="notif-title">High Glucose Warning</div><div class="notif-text">Shayla reached 248 mg/dL (rising)</div></div><div class="notif-time">8:15 PM</div></div>
+        <div class="notif-card"><div class="notif-icon">✅</div><div class="notif-body"><div class="notif-title">Alert Resolved</div><div class="notif-text">Glucose returned to range: 142 mg/dL</div></div><div class="notif-time">9:02 PM</div></div>
+        <div class="notif-card"><div class="notif-icon">👥</div><div class="notif-body"><div class="notif-title">New Circle Member</div><div class="notif-text">Grandpa joined Shayla's Care Circle</div></div><div class="notif-time">3:20 PM</div></div>
+        <div class="notif-card"><div class="notif-icon">🔔</div><div class="notif-body"><div class="notif-title">Low Glucose Alert</div><div class="notif-text">Shayla dropped to 65 mg/dL (falling fast)</div></div><div class="notif-time">6:30 AM</div></div>
+        <div class="notif-card"><div class="notif-icon">✅</div><div class="notif-body"><div class="notif-title">Jessamy acknowledged alert</div><div class="notif-text">"On it — bringing juice"</div></div><div class="notif-time">6:32 AM</div></div>
+      </div>
+      <div style="margin:12px 16px 4px;font-size:13px;font-weight:700;color:#fff">Your Alert Thresholds</div>
+      <div class="glass-card" style="padding:10px 16px">
+        <div class="profile-item"><span class="profile-emoji">🔴</span><span class="profile-label">Low Alert</span><span class="profile-value" style="color:#FF6B6B;font-weight:700">70 mg/dL</span></div>
+        <div class="profile-item"><span class="profile-emoji">🟠</span><span class="profile-label">High Alert</span><span class="profile-value" style="color:#FFA500;font-weight:700">180 mg/dL</span></div>
+        <div class="profile-item"><span class="profile-emoji">⏱️</span><span class="profile-label">High Alert Delay</span><span class="profile-value" style="color:#888;font-weight:700">15 min</span></div>
+      </div>
+      <div style="height:80px"></div>
+    </div>
+    <div class="tab-bar">
+      <div class="tab-item"><span class="tab-icon">🏠</span><span class="tab-label">Home</span></div>
+      <div class="tab-item"><span class="tab-icon">🩸</span><span class="tab-label">CGM</span></div>
+      <div class="tab-item"><span class="tab-icon">👥</span><span class="tab-label">Circle</span></div>
+      <div class="tab-item"><span class="tab-icon">✨</span><span class="tab-label">Insights</span></div>
+      <div class="tab-item"><span class="tab-icon">👤</span><span class="tab-label">Profile</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RENDER 8 — LOGIN / ONBOARDING ═══ -->
+<div class="render-block">
+  <div class="render-label">Welcome &amp; Onboarding</div>
+  <div class="render-desc">Clean landing screen with Sign In, Join a Circle, and Create Account flows</div>
+  <div class="phone" id="render-8">
+    <div class="phone-scroll">
+      <div class="login-hero">
+        <div class="login-logo">∞</div>
+        <div class="login-title">LinkLoop</div>
+        <div class="login-tagline">Real-time glucose sharing<br>for T1D warriors and the people who care</div>
+        <div class="login-btn primary">Sign In</div>
+        <div class="login-btn secondary">Join a Circle</div>
+        <div class="login-link">New T1D Warrior? <span>Create an account</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div class="page-footer">
+  ∞ LinkLoop v1.4.0 — T1D glucose tracking with Dexcom CGM integration, Care Circle sharing, and AI-powered insights.<br>
+  © 2025 LinkLoop. Available on iOS TestFlight · Coming to Google Play.
+</div>
+
+</body>
+</html>

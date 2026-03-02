@@ -37,13 +37,13 @@ function MainTabs() {
       screenListeners={{ tabPress: () => haptic.light() }}
       screenOptions={{
         tabBarActiveTintColor: palette.warrior,
-        tabBarInactiveTintColor: '#666',
+        tabBarInactiveTintColor: '#555',
         tabBarStyle: styles.tabBar,
         tabBarBackground: () => (
           Platform.OS === 'ios' ? (
             <BlurView intensity={60} tint="dark" style={StyleSheet.absoluteFill} />
           ) : (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(16,16,22,0.92)' }]} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(10,10,15,0.94)' }]} />
           )
         ),
         headerStyle: {
@@ -122,13 +122,13 @@ function LoopMemberTabs() {
       screenListeners={{ tabPress: () => haptic.light() }}
       screenOptions={{
         tabBarActiveTintColor: palette.member,
-        tabBarInactiveTintColor: '#666',
+        tabBarInactiveTintColor: '#555',
         tabBarStyle: styles.tabBar,
         tabBarBackground: () => (
           Platform.OS === 'ios' ? (
             <BlurView intensity={60} tint="dark" style={StyleSheet.absoluteFill} />
           ) : (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(16,16,22,0.92)' }]} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(10,10,15,0.94)' }]} />
           )
         ),
         headerStyle: {
@@ -324,14 +324,14 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     borderTopWidth: 0,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.06)',
     backgroundColor: 'transparent',
     paddingBottom: 6,
     paddingTop: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
+    shadowColor: '#4A90D9',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.20,
+    shadowRadius: 20,
     elevation: 12,
     overflow: 'hidden',
   },
@@ -344,7 +344,8 @@ const styles = StyleSheet.create({
   loadingLogo: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#4A90D9',
+    color: '#fff',
     marginBottom: 20,
+    letterSpacing: -0.5,
   },
 });

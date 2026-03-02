@@ -9,6 +9,7 @@ import {
     TextInput, TouchableOpacity,
     View,
 } from 'react-native';
+import BloomBackground from '../components/BloomBackground';
 import { FadeIn } from '../config/animations';
 import { haptic } from '../config/haptics';
 import TYPE from '../config/typography';
@@ -412,9 +413,12 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <StatusBar barStyle="light-content" />
-      <LinearGradient
-        colors={isJoin ? ['#0B2010', '#111111'] : ['#0D1B2E', '#111111']}
+      <BloomBackground
+        accent={isJoin ? '#34C759' : accent}
+        secondary={isJoin ? '#4A90D9' : '#34C759'}
+        variant="login"
         style={styles.gradient}
+        contentStyle={styles.gradient}
       >
         <ScrollView
           contentContainerStyle={styles.scroll}
@@ -434,7 +438,7 @@ export default function LoginScreen() {
           {isLogin || isRegister || isJoin || isForgot || isReset ? renderForm() : renderHero()}
           </FadeIn>
         </ScrollView>
-      </LinearGradient>
+      </BloomBackground>
     </KeyboardAvoidingView>
   );
 }

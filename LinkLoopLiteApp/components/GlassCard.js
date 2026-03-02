@@ -1,5 +1,5 @@
 /**
- * GlassCard — Glassmorphism card with subtle blur, gradient border, and glow.
+ * GlassCard — Glassmorphism card with subtle blur, gradient border, bloom glow.
  *
  * Usage:
  *   <GlassCard accent="#4A90D9">
@@ -39,6 +39,11 @@ export default function GlassCard({
         style,
       ]}
     >
+      {/* Bloom glow orb — subtle color wash behind glow cards */}
+      {glow && (
+        <View style={[styles.bloomOrb, { backgroundColor: accent, opacity: 0.08 }]} />
+      )}
+
       {/* Gradient-ish border via layered borders */}
       <View style={[styles.borderLayer, { borderColor: accent + '25' }]}>
         {isIOS ? (
@@ -64,11 +69,22 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginBottom: 16,
     overflow: 'hidden',
+    position: 'relative',
+  },
+  bloomOrb: {
+    position: 'absolute',
+    top: -20,
+    left: '20%',
+    right: '20%',
+    height: 40,
+    borderRadius: 20,
+    zIndex: 0,
   },
   borderLayer: {
     borderRadius: 20,
     borderWidth: 1,
     overflow: 'hidden',
+    zIndex: 1,
   },
   blurInner: {
     borderRadius: 19,

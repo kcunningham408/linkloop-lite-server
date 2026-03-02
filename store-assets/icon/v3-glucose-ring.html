@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>V3 — GlucoseRing Hero</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { width:1024px; height:1024px; overflow:hidden; background:#0A0A0F; font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif; }
+  .icon {
+    width:1024px; height:1024px; position:relative; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+    background:
+      radial-gradient(circle at 50% 40%, rgba(76,175,80,0.10) 0%, transparent 45%),
+      radial-gradient(circle at 50% 40%, rgba(74,144,217,0.12) 0%, transparent 55%),
+      #0A0A0F;
+  }
+  /* Big glucose ring */
+  .ring-wrap {
+    position:relative; z-index:10; width:480px; height:480px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .ring-svg {
+    position:absolute; inset:0; width:480px; height:480px;
+    filter: drop-shadow(0 0 40px rgba(76,175,80,0.25));
+  }
+  /* Chain links inside the ring */
+  .inner-loop {
+    width:200px; height:200px; z-index:11;
+    filter: drop-shadow(0 0 20px rgba(74,144,217,0.3));
+  }
+  /* Glucose value */
+  .glucose-val {
+    position:absolute; bottom:186px; z-index:15;
+    font-size:18px; font-weight:800; color:rgba(76,175,80,0.7);
+    letter-spacing:1px;
+  }
+  /* Status pill */
+  .status-pill {
+    position:absolute; top:160px; z-index:15;
+    background:rgba(76,175,80,0.12); border:1px solid rgba(76,175,80,0.25);
+    border-radius:20px; padding:8px 24px;
+    font-size:14px; font-weight:800; color:#4CAF50;
+    letter-spacing:2px; text-transform:uppercase;
+  }
+  /* Wordmark */
+  .wordmark {
+    position:absolute; bottom:90px; z-index:12;
+    font-size:64px; font-weight:900; letter-spacing:-2px;
+    background: linear-gradient(135deg, #4A90D9, #7BB3FF);
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  /* Floating stat arcs */
+  .stat-arc {
+    position:absolute; z-index:5; opacity:0.4;
+  }
+  .stat-arc.left { top:260px; left:60px; }
+  .stat-arc.right { top:260px; right:60px; }
+  /* VibeCMD watermark */
+  .vibecmd {
+    position:absolute; bottom:28px; left:32px; z-index:20;
+    display:flex; align-items:center; gap:6px;
+  }
+  .vibecmd .td { width:6px; height:6px; border-radius:50%; }
+  .vibecmd .dr { background:#ff5f57; }
+  .vibecmd .dy { background:#febc2e; }
+  .vibecmd .dg { background:#28c840; }
+  .vibecmd span { font-size:11px; font-weight:700; color:rgba(0,255,136,0.4); letter-spacing:2px; font-family:'SF Mono',monospace; }
+</style>
+</head>
+<body>
+<div class="icon">
+  <div class="status-pill">● In Range</div>
+
+  <div class="ring-wrap">
+    <!-- Glucose ring (like the app's GlucoseRing component) -->
+    <svg class="ring-svg" viewBox="0 0 480 480">
+      <defs>
+        <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#4CAF50"/><stop offset="100%" stop-color="#34C759"/>
+        </linearGradient>
+      </defs>
+      <!-- Track -->
+      <circle cx="240" cy="240" r="220" stroke="rgba(255,255,255,0.04)" stroke-width="14" fill="none"/>
+      <!-- Fill (~75% arc) -->
+      <circle cx="240" cy="240" r="220" stroke="url(#ringGrad)" stroke-width="14" fill="none"
+              stroke-dasharray="1382" stroke-dashoffset="345" stroke-linecap="round"
+              transform="rotate(-90 240 240)"/>
+      <!-- Subtle inner track -->
+      <circle cx="240" cy="240" r="195" stroke="rgba(74,144,217,0.06)" stroke-width="4" fill="none"/>
+    </svg>
+
+    <!-- Chain links centered in ring -->
+    <svg class="inner-loop" viewBox="0 0 280 280" fill="none">
+      <defs>
+        <linearGradient id="b" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#7BB3FF"/><stop offset="50%" stop-color="#4A90D9"/><stop offset="100%" stop-color="#3A7BC8"/>
+        </linearGradient>
+        <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#5FE89D"/><stop offset="50%" stop-color="#34C759"/><stop offset="100%" stop-color="#2A9E47"/>
+        </linearGradient>
+        <filter id="gl"><feGaussianBlur stdDeviation="3" result="blur"/><feComposite in="SourceGraphic" in2="blur" operator="over"/></filter>
+      </defs>
+      <g filter="url(#gl)"><rect x="44" y="82" width="120" height="116" rx="58" ry="58" stroke="url(#b)" stroke-width="16" fill="none"/></g>
+      <g filter="url(#gl)"><rect x="116" y="82" width="120" height="116" rx="58" ry="58" stroke="url(#g)" stroke-width="16" fill="none"/></g>
+      <rect x="128" y="74" width="20" height="24" fill="#0A0A0F" opacity="0.95" rx="2"/>
+      <rect x="128" y="182" width="20" height="24" fill="#0A0A0F" opacity="0.95" rx="2"/>
+      <line x1="128" y1="194" x2="148" y2="194" stroke="url(#g)" stroke-width="16" stroke-linecap="round"/>
+      <line x1="128" y1="86" x2="148" y2="86" stroke="url(#b)" stroke-width="16" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <div class="glucose-val">112 mg/dL · 2 min ago</div>
+
+  <!-- Decorative stat arcs (like the app's StatArc) -->
+  <svg class="stat-arc left" width="100" height="100" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="40" stroke="rgba(255,255,255,0.04)" stroke-width="6" fill="none"/>
+    <circle cx="50" cy="50" r="40" stroke="rgba(74,144,217,0.3)" stroke-width="6" fill="none"
+            stroke-dasharray="251" stroke-dashoffset="80" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+    <text x="50" y="54" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="14" font-weight="800">68%</text>
+  </svg>
+  <svg class="stat-arc right" width="100" height="100" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="40" stroke="rgba(255,255,255,0.04)" stroke-width="6" fill="none"/>
+    <circle cx="50" cy="50" r="40" stroke="rgba(76,175,80,0.3)" stroke-width="6" fill="none"
+            stroke-dasharray="251" stroke-dashoffset="50" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+    <text x="50" y="54" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="14" font-weight="800">80%</text>
+  </svg>
+
+  <div class="wordmark">LinkLoop</div>
+
+  <div class="vibecmd">
+    <div class="td dr"></div><div class="td dy"></div><div class="td dg"></div>
+    <span>VibeCMD</span>
+  </div>
+</div>
+</body>
+</html>

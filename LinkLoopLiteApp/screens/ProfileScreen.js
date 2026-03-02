@@ -2,6 +2,7 @@ import Constants from 'expo-constants';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import { Alert, Linking, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import BloomBackground from '../components/BloomBackground';
 import GlassCard from '../components/GlassCard';
 import { FadeIn, stagger } from '../config/animations';
 import { haptic } from '../config/haptics';
@@ -199,18 +200,13 @@ export default function ProfileScreen() {
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 90 }}>
       {/* ── Hero Banner ── */}
       <FadeIn delay={0} slideY={0}>
-      <LinearGradient
-        colors={[accent, gradient[1] || accent]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.heroBanner}
-      >
+      <BloomBackground accent={accent} secondary={gradient[1] || accent} variant="hero" contentStyle={styles.heroBanner}>
         {/* Decorative circles */}
         <View style={styles.heroDecoCircle1} />
         <View style={styles.heroDecoCircle2} />
 
         {/* Avatar with glow ring */}
-        <View style={styles.avatarRing}>
+        <View style={[styles.avatarRing, { borderColor: accent + '80' }]}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{user?.name?.charAt(0)?.toUpperCase() || '∞'}</Text>
           </View>
@@ -243,7 +239,7 @@ export default function ProfileScreen() {
             <Text style={styles.heroStatValue}>v{APP_VERSION}</Text>
           </View>
         </View>
-      </LinearGradient>
+      </BloomBackground>
       </FadeIn>
 
       <View style={styles.content}>
@@ -702,7 +698,7 @@ const styles = StyleSheet.create({
     width: 140,
     height: 140,
     borderRadius: 70,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.04)',
   },
   heroDecoCircle2: {
     position: 'absolute',
@@ -711,14 +707,14 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(255,255,255,0.03)',
   },
   avatarRing: {
     width: 108,
     height: 108,
     borderRadius: 54,
     borderWidth: 3,
-    borderColor: 'rgba(255,255,255,0.5)',
+    borderColor: 'rgba(255,255,255,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 14,

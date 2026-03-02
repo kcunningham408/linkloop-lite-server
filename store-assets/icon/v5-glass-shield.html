@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>V5 — Glass Shield</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { width:1024px; height:1024px; overflow:hidden; background:#0A0A0F; font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif; }
+  .icon {
+    width:1024px; height:1024px; position:relative; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+    background:
+      radial-gradient(circle at 50% 38%, rgba(74,144,217,0.15) 0%, transparent 50%),
+      radial-gradient(circle at 60% 60%, rgba(52,199,89,0.06) 0%, transparent 40%),
+      #0A0A0F;
+  }
+  /* Rounded-square glass container (like iOS icon shape) */
+  .glass-square {
+    width:520px; height:520px;
+    border-radius:120px;
+    background: rgba(255,255,255,0.025);
+    border: 1.5px solid rgba(74,144,217,0.12);
+    box-shadow:
+      0 0 80px rgba(74,144,217,0.1),
+      inset 0 1px 0 rgba(255,255,255,0.05),
+      inset 0 0 40px rgba(74,144,217,0.03);
+    display:flex; align-items:center; justify-content:center; flex-direction:column;
+    z-index:10; position:relative; gap:16px;
+  }
+  /* Inner gradient shine */
+  .glass-square::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:50%;
+    border-radius:120px 120px 0 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+  }
+  .loop-svg {
+    width:260px; height:260px; z-index:11;
+    filter: drop-shadow(0 0 30px rgba(74,144,217,0.35));
+  }
+  /* "LL" monogram below links */
+  .monogram {
+    font-size:48px; font-weight:900; letter-spacing:-3px; z-index:11;
+    background: linear-gradient(135deg, #7BB3FF, #4A90D9);
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+    margin-top:-10px;
+  }
+  /* Outer decorative border */
+  .outer-border {
+    position:absolute; width:620px; height:620px;
+    border-radius:150px;
+    border:1px solid rgba(74,144,217,0.06);
+    z-index:2;
+  }
+  /* Wordmark */
+  .wordmark {
+    position:absolute; bottom:80px; z-index:12;
+    font-size:58px; font-weight:900; letter-spacing:-1px;
+    background: linear-gradient(135deg, #4A90D9, #7BB3FF);
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  /* Corner accents */
+  .corner {
+    position:absolute; z-index:5; opacity:0.15;
+  }
+  .corner.tl { top:80px; left:80px; }
+  .corner.br { bottom:160px; right:80px; }
+  /* VibeCMD */
+  .vibecmd {
+    position:absolute; bottom:28px; left:32px; z-index:20;
+    display:flex; align-items:center; gap:6px;
+  }
+  .vibecmd .td { width:6px; height:6px; border-radius:50%; }
+  .vibecmd .dr { background:#ff5f57; }
+  .vibecmd .dy { background:#febc2e; }
+  .vibecmd .dg { background:#28c840; }
+  .vibecmd span { font-size:11px; font-weight:700; color:rgba(0,255,136,0.4); letter-spacing:2px; font-family:'SF Mono',monospace; }
+</style>
+</head>
+<body>
+<div class="icon">
+  <div class="outer-border"></div>
+
+  <!-- Corner glucose accents -->
+  <svg class="corner tl" width="80" height="80" viewBox="0 0 80 80">
+    <circle cx="40" cy="40" r="30" stroke="#4A90D9" stroke-width="4" fill="none"
+            stroke-dasharray="188" stroke-dashoffset="50" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+  </svg>
+  <svg class="corner br" width="80" height="80" viewBox="0 0 80 80">
+    <circle cx="40" cy="40" r="30" stroke="#34C759" stroke-width="4" fill="none"
+            stroke-dasharray="188" stroke-dashoffset="70" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+  </svg>
+
+  <div class="glass-square">
+    <svg class="loop-svg" viewBox="0 0 280 280" fill="none">
+      <defs>
+        <linearGradient id="b" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#7BB3FF"/><stop offset="50%" stop-color="#4A90D9"/><stop offset="100%" stop-color="#3A7BC8"/>
+        </linearGradient>
+        <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#5FE89D"/><stop offset="50%" stop-color="#34C759"/><stop offset="100%" stop-color="#2A9E47"/>
+        </linearGradient>
+        <filter id="gl"><feGaussianBlur stdDeviation="3" result="blur"/><feComposite in="SourceGraphic" in2="blur" operator="over"/></filter>
+      </defs>
+      <g filter="url(#gl)"><rect x="44" y="82" width="120" height="116" rx="58" ry="58" stroke="url(#b)" stroke-width="16" fill="none"/></g>
+      <g filter="url(#gl)"><rect x="116" y="82" width="120" height="116" rx="58" ry="58" stroke="url(#g)" stroke-width="16" fill="none"/></g>
+      <rect x="128" y="74" width="20" height="24" fill="#0A0A0F" opacity="0.95" rx="2"/>
+      <rect x="128" y="182" width="20" height="24" fill="#0A0A0F" opacity="0.95" rx="2"/>
+      <line x1="128" y1="194" x2="148" y2="194" stroke="url(#g)" stroke-width="16" stroke-linecap="round"/>
+      <line x1="128" y1="86" x2="148" y2="86" stroke="url(#b)" stroke-width="16" stroke-linecap="round"/>
+    </svg>
+    <div class="monogram">LL</div>
+  </div>
+
+  <div class="wordmark">LinkLoop</div>
+
+  <div class="vibecmd">
+    <div class="td dr"></div><div class="td dy"></div><div class="td dg"></div>
+    <span>VibeCMD</span>
+  </div>
+</div>
+</body>
+</html>

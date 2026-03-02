@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, AppState, Dimensions, Modal, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import BloomBackground from '../components/BloomBackground';
 import GlassCard from '../components/GlassCard';
 import GlucoseChart from '../components/GlucoseChart';
 import GlucoseRing from '../components/GlucoseRing';
@@ -304,11 +305,7 @@ export default function CGMScreen({ navigation }) {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accent} colors={[accent]} />}
     >
       {/* ─── Hero: GlucoseRing on gradient ─── */}
-      <LinearGradient
-        colors={[glucoseColor + 'CC', glucoseColor + '66', '#0A0A0F']}
-        style={styles.headerGradient}
-        locations={[0, 0.55, 1]}
-      >
+      <BloomBackground accent={glucoseColor} secondary={accent} variant="hero" contentStyle={styles.headerGradient}>
         {isMember && (
           <View style={styles.memberPill}>
             <Text style={styles.memberPillText}>👁 Watching {warriorName || 'your warrior'}'s loop</Text>
@@ -349,7 +346,7 @@ export default function CGMScreen({ navigation }) {
             {isMember ? 'No readings from your warrior yet' : 'No readings yet — tap + to log one'}
           </Text>
         )}
-      </LinearGradient>
+      </BloomBackground>
 
       <View style={styles.content}>
         {/* ─── Warriors only: Log Reading button ─── */}

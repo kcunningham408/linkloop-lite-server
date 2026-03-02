@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>V7 — App Dashboard</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { width:1024px; height:1024px; overflow:hidden; background:#0A0A0F; font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif; }
+  .icon {
+    width:1024px; height:1024px; position:relative; overflow:hidden;
+    display:flex; flex-direction:column; align-items:center;
+    background:
+      radial-gradient(circle at 50% 30%, rgba(74,144,217,0.12) 0%, transparent 50%),
+      #0A0A0F;
+  }
+  /* Subtle grid */
+  .icon::before {
+    content:''; position:absolute; inset:0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+    background-size:40px 40px; z-index:1;
+  }
+  /* Top header area */
+  .header {
+    margin-top:80px; text-align:center; z-index:10;
+  }
+  .header .app-name {
+    font-size:42px; font-weight:900; letter-spacing:-1px;
+    background: linear-gradient(135deg, #4A90D9, #7BB3FF);
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .header .app-sub {
+    font-size:12px; font-weight:600; color:rgba(255,255,255,0.2);
+    letter-spacing:4px; text-transform:uppercase; margin-top:4px;
+  }
+  /* Dashboard content area */
+  .dashboard {
+    display:flex; flex-direction:column; gap:16px; width:700px;
+    margin-top:40px; z-index:10;
+  }
+  /* Glass card row */
+  .glass-row { display:flex; gap:16px; }
+  .glass-card {
+    flex:1;
+    background:rgba(255,255,255,0.03);
+    border:1px solid rgba(255,255,255,0.07);
+    border-radius:24px;
+    padding:24px;
+    display:flex; flex-direction:column; gap:8px;
+    box-shadow:0 0 20px rgba(74,144,217,0.03);
+  }
+  .glass-card.accent { border-color:rgba(74,144,217,0.15); }
+  .card-label {
+    font-size:11px; font-weight:700; color:rgba(255,255,255,0.25);
+    text-transform:uppercase; letter-spacing:1.5px;
+  }
+  .card-value {
+    font-size:44px; font-weight:900; color:#fff; line-height:1;
+  }
+  .card-value.green { color:#4CAF50; }
+  .card-value.blue { color:#4A90D9; }
+  .card-unit {
+    font-size:13px; font-weight:600; color:rgba(255,255,255,0.2);
+  }
+  /* Chain link hero in the big card */
+  .hero-card {
+    position:relative; display:flex; align-items:center; gap:24px;
+    min-height:180px;
+  }
+  .hero-card .loop-svg {
+    width:140px; height:140px; flex-shrink:0;
+    filter: drop-shadow(0 0 20px rgba(74,144,217,0.3));
+  }
+  .hero-card .hero-info { flex:1; }
+  .hero-card .hero-glucose {
+    font-size:64px; font-weight:900; color:#4CAF50; line-height:1;
+  }
+  .hero-card .hero-trend {
+    font-size:28px; color:rgba(76,175,80,0.5); margin-left:8px;
+  }
+  .hero-card .hero-status {
+    display:inline-block; background:rgba(76,175,80,0.12);
+    border:1px solid rgba(76,175,80,0.2); border-radius:12px;
+    padding:4px 14px; font-size:12px; font-weight:800; color:#4CAF50;
+    margin-top:8px;
+  }
+  .hero-card .hero-time {
+    font-size:12px; color:rgba(255,255,255,0.2); margin-top:6px;
+  }
+  /* Mini chart in card */
+  .mini-chart { margin-top:4px; }
+  /* Bottom bar row */
+  .bar-row {
+    display:flex; gap:6px; margin-top:2px;
+  }
+  .bar-seg {
+    height:6px; border-radius:3px; flex:1;
+  }
+  .bar-seg.g { background:rgba(76,175,80,0.4); flex:3; }
+  .bar-seg.y { background:rgba(255,165,0,0.3); flex:1; }
+  .bar-seg.r { background:rgba(255,107,107,0.3); flex:0.5; }
+  /* Tab bar at the bottom */
+  .tab-bar {
+    position:absolute; bottom:50px; left:162px; right:162px; height:64px;
+    background:rgba(30,30,35,0.8);
+    border-radius:32px;
+    border:1px solid rgba(255,255,255,0.06);
+    display:flex; align-items:center; justify-content:space-around;
+    z-index:15;
+  }
+  .tab-item { display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .tab-icon { font-size:22px; }
+  .tab-label { font-size:10px; font-weight:600; }
+  .tab-label.dim { color:rgba(255,255,255,0.2); }
+  .tab-label.active { color:#4A90D9; }
+  /* VibeCMD */
+  .vibecmd {
+    position:absolute; bottom:16px; left:32px; z-index:20;
+    display:flex; align-items:center; gap:6px;
+  }
+  .vibecmd .td { width:6px; height:6px; border-radius:50%; }
+  .vibecmd .dr { background:#ff5f57; }
+  .vibecmd .dy { background:#febc2e; }
+  .vibecmd .dg { background:#28c840; }
+  .vibecmd span { font-size:11px; font-weight:700; color:rgba(0,255,136,0.4); letter-spacing:2px; font-family:'SF Mono',monospace; }
+</style>
+</head>
+<body>
+<div class="icon">
+  <div class="header">
+    <div class="app-name">LinkLoop</div>
+    <div class="app-sub">T1D Glucose Tracker</div>
+  </div>
+
+  <div class="dashboard">
+    <!-- Hero glucose card with chain link -->
+    <div class="glass-card accent hero-card">
+      <svg class="loop-svg" viewBox="0 0 280 280" fill="none">
+        <defs>
+          <linearGradient id="b" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#7BB3FF"/><stop offset="50%" stop-color="#4A90D9"/><stop offset="100%" stop-color="#3A7BC8"/>
+          </linearGradient>
+          <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#5FE89D"/><stop offset="50%" stop-color="#34C759"/><stop offset="100%" stop-color="#2A9E47"/>
+          </linearGradient>
+          <filter id="gl"><feGaussianBlur stdDeviation="3" result="blur"/><feComposite in="SourceGraphic" in2="blur" operator="over"/></filter>
+        </defs>
+        <g filter="url(#gl)"><rect x="44" y="82" width="120" height="116" rx="58" ry="58" stroke="url(#b)" stroke-width="16" fill="none"/></g>
+        <g filter="url(#gl)"><rect x="116" y="82" width="120" height="116" rx="58" ry="58" stroke="url(#g)" stroke-width="16" fill="none"/></g>
+        <rect x="128" y="74" width="20" height="24" fill="#0A0A0F" opacity="0.95" rx="2"/>
+        <rect x="128" y="182" width="20" height="24" fill="#0A0A0F" opacity="0.95" rx="2"/>
+        <line x1="128" y1="194" x2="148" y2="194" stroke="url(#g)" stroke-width="16" stroke-linecap="round"/>
+        <line x1="128" y1="86" x2="148" y2="86" stroke="url(#b)" stroke-width="16" stroke-linecap="round"/>
+      </svg>
+      <div class="hero-info">
+        <div><span class="hero-glucose">112</span><span class="hero-trend">→</span></div>
+        <div class="hero-status">● In Range</div>
+        <div class="hero-time">Dexcom G7 · 2 min ago</div>
+      </div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="glass-row">
+      <div class="glass-card">
+        <div class="card-label">Time in Range</div>
+        <div class="card-value green">78%</div>
+        <div class="bar-row">
+          <div class="bar-seg r"></div>
+          <div class="bar-seg y"></div>
+          <div class="bar-seg g"></div>
+          <div class="bar-seg y"></div>
+        </div>
+      </div>
+      <div class="glass-card">
+        <div class="card-label">Average</div>
+        <div class="card-value blue">124</div>
+        <div class="card-unit">mg/dL · 24h</div>
+      </div>
+      <div class="glass-card">
+        <div class="card-label">Care Circle</div>
+        <div class="card-value" style="font-size:36px;">👨‍👩‍👧‍👦</div>
+        <div class="card-unit">4 connected</div>
+      </div>
+    </div>
+
+    <!-- Chart card -->
+    <div class="glass-card" style="padding:16px 24px;">
+      <div class="card-label">24h Glucose</div>
+      <svg class="mini-chart" width="100%" height="80" viewBox="0 0 660 80">
+        <!-- Range band -->
+        <rect x="0" y="20" width="660" height="35" fill="rgba(76,175,80,0.04)" rx="4"/>
+        <line x1="0" y1="20" x2="660" y2="20" stroke="rgba(76,175,80,0.1)" stroke-dasharray="4,4"/>
+        <line x1="0" y1="55" x2="660" y2="55" stroke="rgba(76,175,80,0.1)" stroke-dasharray="4,4"/>
+        <!-- Line -->
+        <polyline points="0,50 40,45 80,38 120,30 160,25 200,28 240,35 280,40 320,42 360,38 400,30 440,25 480,32 520,40 560,45 600,42 660,38"
+                  stroke="#4A90D9" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- Area fill -->
+        <polygon points="0,50 40,45 80,38 120,30 160,25 200,28 240,35 280,40 320,42 360,38 400,30 440,25 480,32 520,40 560,45 600,42 660,38 660,80 0,80"
+                 fill="rgba(74,144,217,0.06)"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Floating tab bar -->
+  <div class="tab-bar">
+    <div class="tab-item"><div class="tab-icon">🏠</div><div class="tab-label active">Home</div></div>
+    <div class="tab-item"><div class="tab-icon">📊</div><div class="tab-label dim">Insights</div></div>
+    <div class="tab-item"><div class="tab-icon">🔗</div><div class="tab-label dim">Circle</div></div>
+    <div class="tab-item"><div class="tab-icon">👤</div><div class="tab-label dim">Profile</div></div>
+  </div>
+
+  <div class="vibecmd">
+    <div class="td dr"></div><div class="td dy"></div><div class="td dg"></div>
+    <span>VibeCMD</span>
+  </div>
+</div>
+</body>
+</html>

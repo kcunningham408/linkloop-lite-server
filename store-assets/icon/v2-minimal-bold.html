@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>V2 — Minimal Bold</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { width:1024px; height:1024px; overflow:hidden; background:#0A0A0F; font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif; }
+  .icon {
+    width:1024px; height:1024px; position:relative; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(74,144,217,0.14) 0%, transparent 50%),
+      #0A0A0F;
+  }
+  /* Giant chain link — big, bold, centered */
+  .loop-svg {
+    width: 520px; height: 520px;
+    filter: drop-shadow(0 0 60px rgba(74,144,217,0.35)) drop-shadow(0 0 120px rgba(74,144,217,0.1));
+    z-index: 10;
+  }
+  /* Wordmark below */
+  .wordmark {
+    position:absolute; bottom:110px; z-index:12;
+    font-size:72px; font-weight:900; letter-spacing:-2px;
+    background: linear-gradient(135deg, #7BB3FF 0%, #4A90D9 50%, #3A7BC8 100%);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  /* Subtle tagline */
+  .tagline {
+    position:absolute; bottom:72px; z-index:12;
+    font-size:16px; font-weight:600; color:rgba(255,255,255,0.25);
+    letter-spacing:6px; text-transform:uppercase;
+  }
+  /* VibeCMD watermark bottom-left */
+  .vibecmd {
+    position:absolute; bottom:28px; left:32px; z-index:20;
+    display:flex; align-items:center; gap:6px;
+  }
+  .vibecmd .terminal-dot { width:6px; height:6px; border-radius:50%; }
+  .vibecmd .dot-r { background:#ff5f57; }
+  .vibecmd .dot-y { background:#febc2e; }
+  .vibecmd .dot-g { background:#28c840; }
+  .vibecmd span {
+    font-size:11px; font-weight:700; color:rgba(0,255,136,0.4);
+    letter-spacing:2px; font-family:'SF Mono',monospace;
+  }
+</style>
+</head>
+<body>
+<div class="icon">
+  <svg class="loop-svg" viewBox="0 0 280 280" fill="none">
+    <defs>
+      <linearGradient id="b" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#7BB3FF"/><stop offset="50%" stop-color="#4A90D9"/><stop offset="100%" stop-color="#3A7BC8"/>
+      </linearGradient>
+      <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#5FE89D"/><stop offset="50%" stop-color="#34C759"/><stop offset="100%" stop-color="#2A9E47"/>
+      </linearGradient>
+      <filter id="gl"><feGaussianBlur stdDeviation="4" result="blur"/><feComposite in="SourceGraphic" in2="blur" operator="over"/></filter>
+    </defs>
+    <g filter="url(#gl)"><rect x="44" y="82" width="120" height="116" rx="58" ry="58" stroke="url(#b)" stroke-width="18" fill="none"/></g>
+    <g filter="url(#gl)"><rect x="116" y="82" width="120" height="116" rx="58" ry="58" stroke="url(#g)" stroke-width="18" fill="none"/></g>
+    <rect x="126" y="72" width="24" height="28" fill="#0A0A0F" opacity="0.95" rx="2"/>
+    <rect x="126" y="180" width="24" height="28" fill="#0A0A0F" opacity="0.95" rx="2"/>
+    <line x1="126" y1="196" x2="150" y2="196" stroke="url(#g)" stroke-width="18" stroke-linecap="round"/>
+    <line x1="126" y1="86" x2="150" y2="86" stroke="url(#b)" stroke-width="18" stroke-linecap="round"/>
+  </svg>
+  <div class="wordmark">LinkLoop</div>
+  <div class="tagline">T1D glucose tracker</div>
+  <div class="vibecmd">
+    <div class="terminal-dot dot-r"></div>
+    <div class="terminal-dot dot-y"></div>
+    <div class="terminal-dot dot-g"></div>
+    <span>VibeCMD</span>
+  </div>
+</div>
+</body>
+</html>
