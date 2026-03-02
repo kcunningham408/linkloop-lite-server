@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LinkLoop Visual Overhaul — Mockup</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1a2e;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    padding: 40px 20px 60px;
+    flex-wrap: wrap;
+  }
+
+  h1 {
+    width: 100%;
+    text-align: center;
+    font-size: 28px;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #4A90D9, #6366F1, #EC4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .subtitle {
+    width: 100%;
+    text-align: center;
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 30px;
+  }
+
+  /* Phone frame */
+  .phone {
+    width: 375px;
+    height: 812px;
+    background: #0A0A0F;
+    border-radius: 44px;
+    border: 3px solid #333;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
+  }
+  .phone-label {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 14px;
+    color: #999;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .notch {
+    width: 160px;
+    height: 30px;
+    background: #000;
+    border-radius: 0 0 20px 20px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 10;
+  }
+  .screen-scroll {
+    height: calc(100% - 30px);
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .screen-scroll::-webkit-scrollbar { display: none; }
+
+  /* ─── Glass Card ─── */
+  .glass {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 16px;
+    margin: 0 16px 14px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .glass.glow-blue {
+    border-color: rgba(74,144,217,0.25);
+    box-shadow: 0 0 20px rgba(74,144,217,0.15), 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .glass.glow-green {
+    border-color: rgba(0,212,170,0.25);
+    box-shadow: 0 0 20px rgba(0,212,170,0.15), 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .glass.glow-red {
+    border-color: rgba(255,107,107,0.25);
+    box-shadow: 0 0 20px rgba(255,107,107,0.15), 0 4px 20px rgba(0,0,0,0.3);
+  }
+
+  /* ─── Hero gradient ─── */
+  .hero {
+    background: linear-gradient(180deg, #3B6BA5 0%, #2A5080 50%, #0A0A0F 100%);
+    padding: 20px 24px 28px;
+    text-align: center;
+  }
+  .hero-title {
+    font-size: 26px;
+    font-weight: 800;
+    margin-bottom: 10px;
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.15);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+  }
+  .hero-cgm {
+    background: linear-gradient(180deg, rgba(74,144,217,0.85) 0%, rgba(74,144,217,0.4) 55%, #0A0A0F 100%);
+    padding: 24px 24px 30px;
+    text-align: center;
+  }
+
+  /* ─── Glucose Ring (SVG) ─── */
+  .ring-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 0;
+  }
+  .ring-svg { flex-shrink: 0; }
+  .ring-meta {
+    flex: 1;
+    margin-left: 16px;
+    text-align: left;
+  }
+  .status-pill {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .ring-time { color: #888; font-size: 14px; margin-bottom: 4px; }
+  .ring-hint { color: #555; font-size: 12px; }
+
+  /* ─── Stat Arcs ─── */
+  .arcs-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+  }
+  .arc-item {
+    text-align: center;
+    flex: 1;
+  }
+  .arc-value {
+    font-size: 13px;
+    font-weight: 700;
+    margin-top: 4px;
+  }
+  .arc-label {
+    font-size: 10px;
+    color: #888;
+    margin-top: 2px;
+  }
+
+  /* ─── Section title ─── */
+  .section-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .label-upper {
+    font-size: 10px;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+
+  /* ─── Quick Actions ─── */
+  .quick-actions {
+    display: flex;
+    gap: 8px;
+    margin: 0 16px 14px;
+  }
+  .quick-action {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 14px 4px;
+    text-align: center;
+  }
+  .quick-action .emoji { font-size: 22px; margin-bottom: 4px; }
+  .quick-action .label { font-size: 11px; color: #B0B0B0; font-weight: 600; }
+
+  /* ─── Alert Banner ─── */
+  .alert-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .alert-icon { font-size: 22px; }
+  .alert-title { font-size: 14px; font-weight: 700; }
+  .alert-sub { font-size: 12px; color: #FF6B6B; margin-top: 2px; }
+
+  /* ─── Chart placeholder ─── */
+  .chart-area {
+    height: 160px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+  }
+  .chart-area svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ─── Floating Tab Bar ─── */
+  .tab-bar {
+    position: absolute;
+    bottom: 12px;
+    left: 16px;
+    right: 16px;
+    height: 56px;
+    background: rgba(16,16,22,0.85);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    z-index: 100;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .tab-item {
+    text-align: center;
+    flex: 1;
+  }
+  .tab-item .tab-icon { font-size: 20px; margin-bottom: 2px; }
+  .tab-item .tab-label { font-size: 10px; color: #666; }
+  .tab-item.active .tab-icon { color: #4A90D9; }
+  .tab-item.active .tab-label { color: #4A90D9; }
+
+  /* ─── Disclaimer ─── */
+  .disclaimer-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .disclaimer-text { font-size: 12px; color: #888; line-height: 1.5; flex: 1; }
+
+  /* ─── Notes ─── */
+  .note-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 6px;
+  }
+  .note-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    font-size: 12px;
+  }
+  .note-author { color: #4A90D9; font-weight: 600; }
+  .note-time { color: #666; font-size: 11px; }
+  .note-text { font-size: 13px; color: #D0D0D0; }
+
+  /* ─── Device section ─── */
+  .device-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 0;
+  }
+  .device-emoji { font-size: 24px; }
+  .device-name { font-size: 15px; font-weight: 600; }
+  .device-status { font-size: 12px; color: #00D4AA; }
+  .device-dot {
+    width: 10px; height: 10px; border-radius: 5px;
+    margin-left: auto;
+  }
+  .divider {
+    height: 1px;
+    background: rgba(255,255,255,0.06);
+    margin: 8px 0;
+  }
+
+  /* Legend */
+  .legend {
+    width: 100%;
+    max-width: 800px;
+    margin: 20px auto 0;
+    padding: 24px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+  }
+  .legend h3 { font-size: 16px; margin-bottom: 14px; color: #ccc; }
+  .legend-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    color: #aaa;
+    line-height: 1.4;
+  }
+  .legend-dot {
+    width: 8px; height: 8px; border-radius: 4px; margin-top: 4px; flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<h1>∞ LinkLoop — Visual Overhaul</h1>
+<p class="subtitle">Glassmorphism · SVG Charts · Ring Gauges · Floating Tab Bar</p>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- HOME SCREEN -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div>
+<div class="phone">
+  <div class="notch"></div>
+  <div class="screen-scroll">
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-title">∞ LinkLoop</div>
+      <div class="hero-badge">🩹 Welcome back, Kevin</div>
+    </div>
+
+    <!-- Glucose Ring Card -->
+    <div class="glass glow-blue" style="margin-top:-8px;">
+      <div class="label-upper">Current Glucose</div>
+      <div class="ring-container">
+        <svg class="ring-svg" width="140" height="140" viewBox="0 0 140 140">
+          <circle cx="70" cy="70" r="62" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="7"/>
+          <circle cx="70" cy="70" r="62" fill="none" stroke="url(#ringGrad)" stroke-width="7"
+            stroke-dasharray="310 390" stroke-dashoffset="-80" stroke-linecap="round"
+            transform="rotate(-90 70 70)"/>
+          <defs>
+            <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#4A90D9"/>
+              <stop offset="100%" stop-color="#6366F1"/>
+            </linearGradient>
+          </defs>
+          <text x="70" y="62" text-anchor="middle" fill="#fff" font-size="36" font-weight="800">127</text>
+          <text x="70" y="80" text-anchor="middle" fill="#888" font-size="11">mg/dL</text>
+          <text x="70" y="100" text-anchor="middle" fill="#4A90D9" font-size="11" font-weight="700">
+            <tspan fill="#4A90D9" font-size="10" dy="0" dx="0" style="background:rgba(74,144,217,0.15)">IN RANGE</tspan>
+          </text>
+          <text x="120" y="70" text-anchor="middle" fill="#4A90D9" font-size="22" font-weight="700">→</text>
+        </svg>
+        <div class="ring-meta">
+          <div class="status-pill" style="background:rgba(74,144,217,0.15); color:#4A90D9;">IN RANGE</div>
+          <div class="ring-time">2:34 PM</div>
+          <div class="ring-hint">Tap for details ›</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today's Overview — Arc Stats -->
+    <div class="glass">
+      <div class="section-title">Today's Overview</div>
+      <div class="arcs-row">
+        <div class="arc-item">
+          <svg width="68" height="68" viewBox="0 0 68 68">
+            <circle cx="34" cy="34" r="28" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/>
+            <circle cx="34" cy="34" r="28" fill="none" stroke="#4A90D9" stroke-width="5"
+              stroke-dasharray="145 176" stroke-linecap="round" transform="rotate(-90 34 34)"/>
+            <text x="34" y="37" text-anchor="middle" fill="#4A90D9" font-size="14" font-weight="700">82%</text>
+          </svg>
+          <div class="arc-label">In Range</div>
+        </div>
+        <div class="arc-item">
+          <svg width="68" height="68" viewBox="0 0 68 68">
+            <circle cx="34" cy="34" r="28" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/>
+            <circle cx="34" cy="34" r="28" fill="none" stroke="#FFA500" stroke-width="5"
+              stroke-dasharray="74 176" stroke-linecap="round" transform="rotate(-90 34 34)"/>
+            <text x="34" y="37" text-anchor="middle" fill="#FFA500" font-size="14" font-weight="700">132</text>
+          </svg>
+          <div class="arc-label">Avg mg/dL</div>
+        </div>
+        <div class="arc-item">
+          <svg width="68" height="68" viewBox="0 0 68 68">
+            <circle cx="34" cy="34" r="28" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/>
+            <circle cx="34" cy="34" r="28" fill="none" stroke="#FF6B6B" stroke-width="5"
+              stroke-dasharray="35 176" stroke-linecap="round" transform="rotate(-90 34 34)"/>
+            <text x="34" y="37" text-anchor="middle" fill="#FF6B6B" font-size="14" font-weight="700">2</text>
+          </svg>
+          <div class="arc-label">Lows</div>
+        </div>
+        <div class="arc-item">
+          <svg width="68" height="68" viewBox="0 0 68 68">
+            <circle cx="34" cy="34" r="28" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/>
+            <circle cx="34" cy="34" r="28" fill="none" stroke="#FFA500" stroke-width="5"
+              stroke-dasharray="53 176" stroke-linecap="round" transform="rotate(-90 34 34)"/>
+            <text x="34" y="37" text-anchor="middle" fill="#FFA500" font-size="14" font-weight="700">3</text>
+          </svg>
+          <div class="arc-label">Highs</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert Banner -->
+    <div class="glass glow-red">
+      <div class="alert-row">
+        <div class="alert-icon">🔔</div>
+        <div style="flex:1">
+          <div class="alert-title">1 Active Alert</div>
+          <div class="alert-sub">Tap to view & acknowledge</div>
+        </div>
+        <span style="color:#FF6B6B; font-size:22px;">›</span>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div style="padding:0 16px; margin-bottom:4px;">
+      <div class="section-title">Quick Actions</div>
+    </div>
+    <div class="quick-actions">
+      <div class="quick-action">
+        <div class="emoji">💬</div>
+        <div class="label">Messages</div>
+      </div>
+      <div class="quick-action">
+        <div class="emoji">✨</div>
+        <div class="label">Insights</div>
+      </div>
+      <div class="quick-action">
+        <div class="emoji">📝</div>
+        <div class="label">Mood</div>
+      </div>
+      <div class="quick-action">
+        <div class="emoji">🔔</div>
+        <div class="label">Alerts</div>
+      </div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="glass" style="margin-bottom:80px;">
+      <div class="disclaimer-row">
+        <span style="font-size:18px;">💚</span>
+        <div class="disclaimer-text">LinkLoop is a wellness companion — not a medical device. Always consult your care team.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Floating Tab Bar -->
+  <div class="tab-bar">
+    <div class="tab-item active">
+      <div class="tab-icon">🏠</div>
+      <div class="tab-label">Home</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">💓</div>
+      <div class="tab-label">CGM</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">👥</div>
+      <div class="tab-label">Circle</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">💊</div>
+      <div class="tab-label">Supplies</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">⚙️</div>
+      <div class="tab-label">Profile</div>
+    </div>
+  </div>
+</div>
+<div class="phone-label">Home Screen</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- CGM SCREEN -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div>
+<div class="phone">
+  <div class="notch"></div>
+  <div class="screen-scroll">
+
+    <!-- CGM Hero with Ring -->
+    <div class="hero-cgm">
+      <svg width="180" height="180" viewBox="0 0 180 180">
+        <circle cx="90" cy="90" r="80" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="8"/>
+        <circle cx="90" cy="90" r="80" fill="none" stroke="url(#cgmRingGrad)" stroke-width="8"
+          stroke-dasharray="350 503" stroke-dashoffset="-60" stroke-linecap="round"
+          transform="rotate(-90 90 90)"/>
+        <defs>
+          <linearGradient id="cgmRingGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#4A90D9"/>
+            <stop offset="100%" stop-color="#6366F1"/>
+          </linearGradient>
+        </defs>
+        <text x="90" y="78" text-anchor="middle" fill="#fff" font-size="46" font-weight="800">127</text>
+        <text x="90" y="98" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="13">mg/dL</text>
+        <text x="90" y="120" text-anchor="middle" fill="#4A90D9" font-size="12" font-weight="700">IN RANGE</text>
+        <text x="155" y="90" text-anchor="middle" fill="#fff" font-size="26" font-weight="700">→</text>
+      </svg>
+      <div style="margin-top:10px; color:rgba(255,255,255,0.8); font-size:14px;">🩸 Dexcom · 2:34 PM</div>
+    </div>
+
+    <!-- Log Button -->
+    <div style="margin:0 16px 14px;">
+      <div style="background:#4A90D9; border-radius:14px; padding:14px; text-align:center; font-weight:700; font-size:15px;">
+        ➕ Log Glucose Reading
+      </div>
+    </div>
+
+    <!-- SVG Line Chart -->
+    <div class="glass">
+      <div class="section-title">Today's Readings</div>
+      <div class="chart-area">
+        <svg viewBox="0 0 320 160" preserveAspectRatio="none">
+          <!-- Threshold lines -->
+          <line x1="0" y1="30" x2="320" y2="30" stroke="#FFA500" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.5"/>
+          <line x1="0" y1="110" x2="320" y2="110" stroke="#FF6B6B" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.5"/>
+          <!-- In-range band -->
+          <rect x="0" y="30" width="320" height="80" fill="rgba(74,144,217,0.06)"/>
+          <!-- Gradient fill under line -->
+          <defs>
+            <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#4A90D9" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="#4A90D9" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="M0,90 C20,85 40,70 60,65 C80,60 100,50 120,55 C140,60 160,75 180,70 C200,65 220,45 240,50 C260,55 280,60 300,55 L320,52 L320,160 L0,160 Z"
+            fill="url(#chartFill)"/>
+          <!-- Line -->
+          <path d="M0,90 C20,85 40,70 60,65 C80,60 100,50 120,55 C140,60 160,75 180,70 C200,65 220,45 240,50 C260,55 280,60 300,55 L320,52"
+            fill="none" stroke="#4A90D9" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- Dots -->
+          <circle cx="0" cy="90" r="3" fill="#4A90D9"/>
+          <circle cx="60" cy="65" r="3" fill="#4A90D9"/>
+          <circle cx="120" cy="55" r="3" fill="#4A90D9"/>
+          <circle cx="180" cy="70" r="3" fill="#4A90D9"/>
+          <circle cx="240" cy="50" r="3" fill="#4A90D9"/>
+          <circle cx="320" cy="52" r="4.5" fill="#4A90D9" stroke="#fff" stroke-width="1.5"/>
+          <!-- Labels -->
+          <text x="4" y="26" fill="#FFA500" font-size="8" opacity="0.7">180</text>
+          <text x="4" y="118" fill="#FF6B6B" font-size="8" opacity="0.7">70</text>
+        </svg>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-top:6px; padding:0 4px;">
+        <span style="font-size:10px; color:#666;">8 AM</span>
+        <span style="font-size:10px; color:#666;">10 AM</span>
+        <span style="font-size:10px; color:#666;">12 PM</span>
+        <span style="font-size:10px; color:#666;">2 PM</span>
+      </div>
+    </div>
+
+    <!-- Stats Arcs -->
+    <div class="glass">
+      <div class="section-title">Today's Stats</div>
+      <div class="arcs-row">
+        <div class="arc-item">
+          <svg width="68" height="68" viewBox="0 0 68 68">
+            <circle cx="34" cy="34" r="28" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/>
+            <circle cx="34" cy="34" r="28" fill="none" stroke="#4A90D9" stroke-width="5"
+              stroke-dasharray="145 176" stroke-linecap="round" transform="rotate(-90 34 34)"/>
+            <text x="34" y="37" text-anchor="middle" fill="#4A90D9" font-size="14" font-weight="700">82%</text>
+          </svg>
+          <div class="arc-label">In Range</div>
+        </div>
+        <div class="arc-item">
+          <svg width="68" height="68" viewBox="0 0 68 68">
+            <circle cx="34" cy="34" r="28" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/>
+            <circle cx="34" cy="34" r="28" fill="none" stroke="#FFA500" stroke-width="5"
+              stroke-dasharray="74 176" stroke-linecap="round" transform="rotate(-90 34 34)"/>
+            <text x="34" y="37" text-anchor="middle" fill="#FFA500" font-size="14" font-weight="700">132</text>
+          </svg>
+          <div class="arc-label">Avg mg/dL</div>
+        </div>
+        <div class="arc-item">
+          <svg width="68" height="68" viewBox="0 0 68 68">
+            <circle cx="34" cy="34" r="28" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/>
+            <circle cx="34" cy="34" r="28" fill="none" stroke="#FFA500" stroke-width="5"
+              stroke-dasharray="53 176" stroke-linecap="round" transform="rotate(-90 34 34)"/>
+            <text x="34" y="37" text-anchor="middle" fill="#FFA500" font-size="14" font-weight="700">3</text>
+          </svg>
+          <div class="arc-label">Highs</div>
+        </div>
+        <div class="arc-item">
+          <svg width="68" height="68" viewBox="0 0 68 68">
+            <circle cx="34" cy="34" r="28" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/>
+            <circle cx="34" cy="34" r="28" fill="none" stroke="#FF6B6B" stroke-width="5"
+              stroke-dasharray="35 176" stroke-linecap="round" transform="rotate(-90 34 34)"/>
+            <text x="34" y="37" text-anchor="middle" fill="#FF6B6B" font-size="14" font-weight="700">2</text>
+          </svg>
+          <div class="arc-label">Lows</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="glass">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div class="section-title" style="margin:0;">📝 Notes</div>
+        <div style="font-size:12px; color:#4A90D9; border:1px solid rgba(74,144,217,0.3); padding:4px 10px; border-radius:8px; background:rgba(74,144,217,0.08);">+ Add Note</div>
+      </div>
+      <div class="note-card">
+        <div class="note-header">
+          <span class="note-author">📝 Kevin</span>
+          <span class="note-time">1:45 PM</span>
+        </div>
+        <div class="note-text">Had a snack before soccer practice</div>
+      </div>
+      <div class="note-card">
+        <div class="note-header">
+          <span class="note-author">📝 Mom</span>
+          <span class="note-time">12:30 PM</span>
+        </div>
+        <div class="note-text">Gave extra insulin for lunch carbs</div>
+      </div>
+    </div>
+
+    <!-- Connected Devices -->
+    <div class="glass" style="margin-bottom:80px;">
+      <div class="section-title">🔗 Connected Devices</div>
+      <div class="device-row">
+        <span class="device-emoji">📱</span>
+        <div style="flex:1;">
+          <div class="device-name">Manual Entry</div>
+          <div style="font-size:12px; color:#4A90D9;">Last log: 2:34 PM</div>
+        </div>
+        <div class="device-dot" style="background:#4A90D9;"></div>
+      </div>
+      <div class="divider"></div>
+      <div class="device-row">
+        <span class="device-emoji">🩸</span>
+        <div style="flex:1;">
+          <div class="device-name">Dexcom CGM · Live</div>
+          <div class="device-status">⚡ Last sync: 2:30 PM</div>
+        </div>
+        <div class="device-dot" style="background:#00D4AA;"></div>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <div style="flex:1; background:#00D4AA; border-radius:10px; padding:8px; text-align:center; font-weight:700; font-size:13px;">
+          ⚡ Sync Now
+        </div>
+        <div style="padding:8px 14px; border-radius:10px; background:rgba(255,107,107,0.1); border:1px solid rgba(255,107,107,0.25); font-size:12px; color:#FF6B6B; font-weight:600;">
+          Disconnect
+        </div>
+      </div>
+      <div style="text-align:center; margin-top:8px; font-size:11px; color:#00D4AA;">⚡ Real-time via Dexcom Share · syncs every 5 min</div>
+    </div>
+
+  </div>
+
+  <!-- Floating Tab Bar -->
+  <div class="tab-bar">
+    <div class="tab-item">
+      <div class="tab-icon">🏠</div>
+      <div class="tab-label">Home</div>
+    </div>
+    <div class="tab-item active">
+      <div class="tab-icon">💓</div>
+      <div class="tab-label">CGM</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">👥</div>
+      <div class="tab-label">Circle</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">💊</div>
+      <div class="tab-label">Supplies</div>
+    </div>
+    <div class="tab-item">
+      <div class="tab-icon">⚙️</div>
+      <div class="tab-label">Profile</div>
+    </div>
+  </div>
+</div>
+<div class="phone-label">CGM Screen</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- LEGEND -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="legend">
+  <h3>🎨 What Changed — Visual Overhaul Summary</h3>
+  <div class="legend-grid">
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#4A90D9;"></div>
+      <div><strong>Glassmorphism Cards</strong> — Frosted blur background with subtle gradient borders replacing flat #1C1C1E cards</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#6366F1;"></div>
+      <div><strong>Glucose Ring</strong> — Circular arc gauge around the glucose number showing position in the 40–300 range</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#00D4AA;"></div>
+      <div><strong>SVG Line Chart</strong> — Real bezier-curve chart with gradient fill, threshold bands, and time labels (replaces dot grid)</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#FFA500;"></div>
+      <div><strong>Stat Arcs</strong> — Mini circular progress rings for Time in Range, Avg Glucose, Lows, Highs</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#EC4899;"></div>
+      <div><strong>Floating Tab Bar</strong> — Rounded pill shape with blur backdrop, positioned above bottom edge with shadow</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#fff;"></div>
+      <div><strong>Darker Base</strong> — Background changed from #111 to #0A0A0F for more contrast with glass cards</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

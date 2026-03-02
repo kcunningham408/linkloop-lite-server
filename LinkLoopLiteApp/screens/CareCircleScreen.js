@@ -1,6 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Clipboard, Linking, Modal, Platform, RefreshControl, ScrollView, Share, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import GlassCard from '../components/GlassCard';
 import ScreenHeader from '../components/ScreenHeader';
 import { FadeIn, stagger } from '../config/animations';
 import { haptic } from '../config/haptics';
@@ -216,8 +217,9 @@ export default function CareCircleScreen() {
       <View style={styles.content}>
         <FadeIn delay={stagger(0, 100)}>
         {/* Notifications Banner */}
+        <GlassCard accent={activeAlertCount > 0 ? '#FF6B6B' : accent} glow={activeAlertCount > 0} style={{ marginBottom: 20 }} noPadding>
         <TouchableOpacity
-          style={[styles.alertBanner, activeAlertCount > 0 && styles.alertBannerActive]}
+          style={styles.alertBanner}
           onPress={() => navigation.navigate('Alerts')}
         >
           <Text style={styles.alertBannerIcon}>{activeAlertCount > 0 ? '🔔' : '✅'}</Text>
@@ -231,9 +233,11 @@ export default function CareCircleScreen() {
           </View>
           <Text style={styles.alertBannerArrow}>›</Text>
         </TouchableOpacity>
+        </GlassCard>
 
         {/* Add Member — compact inline button at the top */}
         {!isMember && (
+          <GlassCard accent={accent} style={{ marginBottom: 20 }} noPadding>
           <TouchableOpacity style={styles.addMemberRow} onPress={() => setShowInviteModal(true)}>
             <View style={[styles.addMemberIcon, { backgroundColor: accent }]}>
               <Text style={{ fontSize: TYPE.xl, color: '#fff' }}>+</Text>
@@ -241,6 +245,7 @@ export default function CareCircleScreen() {
             <Text style={[styles.addMemberText, { color: accent }]}>Add Circle Member</Text>
             <Text style={[styles.addMemberChevron, { color: accent }]}>›</Text>
           </TouchableOpacity>
+          </GlassCard>
         )}
 
         {/* Members Section — warrior only (members see the roster below) */}
@@ -258,7 +263,8 @@ export default function CareCircleScreen() {
             </View>
           ) : (
             activeMembers.map((member) => (
-              <View key={member._id} style={styles.memberCard}>
+              <GlassCard key={member._id} accent={accent} style={{ marginBottom: 12 }} noPadding>
+              <View style={styles.memberCard}>
                 <View style={styles.memberCardTop}>
                   <Text style={styles.memberEmoji}>{member.memberEmoji}</Text>
                   <View style={styles.memberInfo}>
@@ -308,6 +314,7 @@ export default function CareCircleScreen() {
                   </TouchableOpacity>
                 </View>
               </View>
+              </GlassCard>
             ))
           )}
 
@@ -315,7 +322,8 @@ export default function CareCircleScreen() {
             <>
               <Text style={[styles.sectionTitle, { marginTop: 10 }]}>Pending ({pendingMembers.length})</Text>
               {pendingMembers.map((member) => (
-                <View key={member._id} style={styles.pendingCard}>
+                <GlassCard key={member._id} accent="#FFA500" style={{ marginBottom: 12, opacity: 0.85 }} noPadding>
+                <View style={styles.pendingCard}>
                   <Text style={styles.memberEmoji}>{member.memberEmoji}</Text>
                   <View style={styles.memberInfo}>
                     <Text style={styles.memberName}>{member.memberName}</Text>
@@ -339,6 +347,7 @@ export default function CareCircleScreen() {
                     <Text style={{ fontSize: 13, color: '#FF6B6B' }}>Remove</Text>
                   </TouchableOpacity>
                 </View>
+                </GlassCard>
               ))}
             </>
           )}
@@ -347,7 +356,7 @@ export default function CareCircleScreen() {
 
         {/* Sharing Settings — warriors only, real values from DB */}
         {!isMember && (
-          <View style={styles.sharingSettings}>
+          <GlassCard accent={accent} style={{ marginBottom: 20 }}>
             <Text style={styles.sectionTitle}>Sharing Settings</Text>
 
             <View style={styles.settingItem}>
@@ -388,16 +397,18 @@ export default function CareCircleScreen() {
                 thumbColor="#fff"
               />
             </View>
-          </View>
+          </GlassCard>
         )}
 
         {/* Quick Actions — Join is only for members who are NOT yet linked */}
         {isMember && !user?.linkedOwnerId && (
           <View style={styles.quickActions}>
-            <TouchableOpacity style={[styles.actionButtonPrimary, { borderColor: accent }]} onPress={() => setShowJoinModal(true)}>
+            <GlassCard accent={accent} glow noPadding>
+            <TouchableOpacity style={[styles.actionButtonPrimary, { borderColor: 'transparent' }]} onPress={() => setShowJoinModal(true)}>
               <Text style={styles.actionButtonIcon}>🔗</Text>
               <Text style={[styles.actionButtonPrimaryText, { color: accent }]}>Join a Circle</Text>
             </TouchableOpacity>
+            </GlassCard>
           </View>
         )}
 
@@ -415,7 +426,8 @@ export default function CareCircleScreen() {
               </View>
             ) : (
               roster.map((member, idx) => (
-                <View key={idx} style={[styles.memberCard, member.isYou && { borderColor: accent }]}>
+                <GlassCard key={idx} accent={member.isYou ? accent : accent} glow={member.isYou} style={{ marginBottom: 12 }} noPadding>
+                <View style={styles.memberCard}>
                   <View style={styles.memberCardTop}>
                     <Text style={styles.memberEmoji}>{member.emoji || '👤'}</Text>
                     <View style={styles.memberInfo}>
@@ -428,17 +440,20 @@ export default function CareCircleScreen() {
                     </View>
                   </View>
                 </View>
+                </GlassCard>
               ))
             )}
           </View>
         )}
 
         {/* Info Card */}
-        <View style={styles.infoCard}>
-          <Text style={styles.infoCardIcon}>🛡️</Text>
-          <Text style={[styles.infoCardTitle, { color: accent }]}>Stay Connected</Text>
-          <Text style={styles.infoCardDescription}>Your Care Circle helps you share updates with the people who care about you most.</Text>
-        </View>
+        <GlassCard accent={accent} style={{ marginBottom: 20 }}>
+          <View style={styles.infoCardInner}>
+            <Text style={styles.infoCardIcon}>🛡️</Text>
+            <Text style={[styles.infoCardTitle, { color: accent }]}>Stay Connected</Text>
+            <Text style={styles.infoCardDescription}>Your Care Circle helps you share updates with the people who care about you most.</Text>
+          </View>
+        </GlassCard>
         </FadeIn>
       </View>
 
@@ -523,80 +538,96 @@ export default function CareCircleScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111111' },
+  container: { flex: 1, backgroundColor: '#0A0A0F' },
   content: { padding: 20 },
-  alertBanner: { backgroundColor: '#1C1C1E', borderRadius: 14, padding: 16, flexDirection: 'row', alignItems: 'center', marginBottom: 20, borderWidth: 1, borderColor: '#2C2C2E', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6 },
-  alertBannerActive: { borderColor: '#FF6B6B', borderWidth: 2, backgroundColor: '#2A1A1A' },
+
+  /* Alert Banner — now inside GlassCard so strip bg/border/shadow */
+  alertBanner: { padding: 16, flexDirection: 'row', alignItems: 'center' },
   alertBannerIcon: { fontSize: TYPE.h2, marginRight: 12 },
   alertBannerTitle: { fontSize: 15, fontWeight: TYPE.bold, color: '#fff' },
   alertBannerSub: { fontSize: TYPE.sm, color: '#888', marginTop: 2 },
   alertBannerArrow: { fontSize: TYPE.h2, color: '#555', fontWeight: '300' },
+
+  /* Members */
   membersSection: { marginBottom: 20 },
   sectionTitle: { fontSize: TYPE.xl, fontWeight: TYPE.bold, color: '#fff', marginBottom: 15 },
   emptyState: { alignItems: 'center', paddingVertical: 30 },
   emptyEmoji: { fontSize: 50, marginBottom: 10 },
   emptyTitle: { fontSize: TYPE.xl, fontWeight: TYPE.bold, color: '#fff', marginBottom: 6 },
   emptyText: { fontSize: TYPE.md, color: '#888', textAlign: 'center' },
-  memberCard: { backgroundColor: '#1C1C1E', borderRadius: 12, padding: 15, marginBottom: 12, borderWidth: 1, borderColor: '#2C2C2E', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6 },
+
+  /* Member Card — inner content; GlassCard handles outer chrome */
+  memberCard: { padding: 15 },
   memberCardTop: { flexDirection: 'row', alignItems: 'flex-start' },
   memberEmoji: { fontSize: 36, marginRight: 12, marginTop: 2 },
   memberInfo: { flex: 1 },
   memberName: { fontSize: 17, fontWeight: TYPE.semibold, color: '#fff', marginBottom: 3 },
   memberRelationship: { fontSize: 13, color: '#A0A0A0' },
-  memberCardActions: { flexDirection: 'row', alignItems: 'center', marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#2C2C2E', gap: 10 },
-  messageButton: { flex: 1, backgroundColor: '#1A2C4A', borderRadius: 8, paddingVertical: 8, alignItems: 'center', borderWidth: 1, borderColor: '#4A90D9' },
-  messageButtonText: { fontSize: 13, color: '#4A90D9', fontWeight: TYPE.semibold },
-  removeButton: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, backgroundColor: '#2A1A1A', borderWidth: 1, borderColor: '#3A2020' },
+  memberCardActions: { flexDirection: 'row', alignItems: 'center', marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)', gap: 10 },
+  messageButton: { flex: 1, backgroundColor: 'rgba(74,144,217,0.15)', borderRadius: 8, paddingVertical: 8, alignItems: 'center', borderWidth: 1 },
+  messageButtonText: { fontSize: 13, fontWeight: TYPE.semibold },
+  removeButton: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, backgroundColor: 'rgba(255,107,107,0.12)', borderWidth: 1, borderColor: 'rgba(255,107,107,0.25)' },
   removeButtonText: { fontSize: TYPE.sm, color: '#FF6B6B', fontWeight: TYPE.medium },
   memberToggles: { alignItems: 'flex-end', gap: 8 },
   toggleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   toggleLabel: { fontSize: 11, color: '#A0A0A0' },
-  pendingCard: { backgroundColor: '#1C1C1E', borderRadius: 12, padding: 15, marginBottom: 12, flexDirection: 'row', alignItems: 'flex-start', borderWidth: 1, borderStyle: 'dashed', borderColor: '#FFA500', opacity: 0.85, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6 },
-  copyCodeButton: { backgroundColor: '#2C2C2E', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, alignSelf: 'flex-start', borderWidth: 1, borderColor: '#4A90D9' },
-  copyCodeText: { fontSize: 13, color: '#4A90D9', fontWeight: TYPE.semibold, letterSpacing: 1 },
-  addMemberRow: { backgroundColor: '#1C1C1E', borderRadius: 12, padding: 14, flexDirection: 'row', alignItems: 'center', marginBottom: 20, borderWidth: 1, borderColor: '#2C2C2E', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6 },
-  addMemberIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#4A90D9', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  addMemberText: { flex: 1, fontSize: 15, fontWeight: TYPE.semibold, color: '#4A90D9' },
-  addMemberChevron: { fontSize: TYPE.h3, color: '#4A90D9', fontWeight: '300' },
-  sharingSettings: { backgroundColor: '#1C1C1E', borderRadius: 12, padding: 20, marginBottom: 20, borderWidth: 1, borderColor: '#2C2C2E', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6 },
-  settingItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#2C2C2E' },
+
+  /* Pending Card — inner content */
+  pendingCard: { padding: 15, flexDirection: 'row', alignItems: 'flex-start' },
+  copyCodeButton: { backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, alignSelf: 'flex-start', borderWidth: 1 },
+  copyCodeText: { fontSize: 13, fontWeight: TYPE.semibold, letterSpacing: 1 },
+
+  /* Add Member Row — inner content */
+  addMemberRow: { padding: 14, flexDirection: 'row', alignItems: 'center' },
+  addMemberIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  addMemberText: { flex: 1, fontSize: 15, fontWeight: TYPE.semibold },
+  addMemberChevron: { fontSize: TYPE.h3, fontWeight: '300' },
+
+  /* Setting Items — inside GlassCard now */
+  settingItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)' },
   settingInfo: { flex: 1, marginRight: 15 },
   settingTitle: { fontSize: 15, fontWeight: TYPE.semibold, color: '#fff', marginBottom: 4 },
   settingDescription: { fontSize: TYPE.sm, color: '#A0A0A0', lineHeight: 16 },
+
+  /* Quick Actions */
   quickActions: { marginBottom: 20 },
-  actionButtonPrimary: { backgroundColor: '#1C1C1E', borderRadius: 12, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#4A90D9', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6 },
+  actionButtonPrimary: { borderRadius: 12, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   actionButtonIcon: { fontSize: TYPE.xl, marginRight: 8 },
-  actionButtonPrimaryText: { color: '#4A90D9', fontSize: TYPE.lg, fontWeight: TYPE.bold },
-  infoCard: { backgroundColor: '#1A2235', borderRadius: 12, padding: 20, alignItems: 'center', borderWidth: 1, borderColor: '#2A3A50', marginBottom: 20 },
+  actionButtonPrimaryText: { fontSize: TYPE.lg, fontWeight: TYPE.bold },
+
+  /* Info Card — inner content */
+  infoCardInner: { alignItems: 'center' },
   infoCardIcon: { fontSize: 40, marginBottom: 10 },
-  infoCardTitle: { fontSize: TYPE.xl, fontWeight: TYPE.bold, color: '#4A90D9', marginBottom: 8 },
+  infoCardTitle: { fontSize: TYPE.xl, fontWeight: TYPE.bold, marginBottom: 8 },
   infoCardDescription: { fontSize: TYPE.md, color: '#A0A0A0', textAlign: 'center' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#1C1C1E', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 25, paddingBottom: 40 },
+
+  /* Modals — darker glass feel */
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: '#12121A', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 25, paddingBottom: 40, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', borderBottomWidth: 0 },
   modalTitle: { fontSize: TYPE.xxl, fontWeight: TYPE.bold, color: '#fff', marginBottom: 20, textAlign: 'center' },
   inputLabel: { fontSize: TYPE.md, fontWeight: TYPE.semibold, color: '#E0E0E0', marginBottom: 8, marginTop: 10 },
-  input: { backgroundColor: '#2C2C2E', borderRadius: 10, padding: 14, fontSize: TYPE.lg, borderWidth: 1, borderColor: '#3A3A3C', color: '#fff' },
+  input: { backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: 14, fontSize: TYPE.lg, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', color: '#fff' },
   codeInput: { fontSize: TYPE.h3, textAlign: 'center', letterSpacing: 4, fontWeight: TYPE.bold },
   relGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  relChip: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20, backgroundColor: '#2C2C2E', flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#3A3A3C' },
-  relChipActive: { backgroundColor: '#4A90D9', borderColor: '#4A90D9' },
+  relChip: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.06)', flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  relChipActive: {},
   relEmoji: { fontSize: TYPE.lg, marginRight: 6 },
   relLabel: { fontSize: 13, color: '#A0A0A0' },
   relLabelActive: { color: '#fff', fontWeight: TYPE.semibold },
   modalButtons: { flexDirection: 'row', marginTop: 25, gap: 12 },
-  cancelButton: { flex: 1, paddingVertical: 14, borderRadius: 10, backgroundColor: '#2C2C2E', alignItems: 'center' },
+  cancelButton: { flex: 1, paddingVertical: 14, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center' },
   cancelButtonText: { fontSize: TYPE.lg, color: '#A0A0A0', fontWeight: TYPE.semibold },
-  saveButton: { flex: 1, paddingVertical: 14, borderRadius: 10, backgroundColor: '#4A90D9', alignItems: 'center' },
+  saveButton: { flex: 1, paddingVertical: 14, borderRadius: 10, alignItems: 'center' },
   saveButtonText: { fontSize: TYPE.lg, color: '#fff', fontWeight: TYPE.bold },
   codeLabel: { fontSize: TYPE.md, color: '#A0A0A0', textAlign: 'center', marginBottom: 10 },
-  codeBox: { backgroundColor: '#2C2C2E', borderRadius: 12, padding: 20, alignItems: 'center', marginBottom: 20, borderWidth: 2, borderColor: '#4A90D9' },
-  codeText: { fontSize: TYPE.h1, fontWeight: TYPE.bold, color: '#4A90D9', letterSpacing: 6 },
-  textInviteButton: { backgroundColor: '#4A90D9', borderRadius: 12, padding: 16, flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  codeBox: { backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 12, padding: 20, alignItems: 'center', marginBottom: 20, borderWidth: 2 },
+  codeText: { fontSize: TYPE.h1, fontWeight: TYPE.bold, letterSpacing: 6 },
+  textInviteButton: { borderRadius: 12, padding: 16, flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   textInviteIcon: { fontSize: TYPE.h2, marginRight: 12 },
   textInviteTitle: { fontSize: TYPE.lg, fontWeight: TYPE.bold, color: '#fff' },
   textInviteSubtitle: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
   textInviteArrow: { fontSize: TYPE.h2, color: 'rgba(255,255,255,0.6)', fontWeight: '300' },
-  shareButton: { backgroundColor: '#2C2C2E', borderRadius: 10, padding: 14, alignItems: 'center', marginBottom: 12 },
+  shareButton: { backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: 14, alignItems: 'center', marginBottom: 12 },
   shareButtonText: { color: '#A0A0A0', fontSize: TYPE.lg, fontWeight: TYPE.semibold },
   doneButton: { paddingVertical: 14, alignItems: 'center' },
   doneButtonText: { fontSize: TYPE.lg, color: '#A0A0A0' },
