@@ -298,7 +298,24 @@ export default function AlertsScreen({ navigation }) {
             </View>
           )}
 
-          {alert.status === 'active' && (
+          {alert.status === 'active' && isOwner && (
+            <View style={styles.alertSecondaryRow}>
+              <TouchableOpacity
+                style={styles.snoozeButton}
+                onPress={() => handleSnooze(alert)}
+              >
+                <Text style={styles.snoozeButtonText}>😴 Snooze</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.resolveButton}
+                onPress={() => handleResolve(alert)}
+              >
+                <Text style={styles.resolveButtonText}>☑️ Resolve</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {alert.status === 'active' && !isOwner && (
             <TouchableOpacity
               style={styles.snoozeButton}
               onPress={() => handleSnooze(alert)}
@@ -307,18 +324,9 @@ export default function AlertsScreen({ navigation }) {
             </TouchableOpacity>
           )}
 
-          {alert.status === 'active' && isOwner && (
-            <TouchableOpacity
-              style={styles.resolveButton}
-              onPress={() => handleResolve(alert)}
-            >
-              <Text style={styles.resolveButtonText}>☑️ Resolve</Text>
-            </TouchableOpacity>
-          )}
-
           {alert.status === 'acknowledged' && isOwner && (
             <TouchableOpacity
-              style={styles.resolveButton}
+              style={[styles.resolveButton, { flex: 1 }]}
               onPress={() => handleResolve(alert)}
             >
               <Text style={styles.resolveButtonText}>☑️ Mark Resolved</Text>
@@ -578,7 +586,7 @@ export default function AlertsScreen({ navigation }) {
                 {/* Action buttons in detail */}
                 {detailAlert.status === 'active' && !hasUserAcknowledged(detailAlert) && (
                   <TouchableOpacity
-                    style={[styles.ackButton, { backgroundColor: accent }]}
+                    style={[styles.ackButton, { backgroundColor: accent, marginTop: 16 }]}
                     onPress={() => {
                       setShowDetailModal(false);
                       openAcknowledge(detailAlert);
@@ -725,13 +733,13 @@ const styles = StyleSheet.create({
   noAckText: { fontSize: 13, color: '#FF9800', fontStyle: 'italic', paddingVertical: 4 },
 
   // Action buttons
-  alertActions: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
+  alertActions: { gap: 10 },
+  alertSecondaryRow: { flexDirection: 'row', gap: 10 },
   ackButton: {
     backgroundColor: '#4A90D9',
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 20,
-    flex: 1,
     alignItems: 'center',
   },
   ackButtonText: { color: '#fff', fontSize: 15, fontWeight: TYPE.bold },
@@ -740,21 +748,22 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 20,
-    flex: 1,
     alignItems: 'center',
   },
   ackedBadgeText: { color: '#4CAF50', fontSize: TYPE.md, fontWeight: TYPE.semibold },
   resolveButton: {
+    flex: 1,
     backgroundColor: '#1C1C1E',
     borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderWidth: 2,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderWidth: 1.5,
     borderColor: '#4CAF50',
     alignItems: 'center',
   },
-  resolveButtonText: { color: '#4CAF50', fontSize: TYPE.md, fontWeight: TYPE.bold },
+  resolveButtonText: { color: '#4CAF50', fontSize: 13, fontWeight: TYPE.bold },
   snoozeButton: {
+    flex: 1,
     backgroundColor: '#1C1C1E',
     borderRadius: 12,
     paddingVertical: 10,
