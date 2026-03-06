@@ -8,7 +8,7 @@ import { haptic } from '../config/haptics';
 import TYPE from '../config/typography';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { circleAPI, glucoseAPI, usersAPI } from '../services/api';
+import { authAPI, circleAPI, glucoseAPI, usersAPI } from '../services/api';
 
 const APP_VERSION = Constants.expoConfig?.version || Constants.manifest?.version || '1.1.0';
 
@@ -38,6 +38,21 @@ export default function ProfileScreen() {
   const [alertsPaused, setAlertsPaused] = useState(false);
   const [pauseLoading, setPauseLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [watchCode, setWatchCode] = useState(null);
+  const [watchCodeLoading, setWatchCodeLoading] = useState(false);
+
+  const handleWatchPair = async () => {
+    try {
+      setWatchCodeLoading(true);
+      const data = await authAPI.generateWatchPairCode();
+      setWatchCode(data.code);
+      haptic.success();
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Could not generate code');
+    } finally {
+      setWatchCodeLoading(false);
+    }
+  };
 
   useEffect(() => {
     // Load push preferences from user object
@@ -652,6 +667,38 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </GlassCard>
 
+        {/* Apple Watch Pairing */}
+        <GlassCard style={styles.sectionCard}>
+          <Text style={[styles.sectionTitle, { color: accent }]}>⌚ Apple Watch</Text>
+          <Text style={[styles.settingDescription, { marginBottom: 12 }]}>
+            Generate a pairing code to connect your Apple Watch to LinkLoop.
+          </Text>
+
+          {watchCode ? (
+            <View style={{ alignItems: 'center', marginVertical: 8 }}>
+              <Text style={{ fontSize: 36, fontWeight: '800', letterSpacing: 8, color: accent, fontFamily: 'Courier' }}>
+                {watchCode}
+              </Text>
+              <Text style={[styles.settingDescription, { marginTop: 8 }]}>
+                Enter this code on your Watch.{'\n'}Expires in 10 minutes.
+              </Text>
+              <TouchableOpacity onPress={handleWatchPair} style={{ marginTop: 12 }}>
+                <Text style={{ color: accent, fontWeight: '600' }}>Generate New Code</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={[styles.pairButton, { backgroundColor: accent }]}
+              onPress={handleWatchPair}
+              disabled={watchCodeLoading}
+            >
+              <Text style={styles.pairButtonText}>
+                {watchCodeLoading ? 'Generating...' : 'Generate Pairing Code'}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </GlassCard>
+
         {/* Sign Out */}
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutIcon}>🚪</Text>
@@ -763,6 +810,8 @@ const styles = StyleSheet.create({
   logoutButton: { backgroundColor: 'rgba(255,60,60,0.08)', borderRadius: 12, padding: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 12, borderWidth: 1, borderColor: 'rgba(255,60,60,0.15)' },
   logoutIcon: { fontSize: 20, marginRight: 10 },
   logoutText: { fontSize: TYPE.lg, fontWeight: TYPE.bold, color: '#FF6B6B' },
+  pairButton: { borderRadius: 12, padding: 14, alignItems: 'center', justifyContent: 'center' },
+  pairButtonText: { fontSize: TYPE.md, fontWeight: TYPE.bold, color: '#fff' },
   deleteAccountButton: { backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
   deleteAccountIcon: { fontSize: TYPE.xl, marginRight: 10 },
   deleteAccountText: { fontSize: TYPE.md, fontWeight: TYPE.semibold, color: '#888' },

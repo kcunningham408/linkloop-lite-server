@@ -51,8 +51,9 @@ class WatchSessionManager: NSObject, WCSessionDelegate {
 
         // Read thresholds from cached user profile
         if let cachedUserJSON = readAsyncStorageValue(forKey: "cachedUser"),
-           let data = cachedUserJSON.data(using: .utf8),
-           let user = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            let data = cachedUserJSON.data(using: .utf8),
+            let user = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        {
             if let low = user["lowThreshold"] as? Int {
                 context["lowThreshold"] = low
             }
@@ -100,13 +101,17 @@ class WatchSessionManager: NSObject, WCSessionDelegate {
     /// RNCAsyncStorage stores small key-value pairs as [[key, value], ...] in manifest.json.
     /// Larger values are stored in individual files named by their key.
     private func readAsyncStorageValue(forKey key: String) -> String? {
-        let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
-        let storagePath = (documentsPath as NSString).appendingPathComponent("RCTAsyncLocalStorage_V1")
+        let documentsPath = NSSearchPathForDirectoriesInDomains(
+            .documentDirectory, .userDomainMask, true
+        ).first!
+        let storagePath = (documentsPath as NSString).appendingPathComponent(
+            "RCTAsyncLocalStorage_V1")
         let manifestPath = (storagePath as NSString).appendingPathComponent("manifest.json")
 
         guard FileManager.default.fileExists(atPath: manifestPath),
-              let data = FileManager.default.contents(atPath: manifestPath),
-              let manifest = try? JSONSerialization.jsonObject(with: data) as? [[Any]] else {
+            let data = FileManager.default.contents(atPath: manifestPath),
+            let manifest = try? JSONSerialization.jsonObject(with: data) as? [[Any]]
+        else {
             print("[WatchSession] Could not read manifest.json")
             return nil
         }
@@ -131,8 +136,13 @@ class WatchSessionManager: NSObject, WCSessionDelegate {
 
     // MARK: - WCSessionDelegate (required on iOS)
 
-    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
-        print("[WatchSession] Activation complete: \(activationState.rawValue), error: \(String(describing: error))")
+    func session(
+        _ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState,
+        error: Error?
+    ) {
+        print(
+            "[WatchSession] Activation complete: \(activationState.rawValue), error: \(String(describing: error))"
+        )
         if activationState == .activated {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                 self.pushContextToWatch()
@@ -152,7 +162,10 @@ class WatchSessionManager: NSObject, WCSessionDelegate {
     // MARK: - Watch → iPhone Messages
 
     /// Handle sendMessage from Watch (real-time, requires iPhone app in foreground/background)
-    func session(_ session: WCSession, didReceiveMessage message: [String: Any], replyHandler: @escaping ([String: Any]) -> Void) {
+    func session(
+        _ session: WCSession, didReceiveMessage message: [String: Any],
+        replyHandler: @escaping ([String: Any]) -> Void
+    ) {
         print("[WatchSession] Received message: \(message.keys.joined(separator: ", "))")
 
         if let request = message["request"] as? String, request == "authToken" {
@@ -176,8 +189,12 @@ class WatchSessionManager: NSObject, WCSessionDelegate {
     }
 
     /// Handle applicationContext updates from Watch (unlikely but handle gracefully)
-    func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
-        print("[WatchSession] Received application context from Watch: \(applicationContext.keys.joined(separator: ", "))")
+    func session(
+        _ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]
+    ) {
+        print(
+            "[WatchSession] Received application context from Watch: \(applicationContext.keys.joined(separator: ", "))"
+        )
     }
 
     /// Handle userInfo transfers from Watch
@@ -188,7 +205,9 @@ class WatchSessionManager: NSObject, WCSessionDelegate {
     // MARK: - Watch App State Changes
 
     func sessionWatchStateDidChange(_ session: WCSession) {
-        print("[WatchSession] Watch state changed - installed: \(session.isWatchAppInstalled), paired: \(session.isPaired)")
+        print(
+            "[WatchSession] Watch state changed - installed: \(session.isWatchAppInstalled), paired: \(session.isPaired)"
+        )
         if session.isWatchAppInstalled {
             pushContextToWatch()
         }

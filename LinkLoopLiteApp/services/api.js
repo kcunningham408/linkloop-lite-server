@@ -151,6 +151,11 @@ export const authAPI = {
     }
     return data;
   },
+
+  // Generate a 6-digit code for Watch pairing
+  generateWatchPairCode: async () => {
+    return apiRequest('/auth/watch-pair', { method: 'POST' });
+  },
 };
 
 // ============ USER API ============

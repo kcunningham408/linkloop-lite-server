@@ -73,27 +73,16 @@ struct GlucoseView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .font(.system(size: 10))
-                        Text("\(glucoseManager.activeAlertCount) alert\(glucoseManager.activeAlertCount == 1 ? "" : "s")")
-                            .font(.system(size: 11))
+                        Text(
+                            "\(glucoseManager.activeAlertCount) alert\(glucoseManager.activeAlertCount == 1 ? "" : "s")"
+                        )
+                        .font(.system(size: 11))
                     }
                     .foregroundColor(.orange)
                 }
             } else {
-                // Not connected
-                VStack(spacing: 8) {
-                    Image(systemName: "iphone.and.arrow.forward")
-                        .font(.system(size: 36))
-                        .foregroundColor(.blue.opacity(0.6))
-
-                    Text("Open LinkLoop\non iPhone")
-                        .font(.system(size: 13))
-                        .foregroundColor(.gray)
-                        .multilineTextAlignment(.center)
-
-                    Text("to sync your account")
-                        .font(.system(size: 11))
-                        .foregroundColor(.gray.opacity(0.7))
-                }
+                // Not connected — show pairing screen
+                PairCodeView()
             }
         }
         .padding(.horizontal, 4)

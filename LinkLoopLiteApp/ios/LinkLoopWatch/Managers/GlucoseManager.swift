@@ -1,5 +1,6 @@
-import Foundation
 import Combine
+import Foundation
+import WidgetKit
 
 @MainActor
 class GlucoseManager: ObservableObject {
@@ -60,6 +61,22 @@ class GlucoseManager: ObservableObject {
         self.linkedOwnerId = linkedOwnerId
     }
 
+    /// Persist latest glucose data to UserDefaults so the complication TimelineProvider can read it,
+    /// then tell WidgetKit to refresh all complication timelines.
+    private func persistForComplication() {
+        let defaults = UserDefaults.standard
+        if let glucose = currentGlucose {
+            defaults.set(glucose, forKey: "complication_glucose")
+        }
+        defaults.set(currentTrend, forKey: "complication_trend")
+        defaults.set(lowThreshold, forKey: "complication_low")
+        defaults.set(highThreshold, forKey: "complication_high")
+        if let date = lastReadingDate {
+            defaults.set(date.timeIntervalSince1970, forKey: "complication_timestamp")
+        }
+        WidgetCenter.shared.reloadAllTimelines()
+    }
+
     // MARK: - Auto Refresh
     func startAutoRefresh() {
         stopAutoRefresh()
@@ -109,6 +126,7 @@ class GlucoseManager: ObservableObject {
             currentGlucose = reading.value
             currentTrend = reading.trend ?? "stable"
             lastReadingDate = reading.date
+            persistForComplication()
         } catch {
             print("Failed to decode latest: \(error)")
         }
@@ -156,7 +174,8 @@ class GlucoseManager: ObservableObject {
 
         do {
             if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let count = json["activeCount"] as? Int {
+                let count = json["activeCount"] as? Int
+            {
                 activeAlertCount = count
             }
         } catch {
@@ -187,6 +206,8 @@ class GlucoseManager: ObservableObject {
             if let readings = response.readings {
                 recentReadings = readings
             }
+
+            persistForComplication()
         } catch {
             print("Failed to decode member-view: \(error)")
         }
@@ -229,7 +250,8 @@ class GlucoseManager: ObservableObject {
     // MARK: - Network
     private func apiRequest(_ endpoint: String) async -> Data? {
         guard let token = authToken,
-              let url = URL(string: "\(baseURL)\(endpoint)") else { return nil }
+            let url = URL(string: "\(baseURL)\(endpoint)")
+        else { return nil }
 
         var request = URLRequest(url: url)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")

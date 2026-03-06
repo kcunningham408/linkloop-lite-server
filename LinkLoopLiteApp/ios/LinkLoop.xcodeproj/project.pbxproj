@@ -20,6 +20,11 @@
 		AA000001WATCH000000000037 /* ConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001WATCH000000000017 /* ConnectivityManager.swift */; };
 		AA000001WATCH000000000038 /* GlucoseModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001WATCH000000000018 /* GlucoseModels.swift */; };
 		AA000001WATCH000000000039 /* Color+LinkLoop.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001WATCH000000000019 /* Color+LinkLoop.swift */; };
+		AA000001WATCH00000000003A /* PairCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001WATCH00000000001A /* PairCodeView.swift */; };
+		AA000001WATCH00000000003B /* HealthKitRelayManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001WATCH00000000001B /* HealthKitRelayManager.swift */; };
+		AA000001WATCH00000000003C /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA000001WATCH00000000001C /* HealthKit.framework */; };
+		AA000001WATCH00000000003D /* GlucoseComplication.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001WATCH00000000001D /* GlucoseComplication.swift */; };
+		AA000001WATCH00000000003E /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA000001WATCH00000000001E /* WidgetKit.framework */; };
 		AA000001WATCH000000000040 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA000001WATCH000000000020 /* Assets.xcassets */; };
 		AA000001WATCH000000000041 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = AA000001WATCH000000000023 /* PrivacyInfo.xcprivacy */; };
 		AA000001WATCH000000000063 /* LinkLoopWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = AA000001WATCH000000000001 /* LinkLoopWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -72,6 +77,11 @@
 		AA000001WATCH000000000017 /* ConnectivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectivityManager.swift; sourceTree = "<group>"; };
 		AA000001WATCH000000000018 /* GlucoseModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoseModels.swift; sourceTree = "<group>"; };
 		AA000001WATCH000000000019 /* Color+LinkLoop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+LinkLoop.swift"; sourceTree = "<group>"; };
+		AA000001WATCH00000000001A /* PairCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairCodeView.swift; sourceTree = "<group>"; };
+		AA000001WATCH00000000001B /* HealthKitRelayManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitRelayManager.swift; sourceTree = "<group>"; };
+		AA000001WATCH00000000001C /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
+		AA000001WATCH00000000001D /* GlucoseComplication.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoseComplication.swift; sourceTree = "<group>"; };
+		AA000001WATCH00000000001E /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		AA000001WATCH000000000020 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA000001WATCH000000000021 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA000001WATCH000000000022 /* LinkLoopWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LinkLoopWatch.entitlements; sourceTree = "<group>"; };
@@ -102,6 +112,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA000001WATCH00000000003C /* HealthKit.framework in Frameworks */,
+				AA000001WATCH00000000003E /* WidgetKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -129,6 +141,8 @@
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				1D858C8913A35F39C559DB06 /* libPods-LinkLoop.a */,
 				F6D8E094FF0E0BBA4B94EE7D /* WatchConnectivity.framework */,
+				AA000001WATCH00000000001C /* HealthKit.framework */,
+				AA000001WATCH00000000001E /* WidgetKit.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -184,6 +198,7 @@
 				AA000001WATCH000000000052 /* Managers */,
 				AA000001WATCH000000000053 /* Models */,
 				AA000001WATCH000000000054 /* Extensions */,
+				AA000001WATCH000000000055 /* Complications */,
 				AA000001WATCH000000000020 /* Assets.xcassets */,
 				AA000001WATCH000000000021 /* Info.plist */,
 				AA000001WATCH000000000022 /* LinkLoopWatch.entitlements */,
@@ -199,6 +214,7 @@
 				AA000001WATCH000000000013 /* GraphView.swift */,
 				AA000001WATCH000000000014 /* AlertsView.swift */,
 				AA000001WATCH000000000015 /* SettingsView.swift */,
+				AA000001WATCH00000000001A /* PairCodeView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -208,6 +224,7 @@
 			children = (
 				AA000001WATCH000000000016 /* GlucoseManager.swift */,
 				AA000001WATCH000000000017 /* ConnectivityManager.swift */,
+				AA000001WATCH00000000001B /* HealthKitRelayManager.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -226,6 +243,14 @@
 				AA000001WATCH000000000019 /* Color+LinkLoop.swift */,
 			);
 			path = Extensions;
+			sourceTree = "<group>";
+		};
+		AA000001WATCH000000000055 /* Complications */ = {
+			isa = PBXGroup;
+			children = (
+				AA000001WATCH00000000001D /* GlucoseComplication.swift */,
+			);
+			path = Complications;
 			sourceTree = "<group>";
 		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
@@ -505,6 +530,9 @@
 				AA000001WATCH000000000037 /* ConnectivityManager.swift in Sources */,
 				AA000001WATCH000000000038 /* GlucoseModels.swift in Sources */,
 				AA000001WATCH000000000039 /* Color+LinkLoop.swift in Sources */,
+				AA000001WATCH00000000003A /* PairCodeView.swift in Sources */,
+				AA000001WATCH00000000003B /* HealthKitRelayManager.swift in Sources */,
+				AA000001WATCH00000000003D /* GlucoseComplication.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -11,6 +11,18 @@ router.post('/', auth, async (req, res) => {
   try {
     const { value, trend, trendArrow, source, notes } = req.body;
 
+    // Dedup check: skip if same user posted same value within last 2 minutes
+    const twoMinAgo = new Date(Date.now() - 2 * 60 * 1000);
+    const existing = await GlucoseReading.findOne({
+      userId: req.user.userId,
+      value,
+      timestamp: { $gte: twoMinAgo }
+    });
+
+    if (existing) {
+      return res.status(409).json({ message: 'Duplicate reading skipped', reading: existing });
+    }
+
     const reading = new GlucoseReading({
       userId: req.user.userId,
       value,

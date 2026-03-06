@@ -28,7 +28,7 @@ const glucoseReadingSchema = new mongoose.Schema({
   },
   source: {
     type: String,
-    enum: ['manual', 'dexcom', 'libre', 'medtronic', 'nightscout', 'other'],
+    enum: ['manual', 'dexcom', 'libre', 'medtronic', 'nightscout', 'healthkit', 'other'],
     default: 'manual'
   },
   notes: {

@@ -6,7 +6,7 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     var onTokenReceived: ((String) -> Void)?
     var onThresholdsReceived: ((Int, Int) -> Void)?
     var onRoleReceived: ((String, String?) -> Void)?  // (role, linkedOwnerId?)
-    
+
     private var retryCount = 0
     private let maxRetries = 5
 
@@ -33,7 +33,7 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
 
     func requestToken() {
         guard WCSession.default.activationState == .activated else { return }
-        
+
         // First: check if there's already a received applicationContext with a token
         let context = WCSession.default.receivedApplicationContext
         if let token = context["authToken"] as? String, !token.isEmpty {
@@ -44,27 +44,30 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
             applyRole(from: context)
             return
         }
-        
+
         // Second: try real-time message if phone is reachable
         guard WCSession.default.isReachable else {
             // Phone not reachable — schedule a retry
             scheduleRetry()
             return
         }
-        
-        WCSession.default.sendMessage(["request": "authToken"], replyHandler: { reply in
-            if let token = reply["authToken"] as? String {
-                DispatchQueue.main.async {
-                    self.retryCount = 0
-                    self.onTokenReceived?(token)
+
+        WCSession.default.sendMessage(
+            ["request": "authToken"],
+            replyHandler: { reply in
+                if let token = reply["authToken"] as? String {
+                    DispatchQueue.main.async {
+                        self.retryCount = 0
+                        self.onTokenReceived?(token)
+                    }
                 }
-            }
-        }, errorHandler: { error in
-            print("[Watch] Token request failed: \(error.localizedDescription)")
-            self.scheduleRetry()
-        })
+            },
+            errorHandler: { error in
+                print("[Watch] Token request failed: \(error.localizedDescription)")
+                self.scheduleRetry()
+            })
     }
-    
+
     private func scheduleRetry() {
         guard retryCount < maxRetries else { return }
         retryCount += 1
@@ -73,10 +76,11 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
             self?.requestToken()
         }
     }
-    
+
     private func applyThresholds(from context: [String: Any]) {
         if let low = context["lowThreshold"] as? Int,
-           let high = context["highThreshold"] as? Int {
+            let high = context["highThreshold"] as? Int
+        {
             UserDefaults.standard.set(low, forKey: "linkloop_low_threshold")
             UserDefaults.standard.set(high, forKey: "linkloop_high_threshold")
             DispatchQueue.main.async {
@@ -98,7 +102,10 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     }
 
     // MARK: - WCSessionDelegate
-    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
+    func session(
+        _ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState,
+        error: Error?
+    ) {
         DispatchQueue.main.async {
             self.isPhoneReachable = session.isReachable
         }
@@ -118,7 +125,9 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
         }
     }
 
-    func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
+    func session(
+        _ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]
+    ) {
         if let token = applicationContext["authToken"] as? String {
             DispatchQueue.main.async {
                 self.retryCount = 0
