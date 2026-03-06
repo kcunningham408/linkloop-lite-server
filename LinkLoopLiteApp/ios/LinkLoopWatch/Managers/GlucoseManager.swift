@@ -61,8 +61,8 @@ class GlucoseManager: ObservableObject {
         self.linkedOwnerId = linkedOwnerId
     }
 
-    /// Persist latest glucose data to UserDefaults so the complication TimelineProvider can read it,
-    /// then tell WidgetKit to refresh all complication timelines.
+    /// Persist latest glucose data to shared UserDefaults so the Widget Extension
+    /// (complication) TimelineProvider can read it, then tell WidgetKit to refresh.
     private func persistForComplication() {
         let defaults = UserDefaults.standard
         if let glucose = currentGlucose {

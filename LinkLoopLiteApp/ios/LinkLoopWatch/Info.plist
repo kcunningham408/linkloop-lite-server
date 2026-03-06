@@ -36,5 +36,7 @@
 	<string>com.vibecmd.linkloop</string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>LinkLoop reads blood glucose data from Apple Health to share with your Care Circle when your iPhone is not nearby.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>LinkLoop does not write health data, but includes HealthKit for future glucose relay features.</string>
 </dict>
 </plist>
