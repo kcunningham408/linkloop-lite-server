@@ -2,9 +2,9 @@ import SwiftUI
 import WidgetKit
 
 // MARK: - Shared Defaults
-// On watchOS, the Watch app and its embedded extensions share the same
-// UserDefaults.standard container, so no App Groups needed.
-let sharedDefaults = UserDefaults.standard
+// App Group suite shared between the Watch app and this Widget Extension.
+// The Watch app writes glucose data here; the widget reads it for complications.
+let sharedDefaults = UserDefaults(suiteName: "group.com.vibecmd.linkloop.watch") ?? .standard
 
 // MARK: - Timeline Entry
 

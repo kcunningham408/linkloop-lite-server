@@ -61,10 +61,10 @@ class GlucoseManager: ObservableObject {
         self.linkedOwnerId = linkedOwnerId
     }
 
-    /// Persist latest glucose data to shared UserDefaults so the Widget Extension
+    /// Persist latest glucose data to App Group UserDefaults so the Widget Extension
     /// (complication) TimelineProvider can read it, then tell WidgetKit to refresh.
     private func persistForComplication() {
-        let defaults = UserDefaults.standard
+        guard let defaults = UserDefaults(suiteName: "group.com.vibecmd.linkloop.watch") else { return }
         if let glucose = currentGlucose {
             defaults.set(glucose, forKey: "complication_glucose")
         }
