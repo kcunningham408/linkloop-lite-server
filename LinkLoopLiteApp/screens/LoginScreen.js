@@ -37,7 +37,7 @@ export default function LoginScreen() {
   const resetCodeRef = useRef(null);
   const newPasswordRef = useRef(null);
 
-  const { login, register } = useAuth();
+  const { login, register, checkAuth } = useAuth();
   const { palette } = useTheme();
   const accent = palette.warrior;
 
@@ -105,6 +105,9 @@ export default function LoginScreen() {
       try {
         await register(identifier, password, name, 'member');
         await circleAPI.joinCircle(inviteCode.trim().toUpperCase());
+        // Refresh user profile so activeViewingId + role update immediately
+        // Without this, the app shows warrior tabs instead of member tabs
+        await checkAuth();
         haptic.success();
       } catch (err) {
         haptic.error();

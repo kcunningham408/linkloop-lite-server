@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import {
     ActivityIndicator,
     FlatList,
+    Platform,
     RefreshControl,
     StyleSheet,
     Text,
@@ -226,7 +227,10 @@ export default function MessagesScreen({ navigation }) {
               </Text>
             </View>
           }
-          contentContainerStyle={conversations.length === 0 ? styles.emptyContainer : undefined}
+          contentContainerStyle={[
+            { paddingBottom: Platform.OS === 'android' ? 40 : 20 },
+            conversations.length === 0 && styles.emptyContainer,
+          ]}
         />
       )}
     </View>
