@@ -8,12 +8,59 @@ const Groq = require('groq-sdk');
 const router = express.Router();
 
 // ============================================================
+// TIMEZONE HELPERS — Convert UTC dates to user's local time
+// ============================================================
+function getLocalHour(timestamp, tz) {
+  try {
+    const s = new Date(timestamp).toLocaleString('en-US', { timeZone: tz, hour: 'numeric', hour12: false });
+    return parseInt(s, 10);
+  } catch {
+    return new Date(timestamp).getHours();
+  }
+}
+
+function formatLocalTime(timestamp, tz) {
+  try {
+    return new Date(timestamp).toLocaleTimeString('en-US', { timeZone: tz, hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return new Date(timestamp).toLocaleTimeString();
+  }
+}
+
+function formatLocalDateTime(timestamp, tz) {
+  try {
+    return new Date(timestamp).toLocaleString('en-US', { timeZone: tz });
+  } catch {
+    return new Date(timestamp).toLocaleString();
+  }
+}
+
+function getLocalDateString(timestamp, tz) {
+  try {
+    const d = new Date(timestamp);
+    const parts = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+    return parts; // YYYY-MM-DD format
+  } catch {
+    return new Date(timestamp).toISOString().split('T')[0];
+  }
+}
+
+function getLocalDayOfWeek(timestamp, tz) {
+  try {
+    return new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'long' }).format(new Date(timestamp));
+  } catch {
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return dayNames[new Date(timestamp).getDay()];
+  }
+}
+
+// ============================================================
 // INSIGHTS ENGINE — Pattern-based glucose observations
 // Personal wellness journal features. Not medical advice.
 // Observes patterns in user-entered data only.
 // ============================================================
 
-function analyzeGlucosePatterns(readings, settings) {
+function analyzeGlucosePatterns(readings, settings, tz = 'America/New_York') {
   const low = settings?.lowThreshold || 70;
   const high = settings?.highThreshold || 180;
   const insights = [];
@@ -106,7 +153,7 @@ function analyzeGlucosePatterns(readings, settings) {
   // ---- INSIGHT: Low patterns ----
   if (lowCount > 0) {
     const lowReadings = readings.filter(r => r.value < low);
-    const lowHours = lowReadings.map(r => new Date(r.timestamp).getHours());
+    const lowHours = lowReadings.map(r => getLocalHour(r.timestamp, tz));
     const mostCommonLowHour = findMostCommonHour(lowHours);
     const timeLabel = formatHour(mostCommonLowHour);
 
@@ -124,7 +171,7 @@ function analyzeGlucosePatterns(readings, settings) {
   // ---- INSIGHT: High patterns ----
   if (highCount > 0) {
     const highReadings = readings.filter(r => r.value > high);
-    const highHours = highReadings.map(r => new Date(r.timestamp).getHours());
+    const highHours = highReadings.map(r => getLocalHour(r.timestamp, tz));
     const mostCommonHighHour = findMostCommonHour(highHours);
     const timeLabel = formatHour(mostCommonHighHour);
 
@@ -140,10 +187,10 @@ function analyzeGlucosePatterns(readings, settings) {
   }
 
   // ---- INSIGHT: Time-of-day patterns ----
-  const morningReadings = readings.filter(r => { const h = new Date(r.timestamp).getHours(); return h >= 5 && h < 12; });
-  const afternoonReadings = readings.filter(r => { const h = new Date(r.timestamp).getHours(); return h >= 12 && h < 18; });
-  const eveningReadings = readings.filter(r => { const h = new Date(r.timestamp).getHours(); return h >= 18 && h < 23; });
-  const nightReadings = readings.filter(r => { const h = new Date(r.timestamp).getHours(); return h >= 23 || h < 5; });
+  const morningReadings = readings.filter(r => { const h = getLocalHour(r.timestamp, tz); return h >= 5 && h < 12; });
+  const afternoonReadings = readings.filter(r => { const h = getLocalHour(r.timestamp, tz); return h >= 12 && h < 18; });
+  const eveningReadings = readings.filter(r => { const h = getLocalHour(r.timestamp, tz); return h >= 18 && h < 23; });
+  const nightReadings = readings.filter(r => { const h = getLocalHour(r.timestamp, tz); return h >= 23 || h < 5; });
 
   const periods = [
     { name: 'Morning', emoji: '🌅', readings: morningReadings },
@@ -267,10 +314,10 @@ router.get('/', auth, async (req, res) => {
         userId: req.user.userId,
         timestamp: { $gte: since }
       }).sort({ timestamp: -1 }),
-      User.findById(req.user.userId).select('settings')
+      User.findById(req.user.userId).select('settings timezone')
     ]);
 
-    const insights = analyzeGlucosePatterns(readings, user?.settings);
+    const insights = analyzeGlucosePatterns(readings, user?.settings, user?.timezone || 'America/New_York');
 
     // Also return quick summary stats
     const values = readings.map(r => r.value);
@@ -293,7 +340,7 @@ router.get('/', auth, async (req, res) => {
 // ============================================================
 // SHARED: Build glucose stats object for AI endpoints
 // ============================================================
-function buildGlucoseStats(readings, user, hours) {
+function buildGlucoseStats(readings, user, hours, tz = 'America/New_York') {
   const values = readings.map(r => r.value);
   const low = user?.settings?.lowThreshold || 70;
   const high = user?.settings?.highThreshold || 180;
@@ -316,7 +363,7 @@ function buildGlucoseStats(readings, user, hours) {
   ];
   const periodStats = periodDefs.map((p, i) => {
     const pReadings = readings.filter(r => {
-      const h = new Date(r.timestamp).getHours();
+      const h = getLocalHour(r.timestamp, tz);
       return i === 3 ? (h >= 23 || h < 5) : (h >= p.start && h < p.end);
     });
     if (pReadings.length === 0) return null;
@@ -330,18 +377,13 @@ function buildGlucoseStats(readings, user, hours) {
   const recentValues = readings.slice(0, Math.min(5, readings.length)).map(r => r.value);
   const recentTrends = readings.slice(0, Math.min(5, readings.length)).map(r => r.trend).filter(Boolean);
 
-  // Day-over-day comparison
+  // Day-over-day comparison (using user's local timezone)
   const now = new Date();
-  const todayReadings = readings.filter(r => {
-    const d = new Date(r.timestamp);
-    return d.toDateString() === now.toDateString();
-  });
-  const yesterdayStart = new Date(now); yesterdayStart.setDate(now.getDate() - 1); yesterdayStart.setHours(0,0,0,0);
-  const yesterdayEnd = new Date(now); yesterdayEnd.setDate(now.getDate() - 1); yesterdayEnd.setHours(23,59,59,999);
-  const yesterdayReadings = readings.filter(r => {
-    const d = new Date(r.timestamp);
-    return d >= yesterdayStart && d <= yesterdayEnd;
-  });
+  const todayStr = getLocalDateString(now, tz);
+  const todayReadings = readings.filter(r => getLocalDateString(r.timestamp, tz) === todayStr);
+  const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
+  const yesterdayStr = getLocalDateString(yesterday, tz);
+  const yesterdayReadings = readings.filter(r => getLocalDateString(r.timestamp, tz) === yesterdayStr);
 
   const todayAvg = todayReadings.length > 0 ? Math.round(todayReadings.map(r => r.value).reduce((a,b) => a+b, 0) / todayReadings.length) : null;
   const yesterdayAvg = yesterdayReadings.length > 0 ? Math.round(yesterdayReadings.map(r => r.value).reduce((a,b) => a+b, 0) / yesterdayReadings.length) : null;
@@ -405,7 +447,7 @@ router.get('/ai-summary', auth, async (req, res) => {
 
     const [readings, user, moodEntries] = await Promise.all([
       GlucoseReading.find({ userId: req.user.userId, timestamp: { $gte: since } }).sort({ timestamp: -1 }),
-      User.findById(req.user.userId).select('settings name'),
+      User.findById(req.user.userId).select('settings name timezone'),
       MoodEntry.find({ userId: req.user.userId, timestamp: { $gte: since } }).sort({ timestamp: -1 }).limit(20),
     ]);
 
@@ -413,7 +455,8 @@ router.get('/ai-summary', auth, async (req, res) => {
       return res.json({ aiSummary: 'Log some glucose readings and I\'ll give you a personalized analysis! 📊' });
     }
 
-    const stats = buildGlucoseStats(readings, user, parseInt(hours));
+    const tz = user?.timezone || 'America/New_York';
+    const stats = buildGlucoseStats(readings, user, parseInt(hours), tz);
 
     // Build mood context for AI
     let moodContext = '';
@@ -421,7 +464,7 @@ router.get('/ai-summary', auth, async (req, res) => {
       const moodLabels = { great: 'Great', good: 'Good', okay: 'Okay', tired: 'Tired', stressed: 'Stressed', sick: 'Sick', low_energy: 'Low Energy', anxious: 'Anxious' };
       const moodSummary = moodEntries.map(m => {
         const label = moodLabels[m.label] || m.label;
-        const time = new Date(m.timestamp).toLocaleString();
+        const time = formatLocalDateTime(m.timestamp, tz);
         const noteStr = m.note ? ` — "${m.note}"` : '';
         return `${m.emoji} ${label} (${time})${noteStr}`;
       }).join('\n  ');
@@ -463,7 +506,7 @@ DATA (last ${stats.hours}h):
 - Recent trends: ${stats.recentTrends.join(', ') || 'none logged'}
 - Today avg: ${stats.todayAvg ?? 'N/A'} (${stats.todayCount} readings) | Yesterday avg: ${stats.yesterdayAvg ?? 'N/A'} (${stats.yesterdayCount} readings)
 - Current in-range streak: ${stats.inRangeStreak} consecutive readings
-- Rapid changes (>50 mg/dL jump): ${stats.spikes.length > 0 ? stats.spikes.map(s => `${s.direction} ${s.from}→${s.to} at ${new Date(s.time).toLocaleTimeString()}`).join(', ') : 'none'}${moodContext}`;
+- Rapid changes (>50 mg/dL jump): ${stats.spikes.length > 0 ? stats.spikes.map(s => `${s.direction} ${s.from}→${s.to} at ${formatLocalTime(s.time, tz)}`).join(', ') : 'none'}${moodContext}`;
 
     const chatCompletion = await groq.chat.completions.create({
       messages: [
@@ -505,7 +548,7 @@ router.get('/ai-trends', auth, async (req, res) => {
 
     const [readings, user, moodEntries] = await Promise.all([
       GlucoseReading.find({ userId: req.user.userId, timestamp: { $gte: since } }).sort({ timestamp: -1 }),
-      User.findById(req.user.userId).select('settings name'),
+      User.findById(req.user.userId).select('settings name timezone'),
       MoodEntry.find({ userId: req.user.userId, timestamp: { $gte: since } }).sort({ timestamp: -1 }).limit(20),
     ]);
 
@@ -519,7 +562,8 @@ router.get('/ai-trends', auth, async (req, res) => {
       });
     }
 
-    const stats = buildGlucoseStats(readings, user, parseInt(hours));
+    const tz = user?.timezone || 'America/New_York';
+    const stats = buildGlucoseStats(readings, user, parseInt(hours), tz);
 
     // Build mood context for trends
     let moodContext = '';
@@ -527,7 +571,7 @@ router.get('/ai-trends', auth, async (req, res) => {
       const moodLabels = { great: 'Great', good: 'Good', okay: 'Okay', tired: 'Tired', stressed: 'Stressed', sick: 'Sick', low_energy: 'Low Energy', anxious: 'Anxious' };
       const moodSummary = moodEntries.slice(0, 10).map(m => {
         const label = moodLabels[m.label] || m.label;
-        const time = new Date(m.timestamp).toLocaleString();
+        const time = formatLocalDateTime(m.timestamp, tz);
         const noteStr = m.note ? ` — "${m.note}"` : '';
         return `${m.emoji} ${label} (${time})${noteStr}`;
       }).join('\n  ');
@@ -636,8 +680,9 @@ router.get('/daily-motivation', auth, async (req, res) => {
     }
 
     // Get user name for personalization
-    const user = await User.findById(req.user.userId).select('name');
+    const user = await User.findById(req.user.userId).select('name timezone');
     const name = user?.name || 'friend';
+    const tz = user?.timezone || 'America/New_York';
 
     // Get a quick read on their recent data for context (optional personalization)
     const since24h = new Date();
@@ -658,7 +703,7 @@ router.get('/daily-motivation', auth, async (req, res) => {
     if (recentMoods.length > 0) {
       const moodLabels = { great: 'Great', good: 'Good', okay: 'Okay', tired: 'Tired', stressed: 'Stressed', sick: 'Sick', low_energy: 'Low Energy', anxious: 'Anxious' };
       const lastMood = recentMoods[0];
-      dataContext += `\nTheir most recent mood was "${moodLabels[lastMood.label] || lastMood.label}" ${lastMood.emoji}${lastMood.note ? ` with the note: "${lastMood.note}"` : ''}. Tailor the motivation to acknowledge how they're feeling — if they're tired or stressed, be extra compassionate.`;
+      dataContext += `\nTheir most recent mood was "${moodLabels[lastMood.label] || lastMood.label}" ${lastMood.emoji} at ${formatLocalTime(lastMood.timestamp, tz)}${lastMood.note ? ` with the note: "${lastMood.note}"` : ''}. Tailor the motivation to acknowledge how they're feeling — if they're tired or stressed, be extra compassionate.`;
     }
 
     const prompt = `Generate a short, inspiring daily quote for ${name}, a person living with Type 1 Diabetes.
@@ -759,15 +804,16 @@ router.post('/ask', auth, async (req, res) => {
     const [readings72h, readings24h, user, moodEntries] = await Promise.all([
       GlucoseReading.find({ userId, timestamp: { $gte: since72h } }).sort({ timestamp: -1 }),
       GlucoseReading.find({ userId, timestamp: { $gte: since24h } }).sort({ timestamp: -1 }),
-      User.findById(userId).select('settings name'),
+      User.findById(userId).select('settings name timezone'),
       MoodEntry.find({ userId, timestamp: { $gte: since72h } }).sort({ timestamp: -1 }).limit(20),
     ]);
 
+    const tz = user?.timezone || 'America/New_York';
     let stats72h = null;
     let stats24h = null;
     try {
-      stats72h = readings72h.length > 0 ? buildGlucoseStats(readings72h, user, 72) : null;
-      stats24h = readings24h.length > 0 ? buildGlucoseStats(readings24h, user, 24) : null;
+      stats72h = readings72h.length > 0 ? buildGlucoseStats(readings72h, user, 72, tz) : null;
+      stats24h = readings24h.length > 0 ? buildGlucoseStats(readings24h, user, 24, tz) : null;
     } catch (statsErr) {
       console.error('Ask Loop stats build error:', statsErr.message);
       // Continue with null stats — AI can still respond
@@ -783,7 +829,7 @@ ${stats24h ? `- ${stats24h.readingCount} readings | Avg: ${stats24h.avg} mg/dL |
 - TIR (${stats24h.low}-${stats24h.high}): ${stats24h.tir}% | Lows: ${stats24h.lowCount} | Highs: ${stats24h.highCount}
 - StdDev: ${stats24h.stdDev} | CV: ${stats24h.cv}%
 - In-range streak: ${stats24h.inRangeStreak} consecutive readings
-- Spikes: ${stats24h.spikes.length > 0 ? stats24h.spikes.map(s => `${s.direction} ${s.from}→${s.to} at ${new Date(s.time).toLocaleTimeString()}`).join(', ') : 'none'}
+- Spikes: ${stats24h.spikes.length > 0 ? stats24h.spikes.map(s => `${s.direction} ${s.from}→${s.to} at ${formatLocalTime(s.time, tz)}`).join(', ') : 'none'}
 - Periods: ${stats24h.periodStats.map(p => p.text).join(' | ')}` : 'No readings in last 24h'}
 
 LAST 72 HOURS:
@@ -796,7 +842,7 @@ LAST 72 HOURS:
       // Add recent readings timeline
       if (readings24h.length > 0) {
         const timeline = readings24h.slice(0, 15).map(r => {
-          const t = new Date(r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const t = formatLocalTime(r.timestamp, tz);
           const trend = r.trend ? ` (${r.trend})` : '';
           return `${t}: ${r.value} mg/dL${trend}`;
         }).join('\n  ');
@@ -808,7 +854,7 @@ LAST 72 HOURS:
     if (moodEntries.length > 0) {
       const moodLabels = { great: 'Great', good: 'Good', okay: 'Okay', tired: 'Tired', stressed: 'Stressed', sick: 'Sick', low_energy: 'Low Energy', anxious: 'Anxious' };
       const moodTimeline = moodEntries.slice(0, 10).map(m => {
-        const t = new Date(m.timestamp).toLocaleString();
+        const t = formatLocalDateTime(m.timestamp, tz);
         const noteStr = m.note ? ` — "${m.note}"` : '';
         return `${m.emoji} ${moodLabels[m.label] || m.label} (${t})${noteStr}`;
       }).join('\n  ');
@@ -911,7 +957,8 @@ router.delete('/ask/history', auth, (req, res) => {
 router.get('/weekly-report', auth, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const user = await User.findById(userId).select('settings name');
+    const user = await User.findById(userId).select('settings name timezone');
+    const tz = user?.timezone || 'America/New_York';
     const low = user?.settings?.lowThreshold || 70;
     const high = user?.settings?.highThreshold || 180;
 
@@ -940,7 +987,7 @@ router.get('/weekly-report', auth, async (req, res) => {
 
     // Daily breakdown
     let dailyBreakdown = [];
-    try { dailyBreakdown = buildDailyBreakdown(thisWeekReadings, low, high); } catch (e) {
+    try { dailyBreakdown = buildDailyBreakdown(thisWeekReadings, low, high, tz); } catch (e) {
       console.error('Daily breakdown error:', e.message);
     }
 
@@ -1045,13 +1092,11 @@ function buildWeekStats(readings, low, high) {
   return { readingCount: readings.length, avg, min: Math.min(...values), max: Math.max(...values), tir, lowCount, highCount, stdDev, cv, gmi };
 }
 
-function buildDailyBreakdown(readings, low, high) {
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+function buildDailyBreakdown(readings, low, high, tz = 'America/New_York') {
   const dayMap = {};
   readings.forEach(r => {
-    const d = new Date(r.timestamp);
-    const key = d.toISOString().split('T')[0];
-    if (!dayMap[key]) dayMap[key] = { values: [], date: d };
+    const key = getLocalDateString(r.timestamp, tz);
+    if (!dayMap[key]) dayMap[key] = { values: [], timestamp: r.timestamp };
     dayMap[key].values.push(r.value);
   });
 
@@ -1064,7 +1109,7 @@ function buildDailyBreakdown(readings, low, high) {
       const tir = Math.round((inRange / vals.length) * 100);
       return {
         date: dateStr,
-        dayName: dayNames[data.date.getDay()],
+        dayName: getLocalDayOfWeek(data.timestamp, tz),
         readingCount: vals.length,
         avg,
         tir,
@@ -1098,7 +1143,8 @@ function buildMoodSummary(moodEntries) {
 router.get('/glucose-story', auth, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const user = await User.findById(userId).select('settings name');
+    const user = await User.findById(userId).select('settings name timezone');
+    const tz = user?.timezone || 'America/New_York';
     const low = user?.settings?.lowThreshold || 70;
     const high = user?.settings?.highThreshold || 180;
 
@@ -1128,11 +1174,11 @@ router.get('/glucose-story', auth, async (req, res) => {
 
     const blocks = blockDefs.map(def => {
       const blockReadings = readings.filter(r => {
-        const h = new Date(r.timestamp).getHours();
+        const h = getLocalHour(r.timestamp, tz);
         return h >= def.startHour && h < def.endHour;
       });
       const blockMoods = moodEntries.filter(m => {
-        const h = new Date(m.timestamp).getHours();
+        const h = getLocalHour(m.timestamp, tz);
         return h >= def.startHour && h < def.endHour;
       });
 
