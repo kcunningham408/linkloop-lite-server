@@ -251,7 +251,7 @@ export default function LoginScreen() {
             ref={nameRef}
             style={styles.input}
             placeholder="Your name"
-            placeholderTextColor="#555"
+            placeholderTextColor="#888"
             value={name}
             onChangeText={setName}
             autoCapitalize="words"
@@ -287,7 +287,7 @@ export default function LoginScreen() {
             ref={identifierRef}
             style={styles.input}
             placeholder={loginMethod === 'email' ? 'your@email.com' : '(555) 123-4567'}
-            placeholderTextColor="#555"
+            placeholderTextColor="#888"
             value={identifier}
             onChangeText={setIdentifier}
             keyboardType={loginMethod === 'email' ? 'email-address' : 'phone-pad'}
@@ -308,7 +308,7 @@ export default function LoginScreen() {
               ref={passwordRef}
               style={styles.passwordInput}
               placeholder="Password"
-              placeholderTextColor="#555"
+              placeholderTextColor="#888"
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
@@ -332,7 +332,7 @@ export default function LoginScreen() {
               ref={resetCodeRef}
               style={[styles.input, { textAlign: 'center', letterSpacing: 6, fontSize: TYPE.xxl, fontWeight: TYPE.extrabold }]}
               placeholder="000000"
-              placeholderTextColor="#555"
+              placeholderTextColor="#888"
               value={resetCode}
               onChangeText={setResetCode}
               keyboardType="number-pad"
@@ -349,7 +349,7 @@ export default function LoginScreen() {
                 ref={newPasswordRef}
                 style={styles.passwordInput}
                 placeholder="New password"
-                placeholderTextColor="#555"
+                placeholderTextColor="#888"
                 value={newPassword}
                 onChangeText={setNewPassword}
                 secureTextEntry={!showPassword}
@@ -478,6 +478,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     paddingTop: 30,
     alignItems: 'center',
+    backgroundColor: 'rgba(10,10,20,0.45)',
+    borderRadius: 28,
+    marginHorizontal: 10,
+    paddingBottom: 36,
   },
   logoRow: {
     flexDirection: 'row',
@@ -489,7 +493,7 @@ const styles = StyleSheet.create({
   logoText: { fontSize: 46, fontWeight: TYPE.extrabold, color: '#fff', letterSpacing: -1 },
   tagline: {
     fontSize: 17,
-    color: '#A0A0A0',
+    color: '#F0F0F0',
     textAlign: 'center',
     lineHeight: 26,
     marginBottom: 48,
@@ -507,7 +511,7 @@ const styles = StyleSheet.create({
 
   btnJoinCircle: {
     width: '100%',
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(52,199,89,0.12)',
     borderRadius: 14,
     paddingVertical: 17,
     alignItems: 'center',
@@ -518,27 +522,27 @@ const styles = StyleSheet.create({
   btnJoinCircleText: { color: '#34C759', fontSize: 17, fontWeight: TYPE.bold },
 
   signUpLink: { paddingVertical: 8 },
-  signUpLinkText: { color: '#666', fontSize: TYPE.md, textAlign: 'center' },
+  signUpLinkText: { color: 'rgba(255,255,255,0.70)', fontSize: TYPE.md, textAlign: 'center' },
   signUpLinkBold: { color: '#4A90D9', fontWeight: TYPE.bold },
 
   // ── Form card ──
   formCard: {
     marginHorizontal: 20,
     marginTop: 16,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: 'rgba(16,16,28,0.92)',
     borderRadius: 20,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#2C2C2E',
+    borderColor: 'rgba(255,255,255,0.12)',
   },
   backBtn: { marginBottom: 20 },
   backBtnText: { color: '#4A90D9', fontSize: 15, fontWeight: TYPE.semibold },
   formTitle: { fontSize: TYPE.h3, fontWeight: TYPE.extrabold, color: '#fff', marginBottom: 6 },
-  formSubtitle: { fontSize: TYPE.md, color: '#777', marginBottom: 28, lineHeight: 20 },
+  formSubtitle: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.55)', marginBottom: 28, lineHeight: 20 },
 
   methodToggle: {
     flexDirection: 'row',
-    backgroundColor: '#2C2C2E',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: 10,
     padding: 3,
     marginBottom: 20,
@@ -547,18 +551,18 @@ const styles = StyleSheet.create({
     flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center',
   },
   methodTabActive: { backgroundColor: '#4A90D9' },
-  methodTabText: { fontSize: TYPE.md, color: '#777', fontWeight: TYPE.semibold },
+  methodTabText: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.55)', fontWeight: TYPE.semibold },
   methodTabActiveText: { color: '#fff' },
 
   inputGroup: { marginBottom: 18 },
-  inputLabel: { fontSize: 13, fontWeight: TYPE.semibold, color: '#999', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
+  inputLabel: { fontSize: 13, fontWeight: TYPE.semibold, color: 'rgba(255,255,255,0.55)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
   input: {
-    backgroundColor: '#111',
+    backgroundColor: 'rgba(255,255,255,0.07)',
     borderRadius: 12,
     padding: 15,
     fontSize: TYPE.lg,
     borderWidth: 1,
-    borderColor: '#2C2C2E',
+    borderColor: 'rgba(255,255,255,0.14)',
     color: '#fff',
   },
   inviteInput: {
@@ -573,15 +577,15 @@ const styles = StyleSheet.create({
   passwordRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#111',
+    backgroundColor: 'rgba(255,255,255,0.07)',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#2C2C2E',
+    borderColor: 'rgba(255,255,255,0.14)',
   },
   passwordInput: { flex: 1, padding: 15, fontSize: TYPE.lg, color: '#fff' },
   eyeBtn: { paddingHorizontal: 16, paddingVertical: 12 },
-  eyeBtnText: { color: '#555', fontSize: 13, fontWeight: TYPE.semibold },
-  hint: { fontSize: TYPE.sm, color: '#555', marginTop: 6 },
+  eyeBtnText: { color: 'rgba(255,255,255,0.40)', fontSize: 13, fontWeight: TYPE.semibold },
+  hint: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.40)', marginTop: 6 },
 
   submitBtn: {
     backgroundColor: '#4A90D9',
@@ -595,6 +599,6 @@ const styles = StyleSheet.create({
   submitBtnText: { color: '#fff', fontSize: 17, fontWeight: TYPE.bold },
 
   crossLink: { paddingTop: 20, alignItems: 'center' },
-  crossLinkText: { color: '#555', fontSize: TYPE.md },
+  crossLinkText: { color: 'rgba(255,255,255,0.40)', fontSize: TYPE.md },
   crossLinkBold: { color: '#4A90D9', fontWeight: TYPE.bold },
 });

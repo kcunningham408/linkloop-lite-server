@@ -124,7 +124,7 @@ export default function LinkLoopBanner({
           y={BANNER_H / 2 - 55}
           width={10}
           height={13}
-          fill="#0A0A0F"
+          fill="#141422"
           opacity={0.92}
         />
         <Rect
@@ -132,7 +132,7 @@ export default function LinkLoopBanner({
           y={BANNER_H / 2 + 2}
           width={10}
           height={13}
-          fill="#0A0A0F"
+          fill="#141422"
           opacity={0.92}
         />
         {/* Re-draw overlap segments for interlocking */}
@@ -189,7 +189,7 @@ export default function LinkLoopBanner({
               fill={
                 i === 0 ? secondary
                   : i === 1 ? secondary
-                    : i === 2 ? '#FFA500'
+                    : i === 2 ? '#FF7B93'
                       : 'rgba(255,255,255,0.2)'
               }
             />
@@ -228,10 +228,10 @@ export default function LinkLoopBanner({
       {/* ── Trend arrow ── */}
       <Text style={[styles.trendArrow, { color: `rgba(${sRgb},0.25)` }]}>↗</Text>
 
-      {/* ── Radial fade overlay — blends bottom into #0A0A0F ── */}
+      {/* ── Radial fade overlay — blends bottom into background ── */}
       <LinearGradient
         pointerEvents="none"
-        colors={['transparent', 'rgba(10,10,15,0.55)', '#0A0A0F']}
+        colors={['transparent', 'rgba(20,20,34,0.55)', 'rgba(20,20,34,0.85)']}
         locations={[0, 0.6, 1]}
         style={styles.fadeOverlay}
       />
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
   },
   base: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#0A0A0F',
+    backgroundColor: 'transparent',
   },
 
   /* Gradient blobs */
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
     height: 200,
     bottom: 30,
     left: '25%',
-    opacity: 0.7,
+    opacity: 0.9,
     transform: [{ scaleX: 1.4 }],
   },
 

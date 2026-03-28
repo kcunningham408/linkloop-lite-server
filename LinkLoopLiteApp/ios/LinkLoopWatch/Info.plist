@@ -23,9 +23,15 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>$(MARKETING_VERSION)</string>
+	<string>1.7.0</string>
 	<key>CFBundleVersion</key>
-	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<string>70</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>LinkLoop reads blood glucose data from Apple Health to share with your Care Circle when your iPhone is not nearby.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>LinkLoop does not write health data, but includes HealthKit for future glucose relay features.</string>
+	<key>RCTNewArchEnabled</key>
+	<true/>
 	<key>UIDeviceFamily</key>
 	<array>
 		<integer>4</integer>
@@ -34,9 +40,5 @@
 	<true/>
 	<key>WKCompanionAppBundleIdentifier</key>
 	<string>com.vibecmd.linkloop</string>
-	<key>NSHealthShareUsageDescription</key>
-	<string>LinkLoop reads blood glucose data from Apple Health to share with your Care Circle when your iPhone is not nearby.</string>
-	<key>NSHealthUpdateUsageDescription</key>
-	<string>LinkLoop does not write health data, but includes HealthKit for future glucose relay features.</string>
 </dict>
 </plist>

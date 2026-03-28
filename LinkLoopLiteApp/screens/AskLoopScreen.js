@@ -92,7 +92,7 @@ export default function AskLoopScreen() {
     const isUser = item.role === 'user';
     return (
       <View style={[styles.msgRow, isUser ? styles.msgRowUser : styles.msgRowAssistant]}>
-        {!isUser && <Text style={styles.loopAvatar}>∞</Text>}
+        {!isUser && <Text style={[styles.loopAvatar, { color: accent }]}>∞</Text>}
         <View style={[
           styles.msgBubble,
           isUser
@@ -184,7 +184,7 @@ export default function AskLoopScreen() {
         ListFooterComponent={
           loading ? (
             <View style={[styles.msgRow, styles.msgRowAssistant]}>
-              <Text style={styles.loopAvatar}>∞</Text>
+              <Text style={[styles.loopAvatar, { color: accent }]}>∞</Text>
               <View style={[styles.msgBubble, styles.msgBubbleAssistant]}>
                 <View style={styles.typingRow}>
                   <ActivityIndicator size="small" color={accent} />
@@ -207,7 +207,7 @@ export default function AskLoopScreen() {
           <TextInput
             style={styles.textInput}
             placeholder="Ask about your glucose data..."
-            placeholderTextColor="#666"
+            placeholderTextColor="#888"
             value={input}
             onChangeText={setInput}
             onSubmitEditing={() => sendMessage()}
@@ -230,28 +230,28 @@ export default function AskLoopScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0A0A0F' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   lockedContainer: { flex: 1, justifyContent: 'center', padding: 24 },
   lockedEmoji: { fontSize: 48, textAlign: 'center', marginBottom: 12 },
   lockedTitle: { fontSize: TYPE.xxl, fontWeight: TYPE.bold, color: '#fff', textAlign: 'center', marginBottom: 8 },
-  lockedText: { fontSize: TYPE.md, color: '#999', textAlign: 'center', lineHeight: 22 },
+  lockedText: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.55)', textAlign: 'center', lineHeight: 22 },
   messagesList: { padding: 16, paddingBottom: 20 },
 
   // Welcome
   welcomeSection: { marginBottom: 20 },
   welcomeEmoji: { fontSize: 48, textAlign: 'center', marginBottom: 12, color: '#fff' },
   welcomeTitle: { fontSize: TYPE.xxl, fontWeight: TYPE.bold, color: '#fff', textAlign: 'center', marginBottom: 8 },
-  welcomeText: { fontSize: TYPE.md, color: '#999', textAlign: 'center', lineHeight: 22 },
+  welcomeText: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.55)', textAlign: 'center', lineHeight: 22 },
 
   suggestionsTitle: { fontSize: TYPE.lg, fontWeight: TYPE.bold, color: '#fff', marginTop: 24, marginBottom: 12 },
   suggestionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   suggestionChip: {
-    backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12,
-    flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(10,18,40,0.80)', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12,
+    flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
     width: '48%',
   },
   suggestionEmoji: { fontSize: TYPE.xl, marginRight: 8 },
-  suggestionText: { fontSize: TYPE.sm, color: '#C0C0C0', flex: 1, lineHeight: 18 },
+  suggestionText: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.55)', flex: 1, lineHeight: 18 },
 
   // Messages
   msgRow: { flexDirection: 'row', marginBottom: 14, alignItems: 'flex-end' },
@@ -260,28 +260,28 @@ const styles = StyleSheet.create({
   loopAvatar: { fontSize: 20, color: '#4A90D9', fontWeight: '900', marginRight: 8, marginBottom: 4 },
   msgBubble: { maxWidth: '80%', borderRadius: 18, padding: 14 },
   msgBubbleUser: { backgroundColor: '#4A90D9', borderBottomRightRadius: 4 },
-  msgBubbleAssistant: { backgroundColor: 'rgba(255,255,255,0.08)', borderBottomLeftRadius: 4, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
-  msgText: { fontSize: TYPE.md, color: '#D0D0D0', lineHeight: 22 },
+  msgBubbleAssistant: { backgroundColor: 'rgba(10,18,40,0.80)', borderBottomLeftRadius: 4, borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)' },
+  msgText: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.70)', lineHeight: 22 },
   msgTextUser: { color: '#fff' },
 
   contextRow: { marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)' },
-  contextText: { fontSize: TYPE.xs, color: '#888' },
+  contextText: { fontSize: TYPE.xs, color: 'rgba(255,255,255,0.45)' },
 
   // Typing indicator
   typingRow: { flexDirection: 'row', alignItems: 'center' },
-  typingText: { fontSize: TYPE.sm, color: '#888', marginLeft: 8 },
+  typingText: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.45)', marginLeft: 8 },
 
   // Input bar
   inputBar: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 12, paddingVertical: 10, paddingBottom: Platform.OS === 'ios' ? 30 : 10,
-    backgroundColor: 'rgba(10,10,15,0.95)', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(10,18,40,0.88)', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.10)',
   },
   clearBtn: { padding: 8, marginRight: 6 },
   clearBtnText: { fontSize: TYPE.xl },
   inputWrap: {
     flex: 1, flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 24, borderWidth: 1,
+    backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)',
     paddingLeft: 16, paddingRight: 4, paddingVertical: Platform.OS === 'ios' ? 4 : 0,
   },
   textInput: { flex: 1, color: '#fff', fontSize: TYPE.md, paddingVertical: 10 },

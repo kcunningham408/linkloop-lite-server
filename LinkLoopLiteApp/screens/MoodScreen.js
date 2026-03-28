@@ -186,7 +186,7 @@ export default function MoodScreen() {
             <TextInput
               style={styles.noteInput}
               placeholder="What's going on? Pizza night, stressful day, feeling off..."
-              placeholderTextColor="#666"
+              placeholderTextColor="#888"
               value={note}
               onChangeText={setNote}
               multiline
@@ -338,7 +338,7 @@ export default function MoodScreen() {
             <TextInput
               style={styles.editNoteInput}
               placeholder="Optional note..."
-              placeholderTextColor="#666"
+              placeholderTextColor="#888"
               value={editNote}
               onChangeText={setEditNote}
               multiline
@@ -361,7 +361,7 @@ export default function MoodScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111111' },
+  container: { flex: 1, backgroundColor: 'transparent' },
 
   content: { padding: 20 },
 
@@ -374,32 +374,27 @@ const styles = StyleSheet.create({
   },
   moodOption: {
     width: '23%',
-    backgroundColor: '#1C1C1E',
+    backgroundColor: 'rgba(10,18,40,0.94)',
     borderRadius: 12,
     padding: 12,
     alignItems: 'center',
     marginBottom: 10,
     borderWidth: 2,
-    borderColor: '#2C2C2E',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   moodOptionSelected: {
     borderColor: '#4A90D9',
-    backgroundColor: '#1A2235',
+    backgroundColor: 'rgba(74,144,217,0.15)',
   },
   moodEmoji: { fontSize: TYPE.h1, marginBottom: 4 },
-  moodLabel: { fontSize: 11, color: '#A0A0A0', textAlign: 'center' },
+  moodLabel: { fontSize: 11, color: 'rgba(255,255,255,0.55)', textAlign: 'center' },
   moodLabelSelected: { color: '#4A90D9', fontWeight: TYPE.bold },
 
   // Note Input
   noteContainer: { marginBottom: 20 },
-  noteLabel: { fontSize: TYPE.md, color: '#A0A0A0', marginBottom: 8 },
+  noteLabel: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.70)', marginBottom: 8 },
   noteInput: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: 12,
     padding: 15,
     color: '#fff',
@@ -407,14 +402,9 @@ const styles = StyleSheet.create({
     minHeight: 80,
     textAlignVertical: 'top',
     borderWidth: 1,
-    borderColor: '#2C2C2E',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    borderColor: 'rgba(255,255,255,0.10)',
   },
-  noteCount: { fontSize: 11, color: '#555', textAlign: 'right', marginTop: 4 },
+  noteCount: { fontSize: 11, color: 'rgba(255,255,255,0.40)', textAlign: 'right', marginTop: 4 },
 
   // Log Button
   logButton: {
@@ -424,42 +414,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  logButtonDisabled: { backgroundColor: '#2A3A50', opacity: 0.6 },
+  logButtonDisabled: { backgroundColor: 'rgba(42,58,80,0.5)', opacity: 0.6 },
   logButtonText: { color: '#fff', fontSize: TYPE.lg, fontWeight: TYPE.bold },
 
   // AI Info Card
   aiInfoCard: {
-    backgroundColor: '#1A2235',
+    backgroundColor: 'rgba(10,18,40,0.94)',
     borderRadius: 12,
     padding: 15,
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginBottom: 25,
     borderWidth: 1,
-    borderColor: '#2A3A50',
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   aiInfoIcon: { fontSize: 20, marginRight: 12, marginTop: 2 },
-  aiInfoText: { flex: 1, fontSize: 13, color: '#A0A0A0', lineHeight: 19 },
+  aiInfoText: { flex: 1, fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 19 },
 
   // Stats Card
   statsCard: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: 'rgba(10,18,40,0.94)',
     borderRadius: 12,
     padding: 18,
     marginBottom: 25,
     borderWidth: 1,
-    borderColor: '#2C2C2E',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   statsTitle: { fontSize: TYPE.lg, fontWeight: TYPE.bold, color: '#fff', marginBottom: 15 },
   statsRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 15 },
   statBox: { alignItems: 'center' },
   statValue: { fontSize: TYPE.h3, fontWeight: TYPE.bold, color: '#4A90D9' },
-  statLabel: { fontSize: 11, color: '#A0A0A0', marginTop: 4 },
+  statLabel: { fontSize: 11, color: 'rgba(255,255,255,0.55)', marginTop: 4 },
 
   // Frequency bars
   frequencySection: { marginTop: 5 },
@@ -468,13 +453,13 @@ const styles = StyleSheet.create({
   freqBarBg: {
     flex: 1,
     height: 8,
-    backgroundColor: '#2C2C2E',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: 4,
     marginHorizontal: 8,
     overflow: 'hidden',
   },
   freqBarFill: { height: 8, backgroundColor: '#4A90D9', borderRadius: 4 },
-  freqCount: { fontSize: TYPE.sm, color: '#A0A0A0', width: 25, textAlign: 'right' },
+  freqCount: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.55)', width: 25, textAlign: 'right' },
 
   // Section
   sectionTitle: { fontSize: TYPE.xl, fontWeight: TYPE.bold, color: '#fff', marginBottom: 15 },
@@ -483,69 +468,59 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     paddingVertical: 40,
-    backgroundColor: '#1C1C1E',
+    backgroundColor: 'rgba(10,18,40,0.94)',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#2C2C2E',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   emptyEmoji: { fontSize: 40, marginBottom: 10 },
   emptyTitle: { fontSize: TYPE.lg, fontWeight: TYPE.bold, color: '#fff', marginBottom: 6 },
-  emptyText: { fontSize: 13, color: '#A0A0A0' },
+  emptyText: { fontSize: 13, color: 'rgba(255,255,255,0.55)' },
   emptyNudge: { marginTop: 14, backgroundColor: 'rgba(74,144,217,0.10)', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10, marginHorizontal: 16, borderWidth: 1, borderColor: 'rgba(74,144,217,0.20)' },
   emptyNudgeText: { fontSize: 13, color: '#7BB3E0', textAlign: 'center', lineHeight: 19 },
 
   // Entry Cards
   entryCard: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: 'rgba(10,18,40,0.94)',
     borderRadius: 12,
     padding: 15,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#2C2C2E',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   entryHeader: { flexDirection: 'row', alignItems: 'center' },
   entryEmoji: { fontSize: TYPE.h2, marginRight: 12 },
   entryInfo: { flex: 1 },
   entryLabel: { fontSize: 15, fontWeight: TYPE.bold, color: '#fff' },
-  entryTime: { fontSize: TYPE.sm, color: '#888', marginTop: 2 },
+  entryTime: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.45)', marginTop: 2 },
   entryNote: {
     fontSize: 13,
-    color: '#A0A0A0',
+    color: 'rgba(255,255,255,0.55)',
     marginTop: 10,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#2C2C2E',
+    borderTopColor: 'rgba(255,255,255,0.06)',
     lineHeight: 19,
   },
 
   longPressHint: {
     fontSize: 11,
-    color: '#555',
+    color: 'rgba(255,255,255,0.35)',
     textAlign: 'center',
     marginTop: 5,
     marginBottom: 30,
   },
 
   // Edit Modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#1C1C1E', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 25, paddingBottom: 40 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: 'rgba(10,18,40,0.96)', borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 25, paddingBottom: 40, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
   modalTitle: { fontSize: 20, fontWeight: TYPE.bold, color: '#fff', marginBottom: 20, textAlign: 'center' },
   editMoodGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 15 },
-  editNoteLabel: { fontSize: TYPE.md, color: '#A0A0A0', marginBottom: 8 },
-  editNoteInput: { backgroundColor: '#111', borderRadius: 12, padding: 15, color: '#fff', fontSize: 15, minHeight: 70, textAlignVertical: 'top', borderWidth: 1, borderColor: '#2C2C2E', marginBottom: 20 },
+  editNoteLabel: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.70)', marginBottom: 8 },
+  editNoteInput: { backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 12, padding: 15, color: '#fff', fontSize: 15, minHeight: 70, textAlignVertical: 'top', borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)', marginBottom: 20 },
   modalButtons: { flexDirection: 'row', gap: 12 },
-  cancelButton: { flex: 1, paddingVertical: 14, borderRadius: 10, backgroundColor: '#2C2C2E', alignItems: 'center' },
-  cancelButtonText: { fontSize: TYPE.lg, color: '#A0A0A0', fontWeight: TYPE.semibold },
+  cancelButton: { flex: 1, paddingVertical: 14, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)' },
+  cancelButtonText: { fontSize: TYPE.lg, color: 'rgba(255,255,255,0.70)', fontWeight: TYPE.semibold },
   saveButton: { flex: 1, paddingVertical: 14, borderRadius: 10, backgroundColor: '#4A90D9', alignItems: 'center' },
   saveButtonText: { fontSize: TYPE.lg, color: '#fff', fontWeight: TYPE.bold },
 });

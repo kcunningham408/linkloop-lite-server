@@ -86,12 +86,6 @@ struct GlucoseView: View {
             }
         }
         .padding(.horizontal, 4)
-        .onAppear {
-            glucoseManager.startAutoRefresh()
-        }
-        .onDisappear {
-            glucoseManager.stopAutoRefresh()
-        }
     }
 
     // MARK: - Helpers

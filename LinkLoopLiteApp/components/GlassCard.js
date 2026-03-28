@@ -19,7 +19,7 @@ export default function GlassCard({
   accent = '#4A90D9',
   glow = false,
   style,
-  intensity = 40,
+  intensity = 50,
   noPadding = false,
 }) {
   // Android doesn't support BlurView as well — use a semi-transparent fallback
@@ -89,12 +89,12 @@ const styles = StyleSheet.create({
   blurInner: {
     borderRadius: 19,
     overflow: 'hidden',
-    backgroundColor: 'rgba(28, 28, 30, 0.55)',
+    backgroundColor: 'rgba(10, 18, 40, 0.72)',
   },
   androidInner: {
     borderRadius: 19,
     overflow: 'hidden',
-    backgroundColor: 'rgba(28, 28, 30, 0.85)',
+    backgroundColor: 'rgba(10, 18, 40, 0.88)',
   },
   padding: {
     padding: 20,

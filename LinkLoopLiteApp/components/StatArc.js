@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: TYPE.xs,
-    color: '#888',
+    color: '#C8C8C8',
     textAlign: 'center',
     marginTop: 6,
     lineHeight: 13,

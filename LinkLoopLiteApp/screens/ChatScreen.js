@@ -65,7 +65,7 @@ export default function ChatScreen({ route, navigation }) {
   useEffect(() => {
     navigation.setOptions({
       title: `${memberEmoji} ${memberName}`,
-      headerStyle: { backgroundColor: '#1C1C1E' },
+      headerStyle: { backgroundColor: 'rgba(10,18,40,0.94)' },
       headerTintColor: '#fff',
       headerTitleStyle: { fontWeight: TYPE.bold },
     });
@@ -245,7 +245,7 @@ export default function ChatScreen({ route, navigation }) {
       >
         {/* Chat Info Banner */}
         <LinearGradient
-          colors={['#1C1C1E', '#161618']}
+          colors={['#1E1E32', '#1A1A2E']}
           style={styles.chatBanner}
         >
           <View style={[styles.bannerAvatar, { borderColor: accent + '40' }]}>
@@ -287,7 +287,7 @@ export default function ChatScreen({ route, navigation }) {
             <TextInput
               style={styles.textInput}
               placeholder="Type a message..."
-              placeholderTextColor="#666"
+              placeholderTextColor="#888"
               value={text}
               onChangeText={setText}
               multiline
@@ -306,7 +306,7 @@ export default function ChatScreen({ route, navigation }) {
               </LinearGradient>
             ) : (
               <View style={styles.sendDisabledInner}>
-                <Text style={[styles.sendButtonText, { color: '#666' }]}>➤</Text>
+                <Text style={[styles.sendButtonText, { color: '#B0B0B0' }]}>➤</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -317,10 +317,10 @@ export default function ChatScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111111' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   flex: { flex: 1 },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 10, color: '#888', fontSize: TYPE.md },
+  loadingText: { marginTop: 10, color: 'rgba(255,255,255,0.45)', fontSize: TYPE.md },
 
   // Chat Banner
   chatBanner: {
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#2C2C2E',
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   bannerAvatar: {
     width: 42,
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#252528',
+    backgroundColor: 'rgba(37,37,40,0.45)',
     marginRight: 12,
   },
   chatBannerEmoji: { fontSize: 22 },
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: '#1A2235',
+    backgroundColor: 'rgba(26,34,53,0.4)',
     borderWidth: 1.5,
     justifyContent: 'center',
     alignItems: 'center',
@@ -377,10 +377,10 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 6,
   },
   bubbleOther: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: 'rgba(10,18,40,0.85)',
     borderBottomLeftRadius: 6,
     borderWidth: 1,
-    borderColor: '#2C2C2E',
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   bubbleSending: { opacity: 0.6 },
 
@@ -388,29 +388,29 @@ const styles = StyleSheet.create({
 
   msgText: { fontSize: TYPE.md, lineHeight: 20 },
   msgTextMe: { color: '#fff' },
-  msgTextOther: { color: '#E0E0E0' },
+  msgTextOther: { color: 'rgba(255,255,255,0.85)' },
 
   timeText: { fontSize: 9, marginTop: 4 },
-  timeTextMe: { color: 'rgba(255,255,255,0.6)', textAlign: 'right' },
-  timeTextOther: { color: '#555' },
+  timeTextMe: { color: 'rgba(255,255,255,0.85)', textAlign: 'right' },
+  timeTextOther: { color: 'rgba(255,255,255,0.40)' },
 
   // System message
   systemMsgContainer: {
     alignSelf: 'center',
-    backgroundColor: '#1C1C1E',
+    backgroundColor: 'rgba(10,18,40,0.85)',
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 6,
     marginVertical: 8,
     borderWidth: 1,
-    borderColor: '#2C2C2E',
+    borderColor: 'rgba(255,255,255,0.08)',
   },
-  systemMsgText: { fontSize: TYPE.xs, color: '#A0A0A0', textAlign: 'center' },
+  systemMsgText: { fontSize: TYPE.xs, color: 'rgba(255,255,255,0.55)', textAlign: 'center' },
 
   // Alert message
   alertMsgContainer: {
     flexDirection: 'row',
-    backgroundColor: '#2A1A1A',
+    backgroundColor: 'rgba(42,26,26,0.5)',
     borderRadius: 16,
     padding: 14,
     marginVertical: 6,
@@ -423,13 +423,13 @@ const styles = StyleSheet.create({
   alertMsgIcon: { fontSize: TYPE.h3, marginRight: 10 },
   alertMsgContent: { flex: 1 },
   alertMsgLabel: { fontSize: 10, fontWeight: TYPE.extrabold, color: '#FF6B6B', marginBottom: 4, letterSpacing: 0.8, textTransform: 'uppercase' },
-  alertMsgText: { fontSize: TYPE.md, color: '#E0E0E0', lineHeight: 20 },
-  alertMsgTime: { fontSize: 9, color: '#666', marginTop: 4 },
+  alertMsgText: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.85)', lineHeight: 20 },
+  alertMsgTime: { fontSize: 9, color: 'rgba(255,255,255,0.40)', marginTop: 4 },
 
   // Acknowledgment message
   ackMsgContainer: {
     flexDirection: 'row',
-    backgroundColor: '#1A2E1A',
+    backgroundColor: 'rgba(26,46,26,0.5)',
     borderRadius: 16,
     padding: 14,
     marginVertical: 6,
@@ -442,8 +442,8 @@ const styles = StyleSheet.create({
   ackMsgIcon: { fontSize: TYPE.h3, marginRight: 10 },
   ackMsgContent: { flex: 1 },
   ackMsgLabel: { fontSize: 10, fontWeight: TYPE.extrabold, color: '#4CAF50', marginBottom: 4, letterSpacing: 0.5, textTransform: 'uppercase' },
-  ackMsgText: { fontSize: TYPE.md, color: '#E0E0E0', lineHeight: 20 },
-  ackMsgTime: { fontSize: 9, color: '#666', marginTop: 4 },
+  ackMsgText: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.85)', lineHeight: 20 },
+  ackMsgTime: { fontSize: 9, color: 'rgba(255,255,255,0.40)', marginTop: 4 },
 
   // Empty state
   emptyChat: {
@@ -453,7 +453,7 @@ const styles = StyleSheet.create({
   },
   emptyChatEmoji: { fontSize: 50, marginBottom: 12 },
   emptyChatTitle: { fontSize: TYPE.xl, fontWeight: TYPE.bold, color: '#fff', marginBottom: 6 },
-  emptyChatText: { fontSize: TYPE.md, color: '#888', textAlign: 'center' },
+  emptyChatText: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.55)', textAlign: 'center' },
 
   // Input bar
   inputBar: {
@@ -461,9 +461,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     paddingHorizontal: 10,
     paddingVertical: 8,
-    backgroundColor: '#161618',
+    backgroundColor: 'rgba(10,18,40,0.88)',
     borderTopWidth: 1,
-    borderTopColor: '#2C2C2E',
+    borderTopColor: 'rgba(255,255,255,0.08)',
   },
   inputWrap: {
     flex: 1,
@@ -472,14 +472,14 @@ const styles = StyleSheet.create({
   textInput: {
     minHeight: 40,
     maxHeight: 100,
-    backgroundColor: '#1C1C1E',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
     fontSize: TYPE.md,
     color: '#fff',
     borderWidth: 1,
-    borderColor: '#2C2C2E',
+    borderColor: 'rgba(255,255,255,0.10)',
   },
   sendButton: {
     width: 42,
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#1C1C1E',
+    backgroundColor: 'rgba(10,18,40,0.85)',
     justifyContent: 'center',
     alignItems: 'center',
   },

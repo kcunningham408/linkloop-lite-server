@@ -44,7 +44,7 @@ export default function ScreenHeader({ title, subtitle, children }) {
 
 const styles = StyleSheet.create({
   wrapper: {
-    backgroundColor: '#0A0A0F',
+    backgroundColor: 'transparent',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.04)',
     overflow: 'hidden',
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: TYPE.md,
-    color: '#A0A0A0',
+    color: 'rgba(255,255,255,0.70)',
     lineHeight: 20,
   },
 });

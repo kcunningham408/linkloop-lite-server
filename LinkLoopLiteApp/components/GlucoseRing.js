@@ -46,7 +46,7 @@ export default function GlucoseRing({
   const getColor = () => {
     if (!value) return '#333';
     if (value < lowThreshold) return '#FF6B6B';
-    if (value > highThreshold) return '#FFA500';
+    if (value > highThreshold) return '#FF7B93';
     return accentColor;
   };
 
@@ -93,16 +93,11 @@ export default function GlucoseRing({
         />
       </Svg>
       {/* Center content */}
-      <View style={styles.center}>
-        <Text style={[styles.value, { color: value ? '#fff' : '#555' }]}>
+      <View style={[styles.center, { width: size * 0.75 }]}>
+        <Text style={[styles.value, { color: value ? '#fff' : '#B0B0B0' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
           {value || '--'}
         </Text>
         <Text style={styles.unit}>mg/dL</Text>
-        {value ? (
-          <View style={[styles.statusBadge, { backgroundColor: color + '20' }]}>
-            <Text style={[styles.statusText, { color }]}>{getStatus()}</Text>
-          </View>
-        ) : null}
       </View>
       {/* Trend arrow - positioned to the right of the ring */}
       {value ? (
@@ -132,23 +127,19 @@ const styles = StyleSheet.create({
     fontSize: TYPE.mega,
     fontWeight: TYPE.black,
     letterSpacing: -2,
+    textShadowColor: 'rgba(0,0,0,0.9)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 8,
   },
   unit: {
     fontSize: TYPE.sm,
-    color: 'rgba(255,255,255,0.5)',
+    color: 'rgba(255,255,255,0.85)',
     marginTop: -4,
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
-  statusBadge: {
-    marginTop: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-    borderRadius: 10,
-  },
-  statusText: {
-    fontSize: TYPE.xs,
-    fontWeight: TYPE.bold,
-    letterSpacing: 0.5,
-  },
+
   trendContainer: {
     position: 'absolute',
   },

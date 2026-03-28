@@ -3,8 +3,6 @@ import Constants from 'expo-constants';
 import { useState } from 'react';
 import { Alert, Linking, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import GlassCard from '../components/GlassCard';
-import LinkLoopBanner from '../components/LinkLoopBanner';
 import { FadeIn, stagger } from '../config/animations';
 import { haptic } from '../config/haptics';
 import TYPE from '../config/typography';
@@ -17,10 +15,9 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const { user, logout, deleteAccount, updateUser, checkAuth } = useAuth();
-  const { palette, getGradient } = useTheme();
+  const { palette } = useTheme();
   const isMember = user?.role === 'member';
   const accent = isMember ? palette.member : palette.warrior;
-  const gradient = getGradient(isMember);
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState(user?.name || '');
   const [savingName, setSavingName] = useState(false);
@@ -110,69 +107,73 @@ export default function ProfileScreen() {
     ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
     : null;
 
+  const txtShadow = { textShadowColor: 'rgba(0,0,0,0.9)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 6 };
+
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={{ paddingBottom: 90 + insets.bottom }}
+      contentContainerStyle={{ paddingBottom: 90 + insets.bottom, paddingTop: insets.top + 16 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accent} colors={[accent]} />}
     >
-      {/* ── Hero Banner ── */}
-      <FadeIn delay={0} slideY={0}>
-      <LinkLoopBanner accent={accent} secondary={gradient[1] || accent}>
-        {/* Decorative circles */}
-        <View style={styles.heroDecoCircle1} />
-        <View style={styles.heroDecoCircle2} />
-
-        {/* Avatar with glow ring */}
-        <View style={[styles.avatarRing, { borderColor: accent + '80' }]}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{user?.name?.charAt(0)?.toUpperCase() || '∞'}</Text>
-          </View>
-        </View>
-
-        <Text style={styles.heroName} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{user?.name || 'LinkLoop User'}</Text>
-        <Text style={styles.heroEmail} numberOfLines={1}>{user?.email || ''}</Text>
-
-        {/* Role badge */}
-        <View style={styles.heroBadge}>
-          <Text style={styles.heroBadgeText}>
-            {isMember ? '∞ Loop Member' : '💙 T1D Warrior'}
-          </Text>
-        </View>
-
-        {/* Quick stats row */}
-        <View style={styles.heroStatsRow}>
-          {memberSince && (
-            <View style={styles.heroStat}>
-              <Text style={styles.heroStatLabel}>Joined</Text>
-              <Text style={styles.heroStatValue} numberOfLines={1}>{memberSince}</Text>
-            </View>
-          )}
-          <View style={styles.heroStat}>
-            <Text style={styles.heroStatLabel}>Role</Text>
-            <Text style={styles.heroStatValue} numberOfLines={1}>{isMember ? 'Member' : 'Warrior'}</Text>
-          </View>
-          <View style={styles.heroStat}>
-            <Text style={styles.heroStatLabel}>Version</Text>
-            <Text style={styles.heroStatValue} numberOfLines={1}>v{APP_VERSION}</Text>
-          </View>
-        </View>
-      </LinkLoopBanner>
-      </FadeIn>
+      {/* ── Page Title ── */}
+      <View style={styles.pageHeader}>
+        <Text style={[styles.pageTitle, txtShadow]}>Profile</Text>
+      </View>
 
       <View style={styles.content}>
-        <FadeIn delay={stagger(1, 100)}>
-        {/* Account Settings */}
-        <GlassCard style={styles.settingsCard}>
-          <Text style={styles.sectionTitle}>Account Settings</Text>
 
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingIcon}>{'\uD83D\uDC64'}</Text>
+        {/* ── Profile Card ── */}
+        <FadeIn delay={stagger(0, 100)}>
+          <View style={[styles.profileCard, { borderLeftColor: accent }]}>
+            <View style={styles.profileRow}>
+              <View style={[styles.avatarCircle, { borderColor: accent + '60' }]}>
+                <Text style={styles.avatarText}>{user?.name?.charAt(0)?.toUpperCase() || '∞'}</Text>
+              </View>
+              <View style={{ flex: 1, marginLeft: 16 }}>
+                <Text style={styles.profileName} numberOfLines={1}>{user?.name || 'LinkLoop User'}</Text>
+                <Text style={styles.profileEmail} numberOfLines={1}>{user?.email || ''}</Text>
+                <View style={[styles.roleBadge, { backgroundColor: accent + '20' }]}>
+                  <Text style={[styles.roleBadgeText, { color: accent }]}>
+                    {isMember ? '∞ Loop Member' : '💙 T1D Warrior'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Stats row */}
+            <View style={styles.statsRow}>
+              {memberSince && (
+                <View style={styles.stat}>
+                  <Text style={styles.statLabel}>JOINED</Text>
+                  <Text style={styles.statValue}>{memberSince}</Text>
+                </View>
+              )}
+              <View style={styles.stat}>
+                <Text style={styles.statLabel}>ROLE</Text>
+                <Text style={styles.statValue}>{isMember ? 'Member' : 'Warrior'}</Text>
+              </View>
+              <View style={styles.stat}>
+                <Text style={styles.statLabel}>VERSION</Text>
+                <Text style={styles.statValue}>v{APP_VERSION}</Text>
+              </View>
+            </View>
+          </View>
+        </FadeIn>
+
+        {/* ── Account Settings ── */}
+        <FadeIn delay={stagger(1, 100)}>
+          <View style={styles.opaqueCard}>
+            <Text style={styles.cardHeaderTitle}>ACCOUNT</Text>
+            <View style={styles.rowDivider} />
+
+            <View style={styles.settingItem}>
+              <View style={[styles.settingIcon, { backgroundColor: accent + '20' }]}>
+                <Text style={{ fontSize: 18 }}>👤</Text>
+              </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.settingTitle}>Display Name</Text>
                 {editingName ? (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
                     <TextInput
                       style={[styles.nameInput, { borderColor: accent }]}
                       value={newName}
@@ -195,160 +196,167 @@ export default function ProfileScreen() {
                 )}
               </View>
             </View>
-          </View>
 
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingIcon}>{'\uD83D\uDCE7'}</Text>
+            <View style={styles.rowDivider} />
+
+            <View style={styles.settingItem}>
+              <View style={[styles.settingIcon, { backgroundColor: 'rgba(255,255,255,0.06)' }]}>
+                <Text style={{ fontSize: 18 }}>📧</Text>
+              </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.settingTitle}>Email</Text>
                 <Text style={styles.settingValue} numberOfLines={1}>{user?.email || 'Not set'}</Text>
               </View>
             </View>
-          </View>
 
-          {/* Warrior Display Name — only visible to Loop Members */}
-          {isMember && (
-            <View style={styles.settingItem}>
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingIcon}>💙</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.settingTitle}>Warrior Name</Text>
-                  <Text style={styles.settingDescription}>Customize how your warrior's name appears</Text>
-                  {editingWarriorName ? (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                      <TextInput
-                        style={[styles.nameInput, { borderColor: accent }]}
-                        value={newWarriorName}
-                        onChangeText={setNewWarriorName}
-                        placeholder="e.g. Shayla, My Daughter"
-                        placeholderTextColor="#666"
-                        autoFocus
-                        returnKeyType="done"
-                        onSubmitEditing={handleSaveWarriorName}
-                      />
-                      <TouchableOpacity onPress={handleSaveWarriorName} disabled={savingWarriorName} style={[styles.nameSaveBtn, { backgroundColor: accent }]}>
-                        <Text style={styles.nameSaveBtnText}>{savingWarriorName ? '...' : 'Save'}</Text>
+            {isMember && (
+              <>
+                <View style={styles.rowDivider} />
+                <View style={styles.settingItem}>
+                  <View style={[styles.settingIcon, { backgroundColor: accent + '20' }]}>
+                    <Text style={{ fontSize: 18 }}>💙</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.settingTitle}>Warrior Name</Text>
+                    <Text style={styles.settingDesc}>Customize how your warrior's name appears</Text>
+                    {editingWarriorName ? (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
+                        <TextInput
+                          style={[styles.nameInput, { borderColor: accent }]}
+                          value={newWarriorName}
+                          onChangeText={setNewWarriorName}
+                          placeholder="e.g. Shayla, My Daughter"
+                          placeholderTextColor="rgba(255,255,255,0.3)"
+                          autoFocus
+                          returnKeyType="done"
+                          onSubmitEditing={handleSaveWarriorName}
+                        />
+                        <TouchableOpacity onPress={handleSaveWarriorName} disabled={savingWarriorName} style={[styles.nameSaveBtn, { backgroundColor: accent }]}>
+                          <Text style={styles.nameSaveBtnText}>{savingWarriorName ? '...' : 'Save'}</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => { setEditingWarriorName(false); setNewWarriorName(user?.warriorDisplayName || ''); }} style={styles.nameCancelBtn}>
+                          <Text style={styles.nameCancelBtnText}>Cancel</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ) : (
+                      <TouchableOpacity onPress={() => setEditingWarriorName(true)}>
+                        <Text style={[styles.settingValue, { color: accent }]}>{user?.warriorDisplayName || 'Use default name'} ✏️</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity onPress={() => { setEditingWarriorName(false); setNewWarriorName(user?.warriorDisplayName || ''); }} style={styles.nameCancelBtn}>
-                        <Text style={styles.nameCancelBtnText}>Cancel</Text>
-                      </TouchableOpacity>
-                    </View>
-                  ) : (
-                    <TouchableOpacity onPress={() => setEditingWarriorName(true)}>
-                      <Text style={[styles.settingValue, { color: accent }]}>{user?.warriorDisplayName || 'Use default name'} ✏️</Text>
-                    </TouchableOpacity>
-                  )}
+                    )}
+                  </View>
                 </View>
+              </>
+            )}
+          </View>
+        </FadeIn>
+
+        {/* ── Quick Access ── */}
+        <FadeIn delay={stagger(2, 100)}>
+          <View style={styles.opaqueCard}>
+            <Text style={styles.cardHeaderTitle}>QUICK ACCESS</Text>
+            <View style={styles.rowDivider} />
+
+            <TouchableOpacity
+              style={styles.navRow}
+              onPress={() => { haptic.light(); navigation.navigate('WatchSync'); }}
+              activeOpacity={0.65}
+            >
+              <View style={[styles.navIconCircle, { backgroundColor: accent + '20' }]}>
+                <Text style={{ fontSize: 20 }}>⌚</Text>
               </View>
-            </View>
-          )}
-        </GlassCard>
-
-        {/* ── Navigation Menu ── */}
-        <GlassCard style={styles.settingsCard}>
-          <Text style={styles.sectionTitle}>Quick Access</Text>
-
-          {/* Apple Watch — prominent at top */}
-          <TouchableOpacity
-            style={styles.navRow}
-            onPress={() => { haptic.light(); navigation.navigate('WatchSync'); }}
-            activeOpacity={0.65}
-          >
-            <View style={[styles.navIconCircle, { backgroundColor: accent + '20' }]}>
-              <Text style={styles.navIcon}>⌚</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.navRowTitle}>Apple Watch</Text>
-              <Text style={styles.navRowSub}>Pair your watch · complications · live glucose</Text>
-            </View>
-            <Text style={[styles.chevron, { color: accent }]}>›</Text>
-          </TouchableOpacity>
-
-          {/* Settings */}
-          <TouchableOpacity
-            style={styles.navRow}
-            onPress={() => { haptic.light(); navigation.navigate('Settings'); }}
-            activeOpacity={0.65}
-          >
-            <View style={[styles.navIconCircle, { backgroundColor: 'rgba(255,255,255,0.08)' }]}>
-              <Text style={styles.navIcon}>⚙️</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.navRowTitle}>Settings</Text>
-              <Text style={styles.navRowSub}>Thresholds · notifications · theme</Text>
-            </View>
-            <Text style={styles.chevron}>›</Text>
-          </TouchableOpacity>
-        </GlassCard>
-
-        {/* App Info */}
-        <GlassCard style={styles.settingsCard}>
-          <Text style={styles.sectionTitle}>App Information</Text>
-
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingIcon}>📱</Text>
               <View style={{ flex: 1 }}>
-                <Text style={styles.settingTitle}>Version</Text>
-                <Text style={styles.settingValue}>{APP_VERSION}</Text>
+                <Text style={styles.navRowTitle}>Apple Watch</Text>
+                <Text style={styles.navRowSub}>Pair · complications · live glucose</Text>
               </View>
+              <Text style={[styles.chevron, { color: accent }]}>›</Text>
+            </TouchableOpacity>
+
+            <View style={styles.rowDivider} />
+
+            <TouchableOpacity
+              style={styles.navRow}
+              onPress={() => { haptic.light(); navigation.navigate('Settings'); }}
+              activeOpacity={0.65}
+            >
+              <View style={[styles.navIconCircle, { backgroundColor: 'rgba(255,255,255,0.06)' }]}>
+                <Text style={{ fontSize: 20 }}>⚙️</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.navRowTitle}>Settings</Text>
+                <Text style={styles.navRowSub}>Thresholds · notifications · theme</Text>
+              </View>
+              <Text style={styles.chevron}>›</Text>
+            </TouchableOpacity>
+          </View>
+        </FadeIn>
+
+        {/* ── App Info ── */}
+        <FadeIn delay={stagger(3, 100)}>
+          <View style={styles.opaqueCard}>
+            <Text style={styles.cardHeaderTitle}>APP INFO</Text>
+            <View style={styles.rowDivider} />
+
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Version</Text>
+              <Text style={styles.infoValue}>{APP_VERSION}</Text>
             </View>
+
+            <View style={styles.rowDivider} />
+
+            <TouchableOpacity style={styles.navRow} onPress={() => Linking.openURL('https://kcunningham408.github.io/vibecmd-pages/linkloop/privacy.html')}>
+              <View style={[styles.navIconCircle, { backgroundColor: 'rgba(255,255,255,0.06)' }]}>
+                <Text style={{ fontSize: 18 }}>🔒</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.navRowTitle}>Privacy Policy</Text>
+              </View>
+              <Text style={styles.chevron}>›</Text>
+            </TouchableOpacity>
+
+            <View style={styles.rowDivider} />
+
+            <TouchableOpacity style={styles.navRow} onPress={() => Linking.openURL('https://kcunningham408.github.io/vibecmd-pages/linkloop/terms.html')}>
+              <View style={[styles.navIconCircle, { backgroundColor: 'rgba(255,255,255,0.06)' }]}>
+                <Text style={{ fontSize: 18 }}>📋</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.navRowTitle}>Terms of Service</Text>
+              </View>
+              <Text style={styles.chevron}>›</Text>
+            </TouchableOpacity>
+
+            <View style={styles.rowDivider} />
+
+            <TouchableOpacity style={styles.navRow} onPress={() => Linking.openURL('https://kcunningham408.github.io/vibecmd-pages/linkloop/support.html')}>
+              <View style={[styles.navIconCircle, { backgroundColor: 'rgba(255,255,255,0.06)' }]}>
+                <Text style={{ fontSize: 18 }}>🛟</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.navRowTitle}>Support</Text>
+              </View>
+              <Text style={styles.chevron}>›</Text>
+            </TouchableOpacity>
+          </View>
+        </FadeIn>
+
+        {/* ── Actions ── */}
+        <FadeIn delay={stagger(4, 100)}>
+          <View style={styles.actionsCard}>
+            <TouchableOpacity style={styles.signOutBtn} onPress={handleLogout} activeOpacity={0.7}>
+              <Text style={styles.signOutText}>Sign Out</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.deleteBtn} onPress={handleDeleteAccount} activeOpacity={0.7}>
+              <Text style={styles.deleteText}>Delete Account</Text>
+            </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.settingItem} onPress={() => Linking.openURL('https://kcunningham408.github.io/vibecmd-pages/linkloop/privacy.html')}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingIcon}>🔒</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.settingTitle}>Privacy Policy</Text>
-                <Text style={styles.settingDescription}>View our privacy policy</Text>
-              </View>
-            </View>
-            <Text style={styles.chevron}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingItem} onPress={() => Linking.openURL('https://kcunningham408.github.io/vibecmd-pages/linkloop/terms.html')}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingIcon}>📋</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.settingTitle}>Terms of Service</Text>
-                <Text style={styles.settingDescription}>View terms and conditions</Text>
-              </View>
-            </View>
-            <Text style={styles.chevron}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingItem} onPress={() => Linking.openURL('https://kcunningham408.github.io/vibecmd-pages/linkloop/support.html')}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingIcon}>💬</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.settingTitle}>Support</Text>
-                <Text style={styles.settingDescription}>Get help or report an issue</Text>
-              </View>
-            </View>
-            <Text style={styles.chevron}>›</Text>
-          </TouchableOpacity>
-        </GlassCard>
-
-        {/* Sign Out */}
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutIcon}>🚪</Text>
-          <Text style={styles.logoutText}>Sign Out</Text>
-        </TouchableOpacity>
-
-        {/* Delete Account */}
-        <TouchableOpacity style={styles.deleteAccountButton} onPress={handleDeleteAccount}>
-          <Text style={styles.deleteAccountIcon}>⚠️</Text>
-          <Text style={styles.deleteAccountText}>Delete Account</Text>
-        </TouchableOpacity>
-
-        {/* Disclaimer */}
-        <GlassCard style={styles.disclaimerCard}>
-          <Text style={styles.disclaimerIcon}>💚</Text>
-          <Text style={styles.disclaimerText}>
-            LinkLoop is a personal wellness journal for logging your T1D data. It is not a medical device and does not provide medical advice.
-          </Text>
-        </GlassCard>
+          {/* Disclaimer */}
+          <View style={styles.disclaimerRow}>
+            <Text style={styles.disclaimerText}>
+              LinkLoop is a personal wellness journal for logging your T1D data. It is not a medical device and does not provide medical advice.
+            </Text>
+          </View>
         </FadeIn>
       </View>
     </ScrollView>
@@ -356,117 +364,117 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0A0A0F' },
-  content: { padding: 20 },
+  container: { flex: 1, backgroundColor: 'transparent' },
+  content: { padding: 16 },
 
-  // ── Hero Banner ──
-  heroDecoCircle1: {
-    position: 'absolute',
-    top: -40,
-    right: -40,
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+  /* Page header */
+  pageHeader: { paddingHorizontal: 20, paddingBottom: 12 },
+  pageTitle: { fontSize: 28, fontWeight: TYPE.bold, color: '#fff' },
+
+  /* Profile card */
+  profileCard: {
+    backgroundColor: 'rgba(10,18,40,0.94)',
+    borderRadius: 18,
+    padding: 18,
+    marginBottom: 16,
+    borderLeftWidth: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
-  heroDecoCircle2: {
-    position: 'absolute',
-    bottom: -30,
-    left: -30,
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-  },
-  avatarRing: {
-    width: 108,
-    height: 108,
-    borderRadius: 54,
-    borderWidth: 3,
-    borderColor: 'rgba(255,255,255,0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  avatar: {
-    width: 98,
-    height: 98,
-    borderRadius: 49,
+  profileRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  avatarCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 2,
     backgroundColor: 'rgba(0,0,0,0.3)',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  avatarText: { fontSize: 42, fontWeight: TYPE.bold, color: '#fff' },
-  heroName: { fontSize: TYPE.h2, fontWeight: TYPE.extrabold, color: '#fff', marginBottom: 4, letterSpacing: -0.3 },
-  heroEmail: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.7)', marginBottom: 12 },
-  heroBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 16,
-    paddingVertical: 7,
-    borderRadius: 20,
-    marginBottom: 18,
-  },
-  heroBadgeText: { fontSize: TYPE.sm, fontWeight: TYPE.bold, color: '#fff' },
-  heroStatsRow: {
+  avatarText: { fontSize: 28, fontWeight: TYPE.bold, color: '#fff' },
+  profileName: { fontSize: TYPE.xl, fontWeight: TYPE.bold, color: '#fff', marginBottom: 2 },
+  profileEmail: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.5)', marginBottom: 6 },
+  roleBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10, alignSelf: 'flex-start' },
+  roleBadgeText: { fontSize: 12, fontWeight: TYPE.bold },
+  statsRow: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(0,0,0,0.15)',
-    borderRadius: 14,
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    width: '100%',
-    justifyContent: 'space-evenly',
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
   },
-  heroStat: { alignItems: 'center', flex: 1 },
-  heroStatLabel: { fontSize: TYPE.xs, color: 'rgba(255,255,255,0.6)', fontWeight: TYPE.medium, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.5 },
-  heroStatValue: { fontSize: TYPE.md, color: '#fff', fontWeight: TYPE.bold, textAlign: 'center' },
+  stat: { alignItems: 'center', flex: 1 },
+  statLabel: { fontSize: 10, color: 'rgba(255,255,255,0.45)', fontWeight: TYPE.bold, letterSpacing: 1, marginBottom: 3 },
+  statValue: { fontSize: TYPE.md, color: '#fff', fontWeight: TYPE.semibold },
 
-  settingsCard: { borderRadius: 12, padding: 20, marginBottom: 20 },
-  sectionTitle: { fontSize: TYPE.xl, fontWeight: TYPE.bold, color: '#fff', marginBottom: 15 },
-  settingItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)' },
-  settingInfo: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  settingIcon: { fontSize: TYPE.h3, marginRight: 14 },
+  /* Opaque card */
+  opaqueCard: {
+    backgroundColor: 'rgba(10,18,40,0.94)',
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  cardHeaderTitle: { fontSize: 13, fontWeight: TYPE.bold, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8 },
+  rowDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginVertical: 2 },
+
+  /* Setting items */
+  settingItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
+  settingIcon: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
   settingTitle: { fontSize: 15, fontWeight: TYPE.semibold, color: '#fff', marginBottom: 2 },
-  settingValue: { fontSize: 13, color: '#A0A0A0' },
-  settingDescription: { fontSize: TYPE.sm, color: '#888' },
-  chevron: { fontSize: TYPE.h3, color: '#555', fontWeight: '300' },
+  settingValue: { fontSize: 13, color: 'rgba(255,255,255,0.5)' },
+  settingDesc: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.4)', marginBottom: 4 },
 
-  // ── Navigation Menu ──
-  navRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  /* Nav rows */
+  navRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
+  navIconCircle: { width: 38, height: 38, borderRadius: 19, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  navRowTitle: { fontSize: 15, fontWeight: TYPE.semibold, color: '#fff', marginBottom: 2 },
+  navRowSub: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.4)' },
+  chevron: { fontSize: 22, color: 'rgba(255,255,255,0.3)', fontWeight: '300' },
+
+  /* Info row */
+  infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12 },
+  infoLabel: { fontSize: 15, fontWeight: TYPE.semibold, color: '#fff' },
+  infoValue: { fontSize: 15, color: 'rgba(255,255,255,0.5)' },
+
+  /* Action buttons */
+  actionsCard: {
+    backgroundColor: 'rgba(10,18,40,0.94)',
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  signOutBtn: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 14,
     paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.06)',
-  },
-  navIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
   },
-  navIcon: { fontSize: 22 },
-  navRowTitle: { fontSize: 16, fontWeight: TYPE.semibold, color: '#fff', marginBottom: 2 },
-  navRowSub: { fontSize: TYPE.sm, color: '#888' },
+  signOutText: { fontSize: TYPE.lg, fontWeight: TYPE.bold, color: '#fff' },
+  deleteBtn: {
+    backgroundColor: 'rgba(239,68,68,0.18)',
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.35)',
+  },
+  deleteText: { fontSize: TYPE.lg, fontWeight: TYPE.bold, color: '#EF4444' },
 
-  logoutButton: { backgroundColor: 'rgba(255,60,60,0.08)', borderRadius: 12, padding: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 12, borderWidth: 1, borderColor: 'rgba(255,60,60,0.15)' },
-  logoutIcon: { fontSize: 20, marginRight: 10 },
-  logoutText: { fontSize: TYPE.lg, fontWeight: TYPE.bold, color: '#FF6B6B' },
-  deleteAccountButton: { backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
-  deleteAccountIcon: { fontSize: TYPE.xl, marginRight: 10 },
-  deleteAccountText: { fontSize: TYPE.md, fontWeight: TYPE.semibold, color: '#888' },
-  disclaimerCard: { borderRadius: 12, padding: 16, flexDirection: 'row', alignItems: 'flex-start', marginBottom: 30 },
-  disclaimerIcon: { fontSize: 20, marginRight: 10, marginTop: 2 },
-  disclaimerText: { fontSize: TYPE.sm, color: '#888', flex: 1, lineHeight: 18 },
-  nameInput: { flex: 1, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, fontSize: TYPE.md, color: '#fff', borderWidth: 1, borderColor: '#4A90D9' },
-  nameSaveBtn: { backgroundColor: '#4A90D9', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, marginLeft: 8 },
+  /* Disclaimer */
+  disclaimerRow: { paddingVertical: 10, paddingHorizontal: 4, marginBottom: 20 },
+  disclaimerText: { fontSize: 11, color: 'rgba(255,255,255,0.25)', lineHeight: 16, textAlign: 'center' },
+
+  /* Name editing */
+  nameInput: { flex: 1, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, fontSize: TYPE.md, color: '#fff', borderWidth: 1 },
+  nameSaveBtn: { borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, marginLeft: 8 },
   nameSaveBtnText: { color: '#fff', fontSize: 13, fontWeight: TYPE.semibold },
   nameCancelBtn: { paddingHorizontal: 10, paddingVertical: 6, marginLeft: 4 },
-  nameCancelBtnText: { color: '#888', fontSize: 13 },
+  nameCancelBtnText: { color: 'rgba(255,255,255,0.4)', fontSize: 13 },
 });

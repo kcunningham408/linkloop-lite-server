@@ -3,6 +3,7 @@ const auth = require('../middleware/auth');
 const GlucoseReading = require('../models/GlucoseReading');
 const CareCircle = require('../models/CareCircle');
 const User = require('../models/User');
+const { sendGlucosePushNotification } = require('../services/notificationService');
 
 const router = express.Router();
 
@@ -33,6 +34,13 @@ router.post('/', auth, async (req, res) => {
     });
 
     await reading.save();
+
+    // Send push notification to all linked members
+    const timestamp = reading.timestamp.toISOString();
+    sendGlucosePushNotification(req.user.userId, value, trend, timestamp).catch(err => {
+      console.error('[Glucose] Push notification error:', err);
+    });
+
     res.status(201).json({ message: 'Reading saved', reading });
   } catch (err) {
     console.error('Add glucose error:', err);
@@ -55,7 +63,16 @@ router.get('/', auth, async (req, res) => {
       .sort({ timestamp: -1 })
       .limit(parseInt(limit));
 
-    res.json(readings);
+    // Deduplicate by minute
+    const seen = new Set();
+    const dedupedReadings = readings.filter(r => {
+      const key = new Date(r.timestamp).toISOString().slice(0, 16);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    res.json(dedupedReadings);
   } catch (err) {
     console.error('Get glucose error:', err);
     res.status(500).json({ message: 'Server error' });
@@ -91,11 +108,20 @@ router.get('/stats', auth, async (req, res) => {
       timestamp: { $gte: since }
     });
 
-    if (readings.length === 0) {
+    // Deduplicate by minute
+    const seenMin = new Set();
+    const dedupedReadings = readings.filter(r => {
+      const key = new Date(r.timestamp).toISOString().slice(0, 16);
+      if (seenMin.has(key)) return false;
+      seenMin.add(key);
+      return true;
+    });
+
+    if (dedupedReadings.length === 0) {
       return res.json({ count: 0, average: null, timeInRange: null, high: null, low: null });
     }
 
-    const values = readings.map(r => r.value);
+    const values = dedupedReadings.map(r => r.value);
     const average = Math.round(values.reduce((a, b) => a + b, 0) / values.length);
     const inRange = values.filter(v => v >= 70 && v <= 180).length;
     const timeInRange = Math.round((inRange / values.length) * 100);
@@ -103,7 +129,7 @@ router.get('/stats', auth, async (req, res) => {
     const lowCount = values.filter(v => v < 70).length;
 
     res.json({
-      count: readings.length,
+      count: dedupedReadings.length,
       average,
       timeInRange,
       high: highCount,
@@ -192,8 +218,18 @@ router.get('/member-view/:ownerId', auth, async (req, res) => {
       .sort({ timestamp: -1 })
       .limit(parseInt(limit));
 
+    // Deduplicate readings that share the same minute (prevents duplicates
+    // from multiple sync sources e.g. Dexcom API + Dexcom Share)
+    const seen = new Set();
+    const dedupedReadings = readings.filter(r => {
+      const key = new Date(r.timestamp).toISOString().slice(0, 16); // YYYY-MM-DDThh:mm
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
     // Compute stats inline
-    const values = readings.map(r => r.value);
+    const values = dedupedReadings.map(r => r.value);
     const stats = values.length === 0 ? null : {
       count: values.length,
       average: Math.round(values.reduce((a, b) => a + b, 0) / values.length),
@@ -212,8 +248,8 @@ router.get('/member-view/:ownerId', auth, async (req, res) => {
     const lastCGMSync = syncDates.length > 0 ? new Date(Math.max(...syncDates.map(d => new Date(d).getTime()))) : null;
 
     res.json({
-      readings,
-      latest: readings[0] || null,
+      readings: dedupedReadings,
+      latest: dedupedReadings[0] || null,
       stats,
       ownerName: owner?.name || 'Warrior',
       lastActive: owner?.lastActive || null,

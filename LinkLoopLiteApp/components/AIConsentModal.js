@@ -88,15 +88,15 @@ export default function AIConsentModal() {
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: 20 },
-  modal: { backgroundColor: '#1C1C1E', borderRadius: 16, padding: 25, width: '100%', maxWidth: 400, maxHeight: '85%', borderWidth: 1, borderColor: '#2C2C2E' },
+  modal: { backgroundColor: 'rgba(30,30,50,0.45)', borderRadius: 16, padding: 25, width: '100%', maxWidth: 400, maxHeight: '85%', borderWidth: 1, borderColor: '#2E2E48' },
   icon: { fontSize: 48, marginBottom: 15, textAlign: 'center' },
   title: { fontSize: TYPE.xxl, fontWeight: TYPE.bold, color: '#fff', marginBottom: 15, textAlign: 'center' },
   sectionTitle: { fontSize: TYPE.lg, fontWeight: TYPE.bold, color: '#fff', marginBottom: 8 },
-  text: { fontSize: TYPE.md, color: '#C0C0C0', lineHeight: 22, marginBottom: 12, textAlign: 'left', width: '100%' },
-  textSmall: { fontSize: TYPE.sm, color: '#888', lineHeight: 18, marginBottom: 15, textAlign: 'center' },
+  text: { fontSize: TYPE.md, color: '#D0D0D0', lineHeight: 22, marginBottom: 12, textAlign: 'left', width: '100%' },
+  textSmall: { fontSize: TYPE.sm, color: '#C8C8C8', lineHeight: 18, marginBottom: 15, textAlign: 'center' },
   bold: { fontWeight: TYPE.bold, color: '#fff' },
   link: { color: '#4A90D9', textDecorationLine: 'underline' },
-  divider: { width: '100%', height: 1, backgroundColor: '#2C2C2E', marginVertical: 10 },
+  divider: { width: '100%', height: 1, backgroundColor: 'rgba(46,46,72,0.45)', marginVertical: 10 },
   acceptButton: { paddingVertical: 14, paddingHorizontal: 40, borderRadius: 10, width: '100%', alignItems: 'center', marginTop: 5 },
   acceptButtonText: { color: '#fff', fontSize: TYPE.lg, fontWeight: TYPE.bold },
 });

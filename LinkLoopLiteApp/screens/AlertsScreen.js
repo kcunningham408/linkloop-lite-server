@@ -554,7 +554,7 @@ export default function AlertsScreen({ navigation }) {
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Status</Text>
                   <View style={[styles.statusBadge, {
-                    backgroundColor: (STATUS_CONFIG[detailAlert.status] || {}).bg || '#2C2C2E',
+                    backgroundColor: (STATUS_CONFIG[detailAlert.status] || {}).bg || '#2E2E48',
                   }]}>
                     <Text style={[styles.statusText, {
                       color: (STATUS_CONFIG[detailAlert.status] || {}).color || '#A0A0A0',
@@ -630,50 +630,40 @@ export default function AlertsScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111111' },
+  container: { flex: 1, backgroundColor: 'transparent' },
 
   content: { padding: 16 },
 
   // Check Button — subtle/secondary
   checkButton: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: 'rgba(10,18,40,0.94)',
     borderRadius: 14,
     padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#2C2C2E',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   checkButtonIcon: { fontSize: TYPE.xxl, marginRight: 12 },
-  checkButtonText: { fontSize: TYPE.md, fontWeight: TYPE.semibold, color: '#A0A0A0' },
-  checkButtonSub: { fontSize: 11, color: '#666', marginTop: 1 },
+  checkButtonText: { fontSize: TYPE.md, fontWeight: TYPE.semibold, color: 'rgba(255,255,255,0.70)' },
+  checkButtonSub: { fontSize: 11, color: 'rgba(255,255,255,0.40)', marginTop: 1 },
 
   // Settings shortcut button
   settingsButton: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: 'rgba(10,18,40,0.94)',
     borderRadius: 14,
     padding: 14,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#2C2C2E',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   settingsButtonIcon: { fontSize: TYPE.xxl, marginRight: 12 },
-  settingsButtonText: { fontSize: TYPE.md, fontWeight: TYPE.semibold, color: '#E0E0E0' },
-  settingsButtonSub: { fontSize: 11, color: '#666', marginTop: 1 },
-  settingsChevron: { fontSize: 24, color: '#555', marginLeft: 8 },
+  settingsButtonText: { fontSize: TYPE.md, fontWeight: TYPE.semibold, color: 'rgba(255,255,255,0.85)' },
+  settingsButtonSub: { fontSize: 11, color: 'rgba(255,255,255,0.40)', marginTop: 1 },
+  settingsChevron: { fontSize: 24, color: 'rgba(255,255,255,0.30)', marginLeft: 8 },
 
   // Filter
   filterRow: { flexDirection: 'row', marginBottom: 16, gap: 6 },
@@ -681,18 +671,13 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#1C1C1E',
+    backgroundColor: 'rgba(10,18,40,0.94)',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#2C2C2E',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   filterTabActive: { backgroundColor: '#4A90D9', borderColor: '#4A90D9' },
-  filterTabText: { fontSize: TYPE.sm, color: '#A0A0A0', fontWeight: TYPE.semibold },
+  filterTabText: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.55)', fontWeight: TYPE.semibold },
   filterTabTextActive: { color: '#fff' },
 
   // Section headers
@@ -705,30 +690,25 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { fontSize: TYPE.lg, fontWeight: TYPE.bold, color: '#fff' },
   sectionCount: {
-    backgroundColor: '#2C2C2E',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     paddingHorizontal: 10,
     paddingVertical: 2,
     borderRadius: 12,
     fontSize: 13,
     fontWeight: TYPE.semibold,
-    color: '#A0A0A0',
+    color: 'rgba(255,255,255,0.55)',
     overflow: 'hidden',
   },
 
   // Alert Card
   alertCard: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: 'rgba(10,18,40,0.94)',
     borderRadius: 14,
     padding: 16,
     marginBottom: 14,
     borderLeftWidth: 5,
     borderWidth: 1,
-    borderColor: '#2C2C2E',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   alertCardHeader: {
     flexDirection: 'row',
@@ -737,23 +717,23 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   alertTypeRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, marginRight: 8 },
-  alertTypeText: { fontSize: 15, fontWeight: TYPE.bold, color: '#fff', flexShrink: 1 },
+  alertTypeText: { fontSize: TYPE.lg, fontWeight: TYPE.bold, color: '#fff', flexShrink: 1 },
   severityBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
   severityText: { fontSize: TYPE.xs, fontWeight: TYPE.extrabold, letterSpacing: 0.3 },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-  statusText: { fontSize: 11, fontWeight: TYPE.bold },
+  statusText: { fontSize: TYPE.xs, fontWeight: TYPE.bold },
 
   // Glucose value
   glucoseRow: { flexDirection: 'row', alignItems: 'baseline', marginBottom: 8 },
   glucoseValue: { fontSize: TYPE.h1, fontWeight: TYPE.extrabold },
-  glucoseUnit: { fontSize: TYPE.md, color: '#888', marginLeft: 4 },
-  alertTime: { fontSize: TYPE.sm, color: '#666', marginLeft: 'auto' },
+  glucoseUnit: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.45)', marginLeft: 4 },
+  alertTime: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.40)', marginLeft: 'auto' },
 
-  alertMessage: { fontSize: TYPE.md, color: '#C0C0C0', lineHeight: 20, marginBottom: 14 },
+  alertMessage: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.55)', lineHeight: 20, marginBottom: 14 },
 
   // Acknowledgment section
   ackSection: {
-    backgroundColor: '#2C2C2E',
+    backgroundColor: 'rgba(255,255,255,0.04)',
     borderRadius: 10,
     padding: 12,
     marginBottom: 12,
@@ -761,14 +741,14 @@ const styles = StyleSheet.create({
   ackHeader: { marginBottom: 8 },
   ackTitle: { fontSize: 13, fontWeight: TYPE.bold, color: '#fff' },
   ackItem: {
-    backgroundColor: '#1A2E1A',
+    backgroundColor: 'rgba(26,46,26,0.5)',
     borderRadius: 8,
     padding: 10,
     marginBottom: 6,
   },
   ackName: { fontSize: 13, fontWeight: TYPE.bold, color: '#4CAF50' },
-  ackItemMsg: { fontSize: TYPE.sm, color: '#A0A0A0', fontStyle: 'italic', marginTop: 2 },
-  ackItemTime: { fontSize: TYPE.xs, color: '#666', marginTop: 3 },
+  ackItemMsg: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.55)', fontStyle: 'italic', marginTop: 2 },
+  ackItemTime: { fontSize: TYPE.xs, color: 'rgba(255,255,255,0.40)', marginTop: 3 },
   noAckText: { fontSize: 13, color: '#FF9800', fontStyle: 'italic', paddingVertical: 4 },
 
   // Action buttons
@@ -781,9 +761,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     alignItems: 'center',
   },
-  ackButtonText: { color: '#fff', fontSize: 15, fontWeight: TYPE.bold },
+  ackButtonText: { color: '#fff', fontSize: TYPE.lg, fontWeight: TYPE.bold },
   ackedBadge: {
-    backgroundColor: '#1A2E1A',
+    backgroundColor: 'rgba(26,46,26,0.5)',
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 20,
@@ -792,7 +772,7 @@ const styles = StyleSheet.create({
   ackedBadgeText: { color: '#4CAF50', fontSize: TYPE.md, fontWeight: TYPE.semibold },
   resolveButton: {
     flex: 1,
-    backgroundColor: '#1C1C1E',
+    backgroundColor: 'rgba(10,18,40,0.94)',
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 16,
@@ -803,7 +783,7 @@ const styles = StyleSheet.create({
   resolveButtonText: { color: '#4CAF50', fontSize: 13, fontWeight: TYPE.bold },
   snoozeButton: {
     flex: 1,
-    backgroundColor: '#1C1C1E',
+    backgroundColor: 'rgba(10,18,40,0.94)',
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 16,
@@ -817,43 +797,40 @@ const styles = StyleSheet.create({
   emptyState: { alignItems: 'center', paddingVertical: 40 },
   emptyEmoji: { fontSize: 50, marginBottom: 10 },
   emptyTitle: { fontSize: TYPE.xl, fontWeight: TYPE.bold, color: '#fff', marginBottom: 6 },
-  emptyText: { fontSize: TYPE.md, color: '#888', textAlign: 'center', lineHeight: 22 },
+  emptyText: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.55)', textAlign: 'center', lineHeight: 22 },
 
   // Info box
   infoBox: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: 'rgba(10,18,40,0.94)',
     borderRadius: 14,
     padding: 16,
     flexDirection: 'row',
     marginTop: 10,
     marginBottom: 30,
     borderWidth: 1,
-    borderColor: '#2C2C2E',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   infoIcon: { fontSize: TYPE.h2, marginRight: 12 },
   infoTitle: { fontSize: TYPE.md, fontWeight: TYPE.bold, color: '#fff', marginBottom: 6 },
-  infoText: { fontSize: 13, color: '#A0A0A0', lineHeight: 20 },
+  infoText: { fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 20 },
 
   // Modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'flex-end' },
   modalContent: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: 'rgba(10,18,40,0.96)',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 25,
     paddingBottom: 40,
     maxHeight: '85%',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   modalTitle: { fontSize: TYPE.xxl, fontWeight: TYPE.bold, color: '#fff', marginBottom: 16, textAlign: 'center' },
 
   // Ack modal
   ackModalAlert: {
-    backgroundColor: '#2A1A1A',
+    backgroundColor: 'rgba(42,26,26,0.5)',
     borderRadius: 12,
     padding: 14,
     alignItems: 'center',
@@ -861,28 +838,28 @@ const styles = StyleSheet.create({
   },
   ackModalAlertType: { fontSize: TYPE.md, fontWeight: TYPE.bold, color: '#FF6B6B', marginBottom: 4 },
   ackModalAlertValue: { fontSize: TYPE.h2, fontWeight: TYPE.extrabold, color: '#FF6B6B' },
-  ackModalLabel: { fontSize: TYPE.md, fontWeight: TYPE.semibold, color: '#E0E0E0', marginBottom: 12 },
+  ackModalLabel: { fontSize: TYPE.md, fontWeight: TYPE.semibold, color: 'rgba(255,255,255,0.85)', marginBottom: 12 },
 
   quickResponses: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
   quickChip: {
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 20,
-    backgroundColor: '#2C2C2E',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
-    borderColor: '#3A3A3C',
+    borderColor: 'rgba(255,255,255,0.10)',
   },
   quickChipActive: { backgroundColor: '#4A90D9', borderColor: '#4A90D9' },
-  quickChipText: { fontSize: 13, color: '#A0A0A0' },
+  quickChipText: { fontSize: 13, color: 'rgba(255,255,255,0.55)' },
   quickChipTextActive: { color: '#fff', fontWeight: TYPE.semibold },
 
   ackInput: {
-    backgroundColor: '#2C2C2E',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: 12,
     padding: 14,
-    fontSize: 15,
+    fontSize: TYPE.lg,
     borderWidth: 1,
-    borderColor: '#3A3A3C',
+    borderColor: 'rgba(255,255,255,0.10)',
     minHeight: 50,
     maxHeight: 100,
     textAlignVertical: 'top',
@@ -895,10 +872,12 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#2C2C2E',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.10)',
   },
-  cancelButtonText: { fontSize: TYPE.lg, color: '#A0A0A0', fontWeight: TYPE.semibold },
+  cancelButtonText: { fontSize: TYPE.lg, color: 'rgba(255,255,255,0.70)', fontWeight: TYPE.semibold },
   confirmAckButton: {
     flex: 2,
     paddingVertical: 14,
@@ -915,10 +894,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#2C2C2E',
+    borderBottomColor: 'rgba(255,255,255,0.06)',
   },
-  detailLabel: { fontSize: TYPE.md, color: '#888', fontWeight: TYPE.semibold },
-  detailValue: { fontSize: 15, color: '#fff', fontWeight: TYPE.semibold },
+  detailLabel: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.55)', fontWeight: TYPE.semibold },
+  detailValue: { fontSize: TYPE.lg, color: '#fff', fontWeight: TYPE.semibold },
 
   detailSectionTitle: {
     fontSize: TYPE.lg,
@@ -928,7 +907,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   detailAckItem: {
-    backgroundColor: '#1A2E1A',
+    backgroundColor: 'rgba(26,46,26,0.5)',
     borderRadius: 10,
     padding: 12,
     marginBottom: 8,
@@ -939,28 +918,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   detailAckName: { fontSize: TYPE.md, fontWeight: TYPE.bold, color: '#4CAF50', flex: 1, marginRight: 8 },
-  detailAckTime: { fontSize: 11, color: '#666', flexShrink: 0 },
+  detailAckTime: { fontSize: 11, color: 'rgba(255,255,255,0.40)', flexShrink: 0 },
   detailAckMsg: {
     fontSize: 13,
-    color: '#A0A0A0',
+    color: 'rgba(255,255,255,0.55)',
     fontStyle: 'italic',
     marginTop: 4,
     paddingLeft: 4,
   },
 
   noAckDetailBox: {
-    backgroundColor: '#2E2A1A',
+    backgroundColor: 'rgba(255,255,255,0.04)',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
   },
   noAckDetailIcon: { fontSize: 36, marginBottom: 8 },
-  noAckDetailText: { fontSize: 13, color: '#A0A0A0', textAlign: 'center', lineHeight: 20 },
+  noAckDetailText: { fontSize: 13, color: 'rgba(255,255,255,0.55)', textAlign: 'center', lineHeight: 20 },
 
   closeDetailButton: {
     marginTop: 16,
     paddingVertical: 14,
     alignItems: 'center',
   },
-  closeDetailButtonText: { fontSize: TYPE.lg, color: '#A0A0A0', fontWeight: TYPE.semibold },
+  closeDetailButtonText: { fontSize: TYPE.lg, color: 'rgba(255,255,255,0.70)', fontWeight: TYPE.semibold },
 });

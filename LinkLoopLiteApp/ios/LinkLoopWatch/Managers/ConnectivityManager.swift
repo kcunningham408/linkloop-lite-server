@@ -1,6 +1,8 @@
 import Foundation
 import WatchConnectivity
-import WidgetKit
+
+/// Darwin notification name for cross-process widget refresh
+let kGlucoseDataChangedNotification = "com.vibecmd.linkloop.glucoseChanged"
 
 class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     @Published var isPhoneReachable = false
@@ -11,6 +13,9 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
 
     private var retryCount = 0
     private let maxRetries = 5
+    private var persistentRetryWorkItem: DispatchWorkItem?
+
+    private let sharedDefaults = UserDefaults(suiteName: "group.com.vibecmd.linkloop.watch")
 
     func activate() {
         if WCSession.isSupported() {
@@ -18,6 +23,13 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
             session.delegate = self
             session.activate()
         }
+    }
+
+    /// Check if we already have a persisted token
+    func hasPersistedToken() -> Bool {
+        let standardToken = UserDefaults.standard.string(forKey: "linkloop_auth_token")
+        let appGroupToken = sharedDefaults?.string(forKey: "complication_authToken")
+        return (standardToken ?? appGroupToken) != nil
     }
 
     /// Call this from views to re-check for an existing context (safety net)
@@ -39,6 +51,7 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
         // First: check if there's already a received applicationContext with a token
         let context = WCSession.default.receivedApplicationContext
         if let token = context["authToken"] as? String, !token.isEmpty {
+            persistToken(token)
             DispatchQueue.main.async {
                 self.onTokenReceived?(token)
             }
@@ -47,10 +60,19 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
             return
         }
 
-        // Second: try real-time message if phone is reachable
+        // Second: check if token is already persisted from a previous session
+        if let savedToken = UserDefaults.standard.string(forKey: "linkloop_auth_token"), !savedToken.isEmpty {
+            DispatchQueue.main.async {
+                self.retryCount = 0
+                self.onTokenReceived?(savedToken)
+            }
+            return
+        }
+
+        // Third: try real-time message if phone is reachable
         guard WCSession.default.isReachable else {
-            // Phone not reachable — schedule a retry
-            scheduleRetry()
+            // Phone not reachable — schedule persistent retry with longer intervals
+            schedulePersistentRetry()
             return
         }
 
@@ -60,23 +82,57 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
                 if let token = reply["authToken"] as? String {
                     DispatchQueue.main.async {
                         self.retryCount = 0
+                        self.persistToken(token)
                         self.onTokenReceived?(token)
                     }
                 }
             },
             errorHandler: { error in
                 print("[Watch] Token request failed: \(error.localizedDescription)")
-                self.scheduleRetry()
+                self.schedulePersistentRetry()
             })
     }
 
-    private func scheduleRetry() {
-        guard retryCount < maxRetries else { return }
+    private func persistToken(_ token: String) {
+        UserDefaults.standard.set(token, forKey: "linkloop_auth_token")
+        sharedDefaults?.set(token, forKey: "complication_authToken")
+    }
+
+    private func schedulePersistentRetry() {
+        guard retryCount < maxRetries else {
+            // After initial burst, use longer retry intervals (every 30 seconds)
+            scheduleLongerRetry()
+            return
+        }
         retryCount += 1
         let delay = Double(retryCount) * 2.0  // 2s, 4s, 6s, 8s, 10s
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
             self?.requestToken()
         }
+    }
+
+    private func scheduleLongerRetry() {
+        // Cancel any existing persistent retry
+        persistentRetryWorkItem?.cancel()
+
+        let workItem = DispatchWorkItem { [weak self] in
+            guard let self = self else { return }
+            // Check if we have a token now
+            if WCSession.default.receivedApplicationContext["authToken"] != nil ||
+               UserDefaults.standard.string(forKey: "linkloop_auth_token") != nil {
+                self.requestToken()
+            } else {
+                // Schedule next retry
+                self.scheduleLongerRetry()
+            }
+        }
+        persistentRetryWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + 30.0, execute: workItem)
+    }
+
+    func cancelPersistentRetry() {
+        persistentRetryWorkItem?.cancel()
+        persistentRetryWorkItem = nil
     }
 
     private func applyThresholds(from context: [String: Any]) {
@@ -103,6 +159,13 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
         if let ownerId = linkedOwnerId {
             UserDefaults.standard.set(ownerId, forKey: "linkloop_linked_owner_id")
         }
+        // Persist to App Group so the Widget Extension can determine the correct API endpoint
+        if let defaults = UserDefaults(suiteName: "group.com.vibecmd.linkloop.watch") {
+            defaults.set(role, forKey: "complication_role")
+            if let ownerId = linkedOwnerId {
+                defaults.set(ownerId, forKey: "complication_linkedOwnerId")
+            }
+        }
         DispatchQueue.main.async {
             self.onRoleReceived?(role, linkedOwnerId)
         }
@@ -121,33 +184,48 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
             defaults.set(trend, forKey: "complication_trend")
 
             // Parse ISO timestamp to epoch for the complication
+            var readingDate: Date? = nil
             if !timestamp.isEmpty {
                 let formatter = ISO8601DateFormatter()
                 formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
                 if let date = formatter.date(from: timestamp) {
                     defaults.set(date.timeIntervalSince1970, forKey: "complication_timestamp")
+                    readingDate = date
                 } else {
                     // Try without fractional seconds
                     formatter.formatOptions = [.withInternetDateTime]
                     if let date = formatter.date(from: timestamp) {
                         defaults.set(date.timeIntervalSince1970, forKey: "complication_timestamp")
+                        readingDate = date
                     }
                 }
             } else {
                 // No timestamp from server — use current time
                 defaults.set(Date().timeIntervalSince1970, forKey: "complication_timestamp")
+                readingDate = Date()
             }
+            
+            // Log what's being persisted for debugging
+            print("[Watch] Persisting for complication: glucose=\(value), trend=\(trend), timestamp=\(timestamp), readingDate=\(readingDate?.description ?? "nil")")
+            print("[Watch] SharedDefaults keys now: glucose=\(defaults.object(forKey: "complication_glucose") ?? "nil"), trend=\(defaults.string(forKey: "complication_trend") ?? "nil")")
         }
 
-        // Tell WidgetKit to refresh complications
-        WidgetCenter.shared.reloadAllTimelines()
-
-        // Notify GlucoseManager to update the in-app display too
+        // Notify GlucoseManager - it will handle widget reload via persistForComplication()
         DispatchQueue.main.async {
             self.onGlucoseReceived?(value, trend, timestamp)
         }
 
         print("[Watch] Received glucose push: \(value) \(trend)")
+        
+        // Send Darwin notification to wake widget extension
+        let notificationName = kGlucoseDataChangedNotification as CFString
+        CFNotificationCenterPostNotification(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            CFNotificationName(notificationName),
+            nil,
+            nil,
+            true
+        )
     }
 
     // MARK: - WCSessionDelegate
@@ -177,9 +255,13 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     func session(
         _ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]
     ) {
+        // Cancel any pending retries since we got context
+        cancelPersistentRetry()
+        retryCount = 0
+
         if let token = applicationContext["authToken"] as? String {
+            persistToken(token)
             DispatchQueue.main.async {
-                self.retryCount = 0
                 self.onTokenReceived?(token)
             }
         }
@@ -204,6 +286,8 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
         print("[Watch] Received userInfo: \(userInfo.keys.joined(separator: ", "))")
         if userInfo["glucoseValue"] != nil {
             applyGlucose(from: userInfo)
+        } else {
+            print("[Watch] userInfo had no glucoseValue - keys: \(userInfo)")
         }
     }
 

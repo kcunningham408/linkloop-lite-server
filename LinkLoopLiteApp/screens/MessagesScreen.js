@@ -186,7 +186,7 @@ export default function MessagesScreen({ navigation }) {
               >
                 <LinearGradient colors={['#34C759', '#30D158']} style={styles.accentStripe} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} />
                 <View style={[styles.avatarRing, { borderColor: '#34C75950' }]}>
-                  <View style={[styles.avatar, { backgroundColor: '#1A2A44' }]}>
+                  <View style={[styles.avatar, { backgroundColor: 'rgba(26,42,68,0.45)' }]}>
                     <Text style={styles.avatarEmoji}>👥</Text>
                   </View>
                 </View>
@@ -242,19 +242,19 @@ export default function MessagesScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111111',
+    backgroundColor: 'transparent',
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 30,
-    backgroundColor: '#111111',
+    backgroundColor: 'transparent',
   },
   loadingText: {
     marginTop: 12,
     fontSize: TYPE.md,
-    color: '#888',
+    color: '#C8C8C8',
   },
   errorEmoji: {
     fontSize: 40,
@@ -283,16 +283,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: 12,
     marginVertical: 5,
-    backgroundColor: '#1C1C1E',
+    backgroundColor: 'rgba(10,18,40,0.94)',
     borderRadius: 14,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#2C2C2E',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
+    borderColor: 'rgba(255,255,255,0.08)',
     overflow: 'hidden',
   },
   accentStripe: {
@@ -317,7 +312,7 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: '#252528',
+    backgroundColor: 'rgba(37,37,40,0.45)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -342,12 +337,12 @@ const styles = StyleSheet.create({
   },
   timestamp: {
     fontSize: TYPE.xs,
-    color: '#666',
+    color: 'rgba(255,255,255,0.40)',
     fontWeight: TYPE.medium,
   },
   lastMessage: {
     fontSize: TYPE.sm,
-    color: '#A0A0A0',
+    color: 'rgba(255,255,255,0.55)',
     lineHeight: 18,
     marginBottom: 6,
   },
@@ -365,7 +360,7 @@ const styles = StyleSheet.create({
   },
   chevron: {
     fontSize: TYPE.xxl,
-    color: '#444',
+    color: 'rgba(255,255,255,0.30)',
     marginLeft: 6,
     fontWeight: '300',
   },
@@ -398,7 +393,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: TYPE.md,
-    color: '#888',
+    color: 'rgba(255,255,255,0.55)',
     textAlign: 'center',
     lineHeight: 22,
   },

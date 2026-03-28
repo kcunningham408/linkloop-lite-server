@@ -92,6 +92,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  // APNs push token for Apple Watch sync
+  watchPushToken: {
+    type: String,
+    default: null
+  },
   // IANA timezone string (e.g. "America/Los_Angeles") — sent alongside push token
   timezone: {
     type: String,

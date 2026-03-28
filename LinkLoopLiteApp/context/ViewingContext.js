@@ -34,8 +34,8 @@ export function ViewingProvider({ children }) {
   // Whether this user has their own warrior data (warrior or hybrid)
   const hasOwnData = ['warrior', 'hybrid'].includes(user?.role);
 
-  // The tabs this user should see — member tabs when viewing another, warrior tabs for own data
-  const showMemberTabs = isViewingOther || (user?.role === 'member' && !!user?.activeViewingId);
+  // The tabs this user should see — member tabs when viewing another or when role is member
+  const showMemberTabs = isViewingOther || user?.role === 'member';
 
   // Initialize from server state
   useEffect(() => {

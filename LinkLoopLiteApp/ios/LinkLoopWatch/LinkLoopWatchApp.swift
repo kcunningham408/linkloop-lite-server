@@ -1,4 +1,5 @@
 import SwiftUI
+import WatchKit
 import WidgetKit
 
 @main
@@ -15,9 +16,11 @@ struct LinkLoopWatchApp: App {
                 .environmentObject(connectivityManager)
                 .environmentObject(healthKitRelay)
                 .onAppear {
+                    // Wire relay reference so GlucoseManager can trigger uploads
+                    glucoseManager.healthKitRelay = healthKitRelay
+
                     connectivityManager.onTokenReceived = { token in
                         glucoseManager.setAuthToken(token)
-                        // Also give the HealthKit relay the token
                         healthKitRelay.setAuthToken(token)
                     }
                     connectivityManager.onThresholdsReceived = { low, high in
@@ -26,51 +29,52 @@ struct LinkLoopWatchApp: App {
                     }
                     connectivityManager.onRoleReceived = { role, linkedOwnerId in
                         glucoseManager.setRole(role, linkedOwnerId: linkedOwnerId)
-                        // Start HealthKit relay only for warriors
                         if role == "warrior" {
-                            startHealthKitRelayIfReady()
+                            startHealthKitRelay()
                         }
                     }
                     connectivityManager.onGlucoseReceived = { value, trend, timestamp in
-                        // iPhone pushed fresh glucose — update the in-app display
+                        // Supplementary channel — GlucoseManager ignores if HealthKit is fresh
                         glucoseManager.applyPushedGlucose(value: value, trend: trend, timestamp: timestamp)
                     }
                     connectivityManager.activate()
 
                     // Safety net: re-check context after a short delay
-                    // in case activationDidComplete fired before callbacks were wired
                     DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
                         if !glucoseManager.isConnected {
                             connectivityManager.recheckContext()
                         }
                     }
 
-                    // If already connected (saved token), start relay for warriors
-                    if glucoseManager.isConnected && glucoseManager.userRole == "warrior" {
-                        healthKitRelay.setAuthToken(
-                            UserDefaults.standard.string(forKey: "linkloop_auth_token") ?? ""
-                        )
-                        startHealthKitRelayIfReady()
+                    // If already connected (saved token), start appropriate data source
+                    if glucoseManager.isConnected {
+                        if glucoseManager.userRole == "warrior" {
+                            healthKitRelay.setAuthToken(
+                                UserDefaults.standard.string(forKey: "linkloop_auth_token") ?? ""
+                            )
+                            startHealthKitRelay()
+                        }
+                        glucoseManager.ensureActiveDataSource()
                     }
                 }
                 .onChange(of: scenePhase) { newPhase in
                     if newPhase == .active {
-                        // Refresh immediately when Watch app comes to foreground (wrist raise, tap)
                         if glucoseManager.isConnected {
-                            Task { await glucoseManager.refreshAll() }
+                            // Restart the observer/timer — it may have been
+                            // invalidated or stalled while the app was suspended.
+                            glucoseManager.ensureActiveDataSource()
                         }
-                        // Also re-check for any pending WCSession context
                         connectivityManager.recheckContext()
                     }
                 }
         }
     }
 
-    private func startHealthKitRelayIfReady() {
+    private func startHealthKitRelay() {
         Task {
             let authorized = await healthKitRelay.requestAuthorization()
             if authorized {
-                healthKitRelay.startRelay()
+                healthKitRelay.isRelaying = true
             }
         }
     }

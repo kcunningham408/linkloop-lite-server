@@ -1,9 +1,9 @@
 import Foundation
 import HealthKit
 
-/// Reads blood glucose samples from HealthKit (written by Dexcom G7 or other CGMs)
-/// and relays them to the LinkLoop server. Designed for Watch-only scenarios where
-/// the warrior's iPhone is not nearby (e.g. kid at playground with cellular Watch).
+/// Uploads blood glucose samples from HealthKit to the LinkLoop server.
+/// Triggered by GlucoseManager's HealthKit observer — no longer uses its own timer.
+/// Designed for Watch-only scenarios where the warrior's iPhone is not nearby.
 @MainActor
 class HealthKitRelayManager: ObservableObject {
     @Published var isAuthorized = false
@@ -21,9 +21,6 @@ class HealthKitRelayManager: ObservableObject {
             }
         }
     }
-
-    private var relayTimer: Timer?
-    private let relayInterval: TimeInterval = 300  // 5 minutes
 
     // Track last uploaded sample date to avoid duplicates
     private var lastUploadedSampleDate: Date {
@@ -52,22 +49,15 @@ class HealthKitRelayManager: ObservableObject {
     // MARK: - HealthKit Authorization
 
     func requestAuthorization() async -> Bool {
-        guard HKHealthStore.isHealthDataAvailable() else {
-            print("[HealthKitRelay] HealthKit not available on this device")
-            return false
-        }
+        guard HKHealthStore.isHealthDataAvailable() else { return false }
 
         guard let glucoseType = HKQuantityType.quantityType(forIdentifier: .bloodGlucose) else {
-            print("[HealthKitRelay] Blood glucose type not available")
             return false
         }
 
-        let typesToRead: Set<HKSampleType> = [glucoseType]
-
         do {
-            try await healthStore.requestAuthorization(toShare: [], read: typesToRead)
+            try await healthStore.requestAuthorization(toShare: [], read: [glucoseType])
             isAuthorized = true
-            print("[HealthKitRelay] HealthKit authorization granted")
             return true
         } catch {
             print("[HealthKitRelay] HealthKit authorization failed: \(error)")
@@ -75,61 +65,15 @@ class HealthKitRelayManager: ObservableObject {
         }
     }
 
-    // MARK: - Start / Stop Relay
+    // MARK: - Fetch & Upload (called by GlucoseManager when HealthKit observer fires)
 
-    func startRelay() {
-        guard authToken != nil else {
-            print("[HealthKitRelay] No auth token, cannot start relay")
-            return
-        }
-
-        guard isAuthorized else {
-            print("[HealthKitRelay] Not authorized, requesting...")
-            Task {
-                let granted = await requestAuthorization()
-                if granted {
-                    startRelayTimer()
-                }
-            }
-            return
-        }
-
-        startRelayTimer()
-    }
-
-    func stopRelay() {
-        relayTimer?.invalidate()
-        relayTimer = nil
-        isRelaying = false
-        print("[HealthKitRelay] Relay stopped")
-    }
-
-    private func startRelayTimer() {
-        stopRelay()
-        isRelaying = true
-        print("[HealthKitRelay] Relay started (every \(Int(relayInterval))s)")
-
-        // Fetch immediately on start
-        Task { await fetchAndUpload() }
-
-        // Then fetch on interval
-        relayTimer = Timer.scheduledTimer(withTimeInterval: relayInterval, repeats: true) {
-            [weak self] _ in
-            Task { @MainActor [weak self] in
-                await self?.fetchAndUpload()
-            }
-        }
-    }
-
-    // MARK: - Fetch & Upload
-
-    private func fetchAndUpload() async {
+    func fetchAndUpload() async {
+        guard authToken != nil else { return }
         guard let glucoseType = HKQuantityType.quantityType(forIdentifier: .bloodGlucose) else {
             return
         }
 
-        // Query samples newer than our last upload (with a small overlap for safety)
-        let startDate = lastUploadedSampleDate.addingTimeInterval(-60)  // 1 min overlap
+        let startDate = lastUploadedSampleDate.addingTimeInterval(-60)
         let predicate = HKQuery.predicateForSamples(
             withStart: startDate,
             end: Date(),
@@ -150,36 +94,23 @@ class HealthKitRelayManager: ObservableObject {
                         continuation.resume(throwing: error)
                         return
                     }
-                    let samples = (results as? [HKQuantitySample]) ?? []
-                    continuation.resume(returning: samples)
+                    continuation.resume(returning: (results as? [HKQuantitySample]) ?? [])
                 }
                 healthStore.execute(query)
             }
 
-            guard !samples.isEmpty else {
-                print("[HealthKitRelay] No new samples to upload")
-                return
-            }
-
-            // Filter out samples we've already uploaded (strictly newer than last upload)
             let newSamples = samples.filter { $0.startDate > lastUploadedSampleDate }
+            guard !newSamples.isEmpty else { return }
 
-            guard !newSamples.isEmpty else {
-                print("[HealthKitRelay] All samples already uploaded")
-                return
-            }
-
-            print("[HealthKitRelay] Found \(newSamples.count) new glucose sample(s)")
+            print("[HealthKitRelay] Found \(newSamples.count) new sample(s) to upload")
 
             var latestDate = lastUploadedSampleDate
 
             for sample in newSamples {
-                // Blood glucose in mg/dL
                 let mgdL = sample.quantity.doubleValue(for: HKUnit(from: "mg/dL"))
                 let value = Int(round(mgdL))
                 let timestamp = sample.startDate
 
-                // Determine source (Dexcom vs other CGM)
                 let sourceName = sample.sourceRevision.source.name.lowercased()
                 let source: String
                 if sourceName.contains("dexcom") {
@@ -203,7 +134,6 @@ class HealthKitRelayManager: ObservableObject {
                 }
             }
 
-            // Update watermark
             if latestDate > lastUploadedSampleDate {
                 lastUploadedSampleDate = latestDate
                 lastRelayedDate = latestDate
@@ -217,7 +147,7 @@ class HealthKitRelayManager: ObservableObject {
 
     private func uploadReading(value: Int, source: String, timestamp: Date) async -> Bool {
         guard let token = authToken,
-            let url = URL(string: "\(baseURL)/glucose")
+              let url = URL(string: "\(baseURL)/glucose")
         else { return false }
 
         var request = URLRequest(url: url)
@@ -229,14 +159,13 @@ class HealthKitRelayManager: ObservableObject {
         let body: [String: Any] = [
             "value": value,
             "source": source,
-            "trend": "stable",  // HealthKit doesn't provide trend, server/app can infer later
+            "trend": "stable",
             "notes": "Watch HealthKit relay",
         ]
 
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
         } catch {
-            print("[HealthKitRelay] Failed to encode body: \(error)")
             return false
         }
 
@@ -247,14 +176,8 @@ class HealthKitRelayManager: ObservableObject {
                     print("[HealthKitRelay] Uploaded \(value) mg/dL (\(source))")
                     return true
                 } else if httpResponse.statusCode == 409 {
-                    // Duplicate — already exists, that's fine
-                    print("[HealthKitRelay] Duplicate skipped: \(value) mg/dL")
-                    return true
+                    return true // Duplicate, that's fine
                 } else if httpResponse.statusCode == 401 {
-                    print("[HealthKitRelay] Auth expired")
-                    return false
-                } else {
-                    print("[HealthKitRelay] Upload failed with status \(httpResponse.statusCode)")
                     return false
                 }
             }

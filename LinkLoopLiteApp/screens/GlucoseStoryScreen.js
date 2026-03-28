@@ -16,7 +16,7 @@ import { insightsAPI } from '../services/api';
 const QUALITY_COLORS = {
   great: { bg: '#1A2E1A', border: '#4CAF50', text: '#4CAF50', label: 'Great' },
   good: { bg: '#1E2E1A', border: '#8BC34A', text: '#8BC34A', label: 'Good' },
-  mixed: { bg: '#2E2A1A', border: '#FFA500', text: '#FFA500', label: 'Mixed' },
+  mixed: { bg: '#2A1E2E', border: '#FF7B93', text: '#FF7B93', label: 'Mixed' },
   tough: { bg: '#2E1A1A', border: '#FF6B6B', text: '#FF6B6B', label: 'Tough' },
 };
 
@@ -97,12 +97,12 @@ export default function GlucoseStoryScreen() {
                     </View>
                     <View style={styles.overviewDivider} />
                     <View style={styles.overviewStat}>
-                      <Text style={[styles.overviewStatValue, { color: '#FFA500' }]}>{story.avg}</Text>
+                      <Text style={[styles.overviewStatValue, { color: '#FF7B93' }]}>{story.avg}</Text>
                       <Text style={styles.overviewStatLabel}>Avg mg/dL</Text>
                     </View>
                     <View style={styles.overviewDivider} />
                     <View style={styles.overviewStat}>
-                      <Text style={[styles.overviewStatValue, { color: '#888' }]}>{story.readingCount}</Text>
+                      <Text style={[styles.overviewStatValue, { color: '#C8C8C8' }]}>{story.readingCount}</Text>
                       <Text style={styles.overviewStatLabel}>Readings</Text>
                     </View>
                   </View>
@@ -170,7 +170,7 @@ export default function GlucoseStoryScreen() {
                           <Text style={styles.blockStatLabel}>TIR</Text>
                         </View>
                         <View style={styles.blockStatItem}>
-                          <Text style={[styles.blockStatValue, { color: '#FFA500' }]}>{block.stats.avg}</Text>
+                          <Text style={[styles.blockStatValue, { color: '#FF7B93' }]}>{block.stats.avg}</Text>
                           <Text style={styles.blockStatLabel}>Avg</Text>
                         </View>
                         <View style={styles.blockStatItem}>
@@ -228,25 +228,25 @@ export default function GlucoseStoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0A0A0F' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   content: { padding: 16, paddingBottom: 40 },
 
   // Loading / Empty
   loadingBox: { alignItems: 'center', paddingVertical: 60 },
-  loadingText: { fontSize: TYPE.md, color: '#888', marginTop: 15 },
+  loadingText: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.45)', marginTop: 15 },
   emptyState: { alignItems: 'center', paddingVertical: 60 },
   emptyEmoji: { fontSize: 60, marginBottom: 15 },
   emptyTitle: { fontSize: TYPE.xxl, fontWeight: TYPE.bold, color: '#fff', marginBottom: 8 },
-  emptyText: { fontSize: TYPE.md, color: '#888', textAlign: 'center', lineHeight: 22, paddingHorizontal: 20 },
+  emptyText: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.55)', textAlign: 'center', lineHeight: 22, paddingHorizontal: 20 },
 
   // Overview
   overviewCard: { alignItems: 'center', paddingVertical: 8 },
   overviewTitle: { fontSize: TYPE.h2, fontWeight: TYPE.bold, color: '#fff', marginBottom: 4 },
-  overviewDate: { fontSize: TYPE.md, color: '#888', marginBottom: 16 },
+  overviewDate: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.45)', marginBottom: 16 },
   overviewStats: { flexDirection: 'row', alignItems: 'center' },
   overviewStat: { flex: 1, alignItems: 'center' },
   overviewStatValue: { fontSize: TYPE.h2, fontWeight: TYPE.bold },
-  overviewStatLabel: { fontSize: TYPE.xs, color: '#888', marginTop: 4 },
+  overviewStatLabel: { fontSize: TYPE.xs, color: 'rgba(255,255,255,0.45)', marginTop: 4 },
   overviewDivider: { width: 1, height: 30, backgroundColor: 'rgba(255,255,255,0.1)' },
 
   // Timeline
@@ -254,31 +254,31 @@ const styles = StyleSheet.create({
 
   blockWrapper: { position: 'relative', marginLeft: 20, paddingLeft: 24, marginBottom: 16 },
   timelineConnector: { position: 'absolute', left: 6, top: -16, width: 2, height: 16, backgroundColor: 'rgba(255,255,255,0.1)' },
-  timelineDot: { position: 'absolute', left: 0, top: 16, width: 14, height: 14, borderRadius: 7, backgroundColor: '#444', borderWidth: 2, borderColor: '#0A0A0F' },
+  timelineDot: { position: 'absolute', left: 0, top: 16, width: 14, height: 14, borderRadius: 7, backgroundColor: '#4A4A66', borderWidth: 2, borderColor: '#141422' },
 
   // Block card
-  blockCard: { borderRadius: 14, padding: 16, borderLeftWidth: 4, borderLeftColor: '#444' },
-  blockCardInactive: { backgroundColor: 'rgba(255,255,255,0.03)', borderLeftColor: '#333' },
+  blockCard: { borderRadius: 14, padding: 16, borderLeftWidth: 4, borderLeftColor: '#4A4A66' },
+  blockCardInactive: { backgroundColor: 'rgba(10,18,40,0.60)', borderLeftColor: '#333' },
   blockHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
   blockEmoji: { fontSize: TYPE.h3, marginRight: 8 },
   blockLabel: { fontSize: TYPE.lg, fontWeight: TYPE.bold, color: '#fff', flex: 1 },
   qualityBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 12 },
   qualityBadgeText: { fontSize: TYPE.xs, fontWeight: TYPE.bold },
-  blockInactiveText: { fontSize: TYPE.sm, color: '#555' },
+  blockInactiveText: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.40)' },
 
   // Narrative
-  blockNarrative: { fontSize: TYPE.md, color: '#C0C0C0', lineHeight: 22, marginBottom: 12, fontStyle: 'italic' },
+  blockNarrative: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.55)', lineHeight: 22, marginBottom: 12, fontStyle: 'italic' },
 
   // Block stats
   blockStats: { flexDirection: 'row', marginBottom: 10 },
   blockStatItem: { flex: 1, alignItems: 'center' },
-  blockStatValue: { fontSize: TYPE.lg, fontWeight: TYPE.bold, color: '#B0B0B0' },
-  blockStatLabel: { fontSize: TYPE.xs, color: '#666', marginTop: 2 },
+  blockStatValue: { fontSize: TYPE.lg, fontWeight: TYPE.bold, color: 'rgba(255,255,255,0.40)' },
+  blockStatLabel: { fontSize: TYPE.xs, color: 'rgba(255,255,255,0.40)', marginTop: 2 },
 
   // Mood
   moodRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 },
   moodChip: { backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5 },
-  moodChipText: { fontSize: TYPE.xs, color: '#B0B0B0' },
+  moodChipText: { fontSize: TYPE.xs, color: 'rgba(255,255,255,0.40)' },
 
   // TIR bar
   blockBarBg: { height: 4, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 2 },
@@ -287,5 +287,5 @@ const styles = StyleSheet.create({
   // Disclaimer
   disclaimerRow: { flexDirection: 'row', alignItems: 'flex-start' },
   disclaimerIcon: { fontSize: TYPE.xxl, marginRight: 10, marginTop: 2 },
-  disclaimerText: { flex: 1, fontSize: TYPE.sm, color: '#888', lineHeight: 18 },
+  disclaimerText: { flex: 1, fontSize: TYPE.sm, color: 'rgba(255,255,255,0.45)', lineHeight: 18 },
 });

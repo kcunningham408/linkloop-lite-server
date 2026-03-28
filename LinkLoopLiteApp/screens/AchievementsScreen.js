@@ -30,7 +30,9 @@ export default function AchievementsScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { getAccent } = useTheme();
-  const accent = getAccent(user?.role === 'member');
+  const isMember = user?.role === 'member';
+  const accent = getAccent(isMember);
+  const warriorName = user?.linkedOwnerName || 'Warrior';
 
   const [achievements, setAchievements] = useState([]);
   const [stats, setStats] = useState(null);
@@ -105,7 +107,7 @@ export default function AchievementsScreen() {
       {/* Header */}
       <ScreenHeader
         title="Achievements"
-        subtitle="Celebrate your T1D wins — every reading counts 🏆"
+        subtitle={isMember ? `${warriorName}'s badges & milestones 🏆` : 'Celebrate your T1D wins — every reading counts 🏆'}
       />
 
       <View style={styles.content}>
@@ -118,7 +120,7 @@ export default function AchievementsScreen() {
             <View style={styles.progressCard}>
               <View style={styles.progressHeader}>
                 <View>
-                  <Text style={styles.progressTitle}>Your Progress</Text>
+                  <Text style={styles.progressTitle}>{isMember ? `${warriorName}'s Progress` : 'Your Progress'}</Text>
                   <Text style={styles.progressSubtitle}>{unlockedCount} of {totalCount} badges earned</Text>
                 </View>
                 <View style={[styles.progressCircle, { borderColor: accent }]}>
@@ -218,8 +220,9 @@ export default function AchievementsScreen() {
             <View style={styles.infoCard}>
               <Text style={styles.infoIcon}>💡</Text>
               <Text style={styles.infoText}>
-                Badges are earned by logging glucose readings, staying in range, tracking your mood, 
-                and using LinkLoop consistently. Keep going — every check-in counts!
+                {isMember
+                  ? `Watch ${warriorName} earn badges for logging glucose readings, staying in range, and using LinkLoop consistently!`
+                  : 'Badges are earned by logging glucose readings, staying in range, tracking your mood, and using LinkLoop consistently. Keep going — every check-in counts!'}
               </Text>
             </View>
             </FadeIn>
@@ -231,23 +234,18 @@ export default function AchievementsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111111' },
+  container: { flex: 1, backgroundColor: 'transparent' },
 
   content: { padding: 20 },
 
   // Progress Card
   progressCard: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: 'rgba(10,18,40,0.94)',
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#2C2C2E',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   progressHeader: {
     flexDirection: 'row',
@@ -256,12 +254,12 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   progressTitle: { fontSize: TYPE.xl, fontWeight: TYPE.bold, color: '#fff' },
-  progressSubtitle: { fontSize: 13, color: '#A0A0A0', marginTop: 3 },
+  progressSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.55)', marginTop: 3 },
   progressCircle: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#1A2235',
+    backgroundColor: 'rgba(26,34,53,0.4)',
     borderWidth: 3,
     borderColor: '#4A90D9',
     justifyContent: 'center',
@@ -270,7 +268,7 @@ const styles = StyleSheet.create({
   progressPct: { fontSize: TYPE.lg, fontWeight: TYPE.bold, color: '#4A90D9' },
   progressBarBg: {
     height: 10,
-    backgroundColor: '#2C2C2E',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: 5,
     overflow: 'hidden',
     marginBottom: 15,
@@ -286,11 +284,11 @@ const styles = StyleSheet.create({
   },
   quickStatItem: { alignItems: 'center' },
   quickStatValue: { fontSize: TYPE.xl, fontWeight: TYPE.bold, color: '#4A90D9' },
-  quickStatLabel: { fontSize: TYPE.xs, color: '#888', marginTop: 3 },
+  quickStatLabel: { fontSize: TYPE.xs, color: 'rgba(255,255,255,0.45)', marginTop: 3 },
 
   // Check Button
   checkButton: {
-    backgroundColor: '#1A2235',
+    backgroundColor: 'rgba(26,34,53,0.4)',
     borderRadius: 12,
     padding: 16,
     flexDirection: 'row',
@@ -300,13 +298,13 @@ const styles = StyleSheet.create({
     borderColor: '#2A3A50',
   },
   checkButtonIcon: { fontSize: TYPE.h3, marginRight: 12 },
-  checkButtonText: { fontSize: 15, fontWeight: TYPE.bold, color: '#fff' },
-  checkButtonSub: { fontSize: TYPE.sm, color: '#A0A0A0', marginTop: 2 },
+  checkButtonText: { fontSize: TYPE.lg, fontWeight: TYPE.bold, color: '#fff' },
+  checkButtonSub: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.55)', marginTop: 2 },
 
   // Categories
   categorySection: { marginBottom: 25 },
   categoryTitle: { fontSize: TYPE.xl, fontWeight: TYPE.bold, color: '#fff', marginBottom: 4 },
-  categoryDesc: { fontSize: TYPE.sm, color: '#888', marginBottom: 12 },
+  categoryDesc: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.45)', marginBottom: 12 },
 
   // Badge Grid
   badgeGrid: {
@@ -328,23 +326,23 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   badgeUnlocked: {
-    backgroundColor: '#1A2235',
+    backgroundColor: 'rgba(26,34,53,0.4)',
     borderColor: '#4A90D9',
   },
   badgeLocked: {
-    backgroundColor: '#1C1C1E',
-    borderColor: '#2C2C2E',
+    backgroundColor: 'rgba(10,18,40,0.94)',
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   badgeEmoji: { fontSize: TYPE.h1, marginBottom: 6 },
-  badgeEmojiLocked: { opacity: 0.4 },
-  badgeTitle: { fontSize: 13, fontWeight: TYPE.bold, color: '#fff', textAlign: 'center', marginBottom: 4 },
-  badgeTitleLocked: { color: '#666' },
-  badgeDesc: { fontSize: 11, color: '#888', textAlign: 'center', lineHeight: 15 },
+  badgeEmojiLocked: { opacity: 0.6 },
+  badgeTitle: { fontSize: TYPE.sm, fontWeight: TYPE.bold, color: '#fff', textAlign: 'center', marginBottom: 4 },
+  badgeTitleLocked: { color: 'rgba(255,255,255,0.40)' },
+  badgeDesc: { fontSize: TYPE.xs, color: 'rgba(255,255,255,0.45)', textAlign: 'center', lineHeight: 15 },
   badgeDate: { fontSize: TYPE.xs, color: '#4A90D9', marginTop: 6 },
 
   // Info Card
   infoCard: {
-    backgroundColor: '#1A2235',
+    backgroundColor: 'rgba(26,34,53,0.4)',
     borderRadius: 12,
     padding: 15,
     flexDirection: 'row',
@@ -353,6 +351,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#2A3A50',
   },
-  infoIcon: { fontSize: 20, marginRight: 12, marginTop: 2 },
-  infoText: { flex: 1, fontSize: 13, color: '#A0A0A0', lineHeight: 19 },
+  infoIcon: { fontSize: TYPE.xl, marginRight: 12, marginTop: 2 },
+  infoText: { flex: 1, fontSize: TYPE.sm, color: 'rgba(255,255,255,0.55)', lineHeight: 19 },
 });

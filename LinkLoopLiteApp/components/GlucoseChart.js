@@ -114,7 +114,7 @@ export default function GlucoseChart({
   // Color for a glucose value
   const dotColor = (val) => {
     if (val < lowThreshold) return '#FF6B6B';
-    if (val > highThreshold) return '#FFA500';
+    if (val > highThreshold) return '#FF7B93';
     return accentColor;
   };
 
@@ -159,15 +159,15 @@ export default function GlucoseChart({
 
         {/* Threshold lines */}
         <SvgLine x1={PADDING.left} y1={highY} x2={PADDING.left + chartW} y2={highY}
-          stroke="#FFA500" strokeWidth={1} strokeDasharray="6,4" opacity={0.5} />
+          stroke="#FF7B93" strokeWidth={1} strokeDasharray="6,4" opacity={0.7} />
         <SvgLine x1={PADDING.left} y1={lowY} x2={PADDING.left + chartW} y2={lowY}
-          stroke="#FF6B6B" strokeWidth={1} strokeDasharray="6,4" opacity={0.5} />
+          stroke="#FF6B6B" strokeWidth={1} strokeDasharray="6,4" opacity={0.7} />
 
         {/* Y-axis labels */}
-        <SvgText x={PADDING.left - 6} y={highY + 4} fontSize={10} fill="#FFA500" textAnchor="end" opacity={0.7}>
+        <SvgText x={PADDING.left - 6} y={highY + 4} fontSize={10} fill="#FF7B93" textAnchor="end" opacity={0.85}>
           {highThreshold}
         </SvgText>
-        <SvgText x={PADDING.left - 6} y={lowY + 4} fontSize={10} fill="#FF6B6B" textAnchor="end" opacity={0.7}>
+        <SvgText x={PADDING.left - 6} y={lowY + 4} fontSize={10} fill="#FF6B6B" textAnchor="end" opacity={0.85}>
           {lowThreshold}
         </SvgText>
 
@@ -202,7 +202,7 @@ export default function GlucoseChart({
             x={t.x}
             y={height - 6}
             fontSize={9}
-            fill="#666"
+            fill="#999"
             textAnchor="middle"
           >
             {t.label}
@@ -214,7 +214,7 @@ export default function GlucoseChart({
 }
 
 const styles = StyleSheet.create({
-  empty: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#1A1A1C' },
+  empty: { alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(26,26,28,0.45)' },
   emptyEmoji: { fontSize: 36, marginBottom: 8 },
-  emptyText: { fontSize: 14, color: '#666' },
+  emptyText: { fontSize: 14, color: '#B0B0B0' },
 });

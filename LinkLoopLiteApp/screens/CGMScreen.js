@@ -1,11 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, AppState, Dimensions, Modal, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import BloomBackground from '../components/BloomBackground';
-import GlassCard from '../components/GlassCard';
-import GlucoseChart from '../components/GlucoseChart';
-import GlucoseRing from '../components/GlucoseRing';
-import StatArc from '../components/StatArc';
 import { FadeIn, stagger } from '../config/animations';
 import { haptic } from '../config/haptics';
 import TYPE from '../config/typography';
@@ -235,7 +230,7 @@ export default function CGMScreen({ navigation }) {
   const getGlucoseColor = (value) => {
     if (!value) return accent;
     if (value < lowThreshold) return '#FF6B6B';
-    if (value > highThreshold) return '#FFA500';
+    if (value > highThreshold) return '#FF7B93';
     return accent;
   };
 
@@ -262,20 +257,20 @@ export default function CGMScreen({ navigation }) {
 
   const glucoseValue = currentGlucose ? currentGlucose.value : '--';
   const glucoseColor = getGlucoseColor(currentGlucose?.value);
-  const CHART_W = SCREEN_W - 72;
-  const ARC_SIZE = Math.floor((SCREEN_W - 72) / 4);
+
+  const txtShadow = { textShadowColor: 'rgba(0,0,0,0.9)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 6 };
 
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={{ paddingBottom: 90 + insets.bottom }}
+      contentContainerStyle={{ paddingBottom: 90 + insets.bottom, paddingTop: insets.top + 12 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accent} colors={[accent]} />}
     >
-      {/* ─── Hero: GlucoseRing on gradient ─── */}
-      <BloomBackground accent={glucoseColor} secondary={accent} variant="hero" contentStyle={styles.headerGradient}>
+      {/* ─── Banners ─── */}
+      <View style={styles.bannersSection}>
         {isMember && (
           <View style={styles.memberPill}>
-            <Text style={styles.memberPillText} numberOfLines={1}>👁 Watching {warriorName || 'your warrior'}'s loop</Text>
+            <Text style={[styles.memberPillText, txtShadow]} numberOfLines={1}>Watching {warriorName || 'your warrior'}'s loop</Text>
           </View>
         )}
         {isStale && (
@@ -285,104 +280,103 @@ export default function CGMScreen({ navigation }) {
             </Text>
           </View>
         )}
-        {!isStale && isMember && minsOld !== null && minsOld > 15 && (
-          <View style={[styles.staleBanner, { backgroundColor: 'rgba(255,165,0,0.12)', borderColor: 'rgba(255,165,0,0.30)' }]}>
-            <Text style={[styles.staleBannerText, { color: '#FFA500' }]} numberOfLines={1}>
-              🕐 Last reading {minsOld}m ago — waiting for next sync
-            </Text>
-          </View>
-        )}
-
-        {currentGlucose ? (
-          <GlucoseRing
-            value={currentGlucose.value}
-            trend={currentGlucose.trend}
-            accentColor={glucoseColor}
-            lowThreshold={lowThreshold}
-            highThreshold={highThreshold}
-            size={190}
-          />
-        ) : (
-          <View style={styles.emptyHero}>
-            <Text style={styles.emptyHeroValue}>--</Text>
-            <Text style={styles.emptyHeroUnit}>mg/dL</Text>
-          </View>
-        )}
-
-        {currentGlucose && (
-          <Text style={styles.lastUpdate}>
-            {currentGlucose.source === 'dexcom' ? '🩸 Dexcom · ' : currentGlucose.source === 'nightscout' ? '🌐 Nightscout · ' : '📱 Manual · '}
-            {new Date(currentGlucose.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </Text>
-        )}
-        {!currentGlucose && !loading && (
-          <Text style={styles.lastUpdate}>
-            {isMember ? 'No readings from your warrior yet' : 'No readings yet — tap + to log one'}
-          </Text>
-        )}
-      </BloomBackground>
+      </View>
 
       <View style={styles.content}>
-        {/* ─── Warriors only: Log Reading button ─── */}
-        {!isMember && (
-          <FadeIn delay={stagger(0, 100)}>
-            <TouchableOpacity
-              style={[styles.addButton, { backgroundColor: accent }]}
-              onPress={() => setShowAddModal(true)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.addButtonIcon}>➕</Text>
-              <Text style={styles.addButtonText}>Log Glucose Reading</Text>
-            </TouchableOpacity>
-          </FadeIn>
-        )}
-
-        {/* ─── SVG Line Chart ─── */}
-        <FadeIn delay={stagger(1, 100)}>
-          <GlassCard accent={accent}>
-            <Text style={styles.sectionTitle}>Today's Readings</Text>
-            {loading ? (
-              <ActivityIndicator size="small" color={accent} style={{ paddingVertical: 40 }} />
-            ) : readings.length > 0 ? (
-              <GlucoseChart
-                readings={readings}
-                width={CHART_W}
-                height={180}
-                lowThreshold={lowThreshold}
-                highThreshold={highThreshold}
-                accentColor={accent}
-              />
-            ) : (
-              <View style={styles.emptyChart}>
-                <Text style={styles.emptyEmoji}>📊</Text>
-                <Text style={styles.emptyText}>No readings in the last 24 hours</Text>
+        {/* ─── Stats Dashboard: 2x2 solid tiles ─── */}
+        <FadeIn delay={stagger(0, 100)}>
+          <Text style={[styles.dashSectionTitle, txtShadow]}>Today's Stats</Text>
+          {stats && stats.count > 0 ? (
+            <View style={styles.statsGrid}>
+              <View style={[styles.statTile, { backgroundColor: '#2D5A8E' }]}>
+                <Text style={styles.statTileValue}>{stats.average}</Text>
+                <Text style={styles.statTileLabel}>Avg mg/dL</Text>
               </View>
-            )}
-          </GlassCard>
+              <View style={[styles.statTile, { backgroundColor: '#2D6B5A' }]}>
+                <Text style={styles.statTileValue}>{stats.timeInRange}%</Text>
+                <Text style={styles.statTileLabel}>In Range</Text>
+              </View>
+              <View style={[styles.statTile, { backgroundColor: '#8B3A3A' }]}>
+                <Text style={styles.statTileValue}>{stats.high}</Text>
+                <Text style={styles.statTileLabel}>Highs</Text>
+              </View>
+              <View style={[styles.statTile, { backgroundColor: '#6B4A2A' }]}>
+                <Text style={styles.statTileValue}>{stats.low}</Text>
+                <Text style={styles.statTileLabel}>Lows</Text>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.noDataCard}>
+              <Text style={styles.noDataText}>Log readings to see your stats</Text>
+            </View>
+          )}
         </FadeIn>
 
-        {/* ─── Stats Arcs ─── */}
-        <FadeIn delay={stagger(2, 100)}>
-          <GlassCard accent={accent}>
-            <Text style={styles.sectionTitle}>Today's Stats</Text>
-            {stats && stats.count > 0 ? (
-              <View style={styles.arcsRow}>
-                <StatArc value={stats.timeInRange} maxValue={100} label="In Range" suffix="%" color={accent} size={ARC_SIZE} />
-                <StatArc value={stats.average} maxValue={300} label="Avg mg/dL" suffix="" color="#FFA500" size={ARC_SIZE} />
-                <StatArc value={stats.high} maxValue={Math.max(stats.high, 5)} label="Highs" suffix="" color="#FFA500" size={ARC_SIZE} />
-                <StatArc value={stats.low} maxValue={Math.max(stats.low, 5)} label="Lows" suffix="" color="#FF6B6B" size={ARC_SIZE} />
+        {/* ─── Current CGM Reading ─── */}
+        <FadeIn delay={stagger(1, 100)}>
+          <Text style={[styles.dashSectionTitle, txtShadow]}>Current Reading</Text>
+          <View style={[styles.cgmCard, { borderLeftColor: glucoseColor }]}>
+            {currentGlucose ? (
+              <View style={styles.cgmCardContent}>
+                <View style={styles.cgmLeft}>
+                  <Text style={[styles.cgmValue, { color: glucoseColor }]}>{currentGlucose.value}</Text>
+                  <Text style={styles.cgmUnit}>mg/dL</Text>
+                </View>
+                <View style={styles.cgmRight}>
+                  <Text style={styles.cgmTrend}>
+                    {(() => { const t = TREND_OPTIONS.find(o => o.value === currentGlucose.trend); return t ? t.arrow + ' ' + t.label : '→'; })()}
+                  </Text>
+                  <Text style={styles.cgmSource}>
+                    {currentGlucose.source === 'dexcom' ? '🩸 Dexcom' : currentGlucose.source === 'nightscout' ? '🌐 Nightscout' : '📱 Manual'}
+                  </Text>
+                  <Text style={styles.cgmTime}>
+                    {new Date(currentGlucose.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </Text>
+                </View>
               </View>
             ) : (
-              <Text style={styles.noDataText}>Log readings to see your stats</Text>
+              <View style={styles.cgmCardContent}>
+                <Text style={styles.cgmValueEmpty}>--</Text>
+                <Text style={styles.cgmUnit}>
+                  {loading ? 'Loading...' : isMember ? 'No readings from your warrior yet' : 'No readings yet'}
+                </Text>
+              </View>
             )}
-          </GlassCard>
+          </View>
+        </FadeIn>
+
+        {/* ─── Recent readings summary ─── */}
+        <FadeIn delay={stagger(2, 100)}>
+          <Text style={[styles.dashSectionTitle, txtShadow]}>Recent Readings</Text>
+          <View style={styles.opaqueCard}>
+            {loading ? (
+              <ActivityIndicator size="small" color={accent} style={{ paddingVertical: 30 }} />
+            ) : readings.length > 0 ? (
+              readings.slice(0, 6).map((r, i) => (
+                <View key={r._id || i} style={[styles.readingRow, i < Math.min(readings.length, 6) - 1 && styles.readingDivider]}>
+                  <View style={[styles.readingDot, { backgroundColor: getGlucoseColor(r.value) }]} />
+                  <Text style={styles.readingValue}>{r.value}</Text>
+                  <Text style={styles.readingUnit}>mg/dL</Text>
+                  <Text style={styles.readingTrend}>{(() => { const t = TREND_OPTIONS.find(o => o.value === r.trend); return t ? t.arrow : '→'; })()}</Text>
+                  <Text style={styles.readingTime}>
+                    {new Date(r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </Text>
+                </View>
+              ))
+            ) : (
+              <View style={{ alignItems: 'center', paddingVertical: 24 }}>
+                <Text style={{ fontSize: 36, marginBottom: 8 }}>📊</Text>
+                <Text style={styles.noDataText}>No readings in the last 24 hours</Text>
+              </View>
+            )}
+          </View>
         </FadeIn>
 
         {/* ─── Warriors only: Connected Devices ─── */}
         {!isMember && (
           <FadeIn delay={stagger(3, 100)}>
-            <GlassCard accent={accent}>
-              <Text style={styles.sectionTitle}>🔗 Connected Devices</Text>
+            <Text style={[styles.dashSectionTitle, txtShadow]}>🔗 Connected Devices</Text>
+            <View style={styles.opaqueCard}>
 
               {/* Manual Entry */}
               <View style={styles.deviceItem}>
@@ -393,7 +387,7 @@ export default function CGMScreen({ navigation }) {
                     {currentGlucose ? 'Last log: ' + new Date(currentGlucose.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No data yet'}
                   </Text>
                 </View>
-                <View style={[styles.statusDot, { backgroundColor: currentGlucose ? accent : '#555' }]} />
+                <View style={[styles.statusDot, { backgroundColor: currentGlucose ? accent : '#666' }]} />
               </View>
 
               {/* Dexcom Share */}
@@ -473,7 +467,7 @@ export default function CGMScreen({ navigation }) {
                   <Text style={styles.chevron}>›</Text>
                 </TouchableOpacity>
               )}
-            </GlassCard>
+            </View>
           </FadeIn>
         )}
       </View>
@@ -484,7 +478,7 @@ export default function CGMScreen({ navigation }) {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Log Glucose Reading</Text>
             <Text style={styles.inputLabel}>Glucose Value (mg/dL)</Text>
-            <TextInput style={styles.input} placeholder="e.g. 120" placeholderTextColor="#555" keyboardType="numeric" value={newValue} onChangeText={setNewValue} maxLength={3} />
+            <TextInput style={styles.input} placeholder="e.g. 120" placeholderTextColor="#888" keyboardType="numeric" value={newValue} onChangeText={setNewValue} maxLength={3} />
             <Text style={styles.inputLabel}>Trend</Text>
             <View style={styles.trendRow}>
               {TREND_OPTIONS.map(t => (
@@ -494,7 +488,7 @@ export default function CGMScreen({ navigation }) {
               ))}
             </View>
             <Text style={styles.inputLabel}>Notes (optional)</Text>
-            <TextInput style={[styles.input, { height: 60 }]} placeholder="After lunch, before exercise..." placeholderTextColor="#555" value={newNotes} onChangeText={setNewNotes} multiline />
+            <TextInput style={[styles.input, { height: 60 }]} placeholder="After lunch, before exercise..." placeholderTextColor="#888" value={newNotes} onChangeText={setNewNotes} multiline />
             <View style={styles.modalButtons}>
               <TouchableOpacity style={styles.cancelButton} onPress={() => setShowAddModal(false)}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
@@ -516,9 +510,9 @@ export default function CGMScreen({ navigation }) {
               Works with Dexcom, Freestyle Libre, Medtronic, and any CGM connected to your Nightscout site.
             </Text>
             <Text style={styles.inputLabel}>Nightscout URL</Text>
-            <TextInput style={styles.input} placeholder="https://mysite.herokuapp.com" placeholderTextColor="#555" value={nsUrl} onChangeText={setNsUrl} autoCapitalize="none" autoCorrect={false} keyboardType="url" />
+            <TextInput style={styles.input} placeholder="https://mysite.herokuapp.com" placeholderTextColor="#888" value={nsUrl} onChangeText={setNsUrl} autoCapitalize="none" autoCorrect={false} keyboardType="url" />
             <Text style={styles.inputLabel}>API Secret (optional)</Text>
-            <TextInput style={styles.input} placeholder="Leave blank if not required" placeholderTextColor="#555" value={nsSecret} onChangeText={setNsSecret} autoCapitalize="none" autoCorrect={false} secureTextEntry />
+            <TextInput style={styles.input} placeholder="Leave blank if not required" placeholderTextColor="#888" value={nsSecret} onChangeText={setNsSecret} autoCapitalize="none" autoCorrect={false} secureTextEntry />
             <Text style={styles.modalFine}>Your API secret is stored securely and only used to read glucose data.</Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity style={styles.cancelButton} onPress={() => { setShowNsConnect(false); setNsUrl(''); setNsSecret(''); }}>
@@ -537,35 +531,51 @@ export default function CGMScreen({ navigation }) {
 
 /* ─── Styles ─── */
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0A0A0F' },
+  container: { flex: 1, backgroundColor: 'transparent' },
 
-  /* Hero gradient */
-  headerGradient: { padding: 24, alignItems: 'center', paddingTop: 30, paddingBottom: 35 },
-  memberPill: { backgroundColor: 'rgba(0,0,0,0.25)', paddingHorizontal: 14, paddingVertical: 5, borderRadius: 20, marginBottom: 12, maxWidth: '90%' },
+  /* Banners */
+  bannersSection: { alignItems: 'center', paddingHorizontal: 24, paddingTop: 4, paddingBottom: 4 },
+  memberPill: { backgroundColor: 'rgba(0,0,0,0.35)', paddingHorizontal: 14, paddingVertical: 5, borderRadius: 20, marginBottom: 6, maxWidth: '90%' },
   memberPillText: { fontSize: 13, color: '#fff', opacity: 0.9 },
-  staleBanner: { backgroundColor: 'rgba(255,165,0,0.20)', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 7, marginBottom: 10, borderWidth: 1, borderColor: 'rgba(255,165,0,0.45)' },
-  staleBannerText: { fontSize: 13, color: '#FFA500', fontWeight: TYPE.semibold, textAlign: 'center' },
-  emptyHero: { alignItems: 'center', paddingVertical: 20 },
-  emptyHeroValue: { fontSize: TYPE.mega, fontWeight: TYPE.bold, color: '#fff', opacity: 0.4 },
-  emptyHeroUnit: { fontSize: 18, color: '#fff', opacity: 0.4 },
-  lastUpdate: { fontSize: TYPE.md, color: '#fff', opacity: 0.8, marginTop: 10 },
+  staleBanner: { backgroundColor: 'rgba(255,123,147,0.20)', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 7, marginBottom: 6, borderWidth: 1, borderColor: 'rgba(255,123,147,0.45)' },
+  staleBannerText: { fontSize: 13, color: '#FF7B93', fontWeight: TYPE.semibold, textAlign: 'center' },
 
-  content: { padding: 16, marginTop: -10 },
+  content: { padding: 16 },
 
-  /* Add button */
-  addButton: { borderRadius: 14, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  addButtonIcon: { fontSize: 20, marginRight: 10 },
-  addButtonText: { color: '#fff', fontSize: TYPE.lg, fontWeight: TYPE.bold },
+  /* Dashboard section titles */
+  dashSectionTitle: { fontSize: TYPE.lg, fontWeight: TYPE.bold, color: '#fff', marginBottom: 12, marginTop: 8, textTransform: 'uppercase', letterSpacing: 1.5 },
 
-  /* Chart */
-  sectionTitle: { fontSize: TYPE.lg, fontWeight: TYPE.bold, color: '#fff', marginBottom: 14 },
-  emptyChart: { alignItems: 'center', paddingVertical: 30 },
-  emptyEmoji: { fontSize: 40, marginBottom: 10 },
-  emptyText: { fontSize: TYPE.md, color: '#888' },
+  /* CGM reading card */
+  cgmCard: { backgroundColor: 'rgba(10,18,40,0.90)', borderRadius: 18, padding: 20, marginBottom: 16, borderLeftWidth: 5, borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 10, elevation: 8 },
+  cgmCardContent: { flexDirection: 'row', alignItems: 'center' },
+  cgmLeft: { flexDirection: 'row', alignItems: 'baseline', marginRight: 'auto' },
+  cgmValue: { fontSize: 54, fontWeight: TYPE.bold, letterSpacing: -1 },
+  cgmValueEmpty: { fontSize: 44, fontWeight: TYPE.bold, color: 'rgba(255,255,255,0.4)', marginRight: 10 },
+  cgmUnit: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.6)', marginLeft: 6 },
+  cgmRight: { alignItems: 'flex-end' },
+  cgmTrend: { fontSize: TYPE.md, color: '#fff', fontWeight: TYPE.semibold, marginBottom: 4 },
+  cgmSource: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.7)', marginBottom: 2 },
+  cgmTime: { fontSize: TYPE.lg, color: '#fff', fontWeight: TYPE.bold },
 
-  /* Stat Arcs */
-  arcsRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  noDataText: { fontSize: TYPE.md, color: '#888', textAlign: 'center', paddingVertical: 15 },
+  /* 2x2 stats grid */
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 },
+  statTile: { width: (SCREEN_W - 42) / 2, borderRadius: 16, padding: 18, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6 },
+  statTileValue: { fontSize: 32, fontWeight: TYPE.bold, color: '#fff', marginBottom: 4 },
+  statTileLabel: { fontSize: TYPE.sm, fontWeight: TYPE.semibold, color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: 1 },
+
+  /* Opaque card */
+  opaqueCard: { backgroundColor: 'rgba(10,18,40,0.85)', borderRadius: 18, padding: 18, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)' },
+  noDataCard: { backgroundColor: 'rgba(10,18,40,0.85)', borderRadius: 18, padding: 24, marginBottom: 16, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)' },
+  noDataText: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.6)', textAlign: 'center' },
+
+  /* Recent readings list */
+  readingRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10 },
+  readingDivider: { borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)' },
+  readingDot: { width: 10, height: 10, borderRadius: 5, marginRight: 12 },
+  readingValue: { fontSize: TYPE.xl, fontWeight: TYPE.bold, color: '#fff', width: 52 },
+  readingUnit: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.5)', marginRight: 8 },
+  readingTrend: { fontSize: TYPE.lg, color: '#fff', marginRight: 'auto' },
+  readingTime: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.6)' },
 
   /* Devices */
   deviceItem: { flexDirection: 'row', alignItems: 'center' },
@@ -573,11 +583,11 @@ const styles = StyleSheet.create({
   deviceInfo: { flex: 1 },
   deviceName: { fontSize: TYPE.lg, fontWeight: TYPE.semibold, color: '#fff', marginBottom: 3 },
   deviceStatus: { fontSize: 13 },
-  deviceSub: { fontSize: 13, color: '#A0A0A0' },
+  deviceSub: { fontSize: 13, color: '#D0D0D0' },
   statusDot: { width: 10, height: 10, borderRadius: 5 },
   deviceDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginVertical: 12 },
   connectRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
-  chevron: { fontSize: 28, color: '#555', fontWeight: '300' },
+  chevron: { fontSize: 28, color: '#B0B0B0', fontWeight: '300' },
   dexcomActions: { flexDirection: 'row', gap: 10, marginTop: 12 },
   syncBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: 10, paddingVertical: 10, gap: 6 },
   syncBtnIcon: { fontSize: 16 },
@@ -588,20 +598,20 @@ const styles = StyleSheet.create({
 
   /* Modals */
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#1A1A20', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 25, paddingBottom: 40 },
+  modalContent: { backgroundColor: 'rgba(26,26,32,0.5)', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 25, paddingBottom: 40 },
   modalTitle: { fontSize: TYPE.xxl, fontWeight: TYPE.bold, color: '#fff', marginBottom: 16, textAlign: 'center' },
-  modalHint: { fontSize: 13, color: '#A0A0A0', textAlign: 'center', marginBottom: 16, lineHeight: 19 },
-  modalFine: { fontSize: 11, color: '#666', marginTop: 6 },
+  modalHint: { fontSize: 13, color: '#D0D0D0', textAlign: 'center', marginBottom: 16, lineHeight: 19 },
+  modalFine: { fontSize: 11, color: '#B0B0B0', marginTop: 6 },
   inputLabel: { fontSize: TYPE.md, fontWeight: TYPE.semibold, color: '#E0E0E0', marginBottom: 8, marginTop: 10 },
-  input: { backgroundColor: '#2A2A32', borderRadius: 12, padding: 14, fontSize: TYPE.lg, borderWidth: 1, borderColor: '#3A3A42', color: '#fff' },
+  input: { backgroundColor: 'rgba(42,42,50,0.45)', borderRadius: 12, padding: 14, fontSize: TYPE.lg, borderWidth: 1, borderColor: '#3A3A42', color: '#fff' },
   trendRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
-  trendButton: { flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: '#2A2A32', alignItems: 'center', borderWidth: 1, borderColor: '#3A3A42' },
+  trendButton: { flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: 'rgba(42,42,50,0.45)', alignItems: 'center', borderWidth: 1, borderColor: '#3A3A42' },
   trendButtonActive: {},
-  trendButtonText: { fontSize: 20, color: '#A0A0A0' },
+  trendButtonText: { fontSize: 20, color: '#D0D0D0' },
   trendButtonTextActive: { color: '#fff' },
   modalButtons: { flexDirection: 'row', marginTop: 25, gap: 12 },
-  cancelButton: { flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: '#2A2A32', alignItems: 'center' },
-  cancelButtonText: { fontSize: TYPE.lg, color: '#A0A0A0', fontWeight: TYPE.semibold },
+  cancelButton: { flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: 'rgba(42,42,50,0.45)', alignItems: 'center' },
+  cancelButtonText: { fontSize: TYPE.lg, color: '#D0D0D0', fontWeight: TYPE.semibold },
   saveButton: { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
   saveButtonText: { fontSize: TYPE.lg, color: '#fff', fontWeight: TYPE.bold },
 });

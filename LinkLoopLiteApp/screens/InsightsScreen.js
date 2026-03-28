@@ -19,11 +19,11 @@ const TIME_RANGES = [
 ];
 
 const TYPE_COLORS = {
-  success: { bg: '#1A2E1A', border: '#4CAF50', badge: '#4CAF50' },
-  warning: { bg: '#2E2A1A', border: '#FFA500', badge: '#FFA500' },
-  alert:   { bg: '#2E1A1A', border: '#D32F2F', badge: '#D32F2F' },
-  info:    { bg: '#1C1C1E', border: '#888', badge: '#888' },
-  streak:  { bg: '#2E2A1A', border: '#FFA500', badge: '#FFA500' },
+  success: { bg: '#1E3422', border: '#4CAF50', badge: '#4CAF50' },
+  warning: { bg: '#2E1E34', border: '#FF7B93', badge: '#FF7B93' },
+  alert:   { bg: '#341E1E', border: '#D32F2F', badge: '#D32F2F' },
+  info:    { bg: '#1E1E32', border: '#B0B0B0', badge: '#B0B0B0' },
+  streak:  { bg: '#2E1E34', border: '#FF7B93', badge: '#FF7B93' },
 };
 
 const TYPE_LABELS = {
@@ -171,46 +171,49 @@ export default function InsightsScreen() {
       {/* Header */}
       <ScreenHeader
         title="✨ AI Insights"
-        subtitle="Pattern analysis & trend notifications powered by AI"
+        subtitle="Pattern analysis & trends powered by AI"
       />
 
       <View style={[styles.content, { paddingBottom: 90 + insets.bottom }]}>
-        {/* Daily Motivation Card — always visible */}
+        {/* Daily Motivation Card */}
         <FadeIn delay={0}>
-        <View style={[styles.motivationCard, { backgroundColor: accent }]}>
-          {motivationLoading ? (
-            <View style={styles.motivationLoading}>
-              <ActivityIndicator size="small" color="#fff" />
-              <Text style={styles.motivationLoadingText}>Loading your daily boost...</Text>
-            </View>
-          ) : motivation ? (
-            <>
-              <Text style={styles.motivationLabel}>✨ Daily Motivation</Text>
-              <Text style={styles.motivationText}>{motivation}</Text>
-            </>
-          ) : (
-            <>
-              <Text style={styles.motivationLabel}>✨ Daily Motivation</Text>
-              <Text style={styles.motivationText}>{"T1D doesn\u2019t define you \u2014 but how you handle it sure says a lot about who you are. \uD83D\uDCAA"}</Text>
-            </>
-          )}
+        <View style={styles.motivationCard}>
+          <View style={[styles.motivationAccent, { backgroundColor: accent }]} />
+          <View style={styles.motivationInner}>
+            {motivationLoading ? (
+              <View style={styles.motivationLoading}>
+                <ActivityIndicator size="small" color={accent} />
+                <Text style={[styles.motivationLoadingText, { color: accent }]}>Loading your daily boost...</Text>
+              </View>
+            ) : (
+              <>
+                <Text style={[styles.motivationLabel, { color: accent }]}>✨ Daily Motivation</Text>
+                <Text style={styles.motivationText}>
+                  {motivation || "T1D picked the wrong one. You show up every day. \uD83D\uDCAA"}
+                </Text>
+              </>
+            )}
+          </View>
         </View>
         </FadeIn>
 
         {/* Quick nav to new features */}
         <FadeIn delay={40}>
         <View style={styles.featureRow}>
-          <TouchableOpacity style={styles.featureBtn} onPress={() => { haptic.light(); navigation.navigate('AskLoop'); }}>
+          <TouchableOpacity style={[styles.featureBtn, { borderColor: accent + '30' }]} onPress={() => { haptic.light(); navigation.navigate('AskLoop'); }}>
             <Text style={styles.featureBtnEmoji}>🤖</Text>
-            <Text style={styles.featureBtnText}>Ask Loop</Text>
+            <Text style={[styles.featureBtnLabel, { color: accent }]}>Ask Loop</Text>
+            <Text style={styles.featureBtnSub}>Chat with AI</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.featureBtn} onPress={() => { haptic.light(); navigation.navigate('GlucoseStory'); }}>
+          <TouchableOpacity style={[styles.featureBtn, { borderColor: accent + '30' }]} onPress={() => { haptic.light(); navigation.navigate('GlucoseStory'); }}>
             <Text style={styles.featureBtnEmoji}>📖</Text>
-            <Text style={styles.featureBtnText}>Your Story</Text>
+            <Text style={[styles.featureBtnLabel, { color: accent }]}>Your Story</Text>
+            <Text style={styles.featureBtnSub}>Daily narrative</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.featureBtn} onPress={() => { haptic.light(); navigation.navigate('WeeklyReport'); }}>
+          <TouchableOpacity style={[styles.featureBtn, { borderColor: accent + '30' }]} onPress={() => { haptic.light(); navigation.navigate('WeeklyReport'); }}>
             <Text style={styles.featureBtnEmoji}>📊</Text>
-            <Text style={styles.featureBtnText}>Report</Text>
+            <Text style={[styles.featureBtnLabel, { color: accent }]}>Report</Text>
+            <Text style={styles.featureBtnSub}>Weekly recap</Text>
           </TouchableOpacity>
         </View>
         </FadeIn>
@@ -233,20 +236,8 @@ export default function InsightsScreen() {
         </FadeIn>
 
         <FadeIn delay={stagger(2, 100)}>
-        {/* Summary Bar */}
-        {summary && (
-          <GlassCard style={styles.summaryCard}>
-            <View style={styles.summaryRow}>
-              <SummaryPill label="Readings" value={summary.readingCount} color="#666" />
-              <SummaryPill label="Avg" value={summary.average + ''} color="#FFA500" />
-              <SummaryPill label="TIR" value={summary.timeInRange + '%'} color="#4CAF50" />
-              <SummaryPill label="Range" value={summary.min + '-' + summary.max} color="#666" />
-            </View>
-          </GlassCard>
-        )}
-
-        {/* Tab Switcher: Insights vs Trends */}
-        <GlassCard style={styles.tabRow}>
+        {/* Tab Switcher */}
+        <View style={styles.tabRow}>
           <TouchableOpacity
             style={[styles.tab, activeTab === 'insights' && [styles.tabActive, { backgroundColor: accent }]]}
             onPress={() => { haptic.selection(); setActiveTab('insights'); }}
@@ -259,7 +250,7 @@ export default function InsightsScreen() {
           >
             <Text style={[styles.tabText, activeTab === 'trends' && styles.tabTextActive]}>📈 AI Trends</Text>
           </TouchableOpacity>
-        </GlassCard>
+        </View>
 
         {/* ======== INSIGHTS TAB ======== */}
         {activeTab === 'insights' && (
@@ -268,18 +259,18 @@ export default function InsightsScreen() {
             {insights.length > 0 && (
               <View style={styles.statusRow}>
                 {alertCount > 0 && (
-                  <View style={[styles.statusBadge, { backgroundColor: '#2E1A1A' }]}>
-                    <Text style={[styles.statusBadgeText, { color: '#D32F2F' }]}>🚨 {alertCount} Notable</Text>
+                  <View style={[styles.statusBadge, { backgroundColor: '#2A1010' }]}>
+                    <Text style={[styles.statusBadgeText, { color: '#EF5350' }]}>🚨 {alertCount} Notable</Text>
                   </View>
                 )}
                 {warningCount > 0 && (
-                  <View style={[styles.statusBadge, { backgroundColor: '#2E2A1A' }]}>
-                    <Text style={[styles.statusBadgeText, { color: '#FFA500' }]}>⚠️ {warningCount} Watch</Text>
+                  <View style={[styles.statusBadge, { backgroundColor: '#2A1E10' }]}>
+                    <Text style={[styles.statusBadgeText, { color: '#FF8FA3' }]}>⚠️ {warningCount} Watch</Text>
                   </View>
                 )}
                 {successCount > 0 && (
-                  <View style={[styles.statusBadge, { backgroundColor: '#1A2E1A' }]}>
-                    <Text style={[styles.statusBadgeText, { color: '#4CAF50' }]}>✅ {successCount} Great</Text>
+                  <View style={[styles.statusBadge, { backgroundColor: '#102A14' }]}>
+                    <Text style={[styles.statusBadgeText, { color: '#66BB6A' }]}>✅ {successCount} Great</Text>
                   </View>
                 )}
               </View>
@@ -435,12 +426,11 @@ export default function InsightsScreen() {
         )}
 
         {/* Disclaimer */}
-        <GlassCard style={styles.disclaimerBox}>
-          <Text style={styles.disclaimerIcon}>💚</Text>
+        <View style={styles.disclaimerBox}>
           <Text style={styles.disclaimerText}>
-            Insights and trends are based on patterns in the data you log. They are observations — not medical advice or recommendations. Always work with your care team for health decisions.
+            💚  Insights and trends are observations based on your data — not medical advice. Always work with your care team for health decisions.
           </Text>
-        </GlassCard>
+        </View>
         </FadeIn>
       </View>
     </ScrollView>
@@ -457,105 +447,114 @@ function SummaryPill({ label, value, color }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0A0A0F' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   content: { padding: 20 },
 
-  // Daily motivation
-  motivationCard: { backgroundColor: '#4A90D9', borderRadius: 16, padding: 20, marginBottom: 20, borderWidth: 1, borderColor: '#3A7BC8' },
-  motivationLabel: { fontSize: TYPE.sm, fontWeight: TYPE.bold, color: '#fff', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 },
-  motivationText: { fontSize: TYPE.lg, color: '#fff', lineHeight: 24, fontStyle: 'italic' },
+  // ── Daily Motivation ──────────────────────
+  motivationCard: {
+    flexDirection: 'row',
+    backgroundColor: '#0E1530',
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.10)',
+  },
+  motivationAccent: { width: 4, alignSelf: 'stretch' },
+  motivationInner: { flex: 1, padding: 18 },
+  motivationLabel: { fontSize: TYPE.xs, fontWeight: TYPE.bold, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 },
+  motivationText: { fontSize: TYPE.md, color: '#fff', lineHeight: 22, fontStyle: 'italic' },
   motivationLoading: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4 },
-  motivationLoadingText: { fontSize: 13, color: '#fff', marginLeft: 10 },
+  motivationLoadingText: { fontSize: TYPE.sm, marginLeft: 10 },
 
-  // Time range
-  rangeRow: { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 12, padding: 4, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
-  rangeTab: { flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center' },
-  rangeTabActive: { backgroundColor: '#4A90D9' },
-  rangeTabText: { fontSize: TYPE.md, color: '#A0A0A0', fontWeight: TYPE.semibold },
+  // ── Feature Buttons ───────────────────────
+  featureRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
+  featureBtn: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: '#0E1530',
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 6,
+    borderWidth: 1,
+  },
+  featureBtnEmoji: { fontSize: 26, marginBottom: 6 },
+  featureBtnLabel: { fontSize: TYPE.sm, fontWeight: TYPE.bold, marginBottom: 2 },
+  featureBtnSub: { fontSize: 10, color: 'rgba(255,255,255,0.55)' },
+
+  // ── Time Range ────────────────────────────
+  rangeRow: { flexDirection: 'row', backgroundColor: '#0E1530', borderRadius: 14, padding: 4, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)' },
+  rangeTab: { flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center' },
+  rangeTabActive: {},
+  rangeTabText: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.60)', fontWeight: TYPE.semibold },
   rangeTabTextActive: { color: '#fff' },
 
-  // Summary
-  summaryCard: { borderRadius: 12, padding: 16, marginBottom: 20 },
-  summaryRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  summaryPill: { alignItems: 'center', flex: 1 },
-  summaryValue: { fontSize: 20, fontWeight: TYPE.bold, marginBottom: 4 },
-  summaryLabel: { fontSize: 11, color: '#888' },
-
-  // Tab switcher
-  tabRow: { flexDirection: 'row', borderRadius: 12, padding: 4, marginBottom: 20 },
-  tab: { flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
-  tabActive: { backgroundColor: '#4A90D9' },
-  tabText: { fontSize: TYPE.md, color: '#A0A0A0', fontWeight: TYPE.bold },
+  // ── Tab Switcher ──────────────────────────
+  tabRow: { flexDirection: 'row', backgroundColor: '#0E1530', borderRadius: 14, padding: 4, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)' },
+  tab: { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
+  tabActive: {},
+  tabText: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.60)', fontWeight: TYPE.bold },
   tabTextActive: { color: '#fff' },
 
-  // Status badges
-  statusRow: { flexDirection: 'row', gap: 8, marginBottom: 20, flexWrap: 'wrap' },
-  statusBadge: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20 },
-  statusBadgeText: { fontSize: 13, fontWeight: TYPE.bold },
+  // ── Status Badges ─────────────────────────
+  statusRow: { flexDirection: 'row', gap: 8, marginBottom: 18, flexWrap: 'wrap' },
+  statusBadge: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20 },
+  statusBadgeText: { fontSize: TYPE.sm, fontWeight: TYPE.bold },
 
-  // Loading / empty
+  // ── Loading / Empty ───────────────────────
   loadingBox: { alignItems: 'center', paddingVertical: 60 },
-  loadingText: { fontSize: TYPE.md, color: '#888', marginTop: 15 },
+  loadingText: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.45)', marginTop: 15 },
   emptyState: { alignItems: 'center', paddingVertical: 50 },
   emptyEmoji: { fontSize: 60, marginBottom: 15 },
-  emptyTitle: { fontSize: 20, fontWeight: TYPE.bold, color: '#fff', marginBottom: 8 },
-  emptyText: { fontSize: TYPE.md, color: '#888', textAlign: 'center', lineHeight: 22 },
+  emptyTitle: { fontSize: TYPE.xl, fontWeight: TYPE.bold, color: '#fff', marginBottom: 8 },
+  emptyText: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.55)', textAlign: 'center', lineHeight: 22 },
 
-  // Insight cards
-  insightCard: { borderRadius: 12, padding: 18, marginBottom: 14, borderLeftWidth: 5 },
+  // ── Insight Cards ────────────────────────
+  insightCard: { borderRadius: 14, padding: 18, marginBottom: 12, borderLeftWidth: 4 },
   insightTop: { flexDirection: 'row', alignItems: 'flex-start' },
-  insightIcon: { fontSize: TYPE.h1, marginRight: 14 },
+  insightIcon: { fontSize: TYPE.h3, marginRight: 14 },
   insightBody: { flex: 1 },
   insightTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
   insightTitle: { fontSize: TYPE.lg, fontWeight: TYPE.bold, color: '#fff', flex: 1, marginRight: 8 },
   typeBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 12 },
   typeBadgeText: { fontSize: 11, fontWeight: TYPE.bold },
-  insightSummary: { fontSize: TYPE.md, color: '#C0C0C0', lineHeight: 21 },
-  insightDetail: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)' },
-  insightDetailText: { fontSize: 13, color: '#A0A0A0', lineHeight: 20, fontStyle: 'italic' },
-  expandHint: { fontSize: 11, color: '#666', textAlign: 'center', marginTop: 10 },
+  insightSummary: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.60)', lineHeight: 21 },
+  insightDetail: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)' },
+  insightDetailText: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.55)', lineHeight: 20, fontStyle: 'italic' },
+  expandHint: { fontSize: 11, color: 'rgba(255,255,255,0.35)', textAlign: 'center', marginTop: 10 },
 
-  // AI card
-  aiCard: { borderRadius: 14, padding: 18, marginBottom: 20 },
+  // ── AI Card ──────────────────────────────
+  aiCard: { borderRadius: 16, padding: 18, marginBottom: 20 },
   aiCardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   aiCardIcon: { fontSize: TYPE.h3, marginRight: 8 },
-  aiCardTitle: { fontSize: 17, fontWeight: TYPE.bold, color: '#fff', flex: 1 },
-  aiCardBadge: { backgroundColor: '#4A90D9', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 12, fontSize: 11, fontWeight: TYPE.bold, color: '#fff', overflow: 'hidden' },
-  aiCardText: { fontSize: TYPE.md, color: '#C0C0C0', lineHeight: 22 },
+  aiCardTitle: { fontSize: TYPE.lg, fontWeight: TYPE.bold, color: '#fff', flex: 1 },
+  aiCardBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 12, fontSize: 11, fontWeight: TYPE.bold, color: '#fff', overflow: 'hidden' },
+  aiCardText: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.60)', lineHeight: 22 },
   aiLoadingRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
-  aiLoadingText: { fontSize: 13, color: '#4A90D9', marginLeft: 10 },
-  aiButton: { backgroundColor: '#4A90D9', borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
-  aiButtonText: { color: '#fff', fontSize: 15, fontWeight: TYPE.bold },
-  refreshButton: { alignSelf: 'center', marginTop: 14, paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: '#4A90D9' },
-  refreshButtonText: { fontSize: TYPE.md, color: '#4A90D9', fontWeight: TYPE.bold },
+  aiLoadingText: { fontSize: TYPE.sm, marginLeft: 10 },
+  refreshButton: { alignSelf: 'center', marginTop: 14, paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1 },
+  refreshButtonText: { fontSize: TYPE.md, fontWeight: TYPE.bold },
 
-  // Trends tab
-  trendsHeader: { flexDirection: 'row', alignItems: 'center', borderRadius: 14, padding: 16, marginBottom: 16 },
-  trendsHeaderIcon: { fontSize: 30, marginRight: 12 },
-  trendsHeaderTitle: { fontSize: 17, fontWeight: TYPE.bold, color: '#fff' },
-  trendsHeaderSub: { fontSize: TYPE.sm, color: '#888', marginTop: 2 },
+  // ── Trends Tab ────────────────────────────
+  trendsHeader: { flexDirection: 'row', alignItems: 'center', borderRadius: 16, padding: 16, marginBottom: 16 },
+  trendsHeaderIcon: { fontSize: 28, marginRight: 12 },
+  trendsHeaderTitle: { fontSize: TYPE.lg, fontWeight: TYPE.bold, color: '#fff' },
+  trendsHeaderSub: { fontSize: TYPE.xs, color: 'rgba(255,255,255,0.45)', marginTop: 2 },
   trendsRefreshBtn: { padding: 8, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.08)' },
-  trendsRefreshText: { fontSize: TYPE.xl },
+  trendsRefreshText: { fontSize: TYPE.lg },
 
-  // Trend cards
-  trendCard: { borderRadius: 12, padding: 16, marginBottom: 12, borderLeftWidth: 5 },
+  // ── Trend Cards ───────────────────────────
+  trendCard: { borderRadius: 14, padding: 16, marginBottom: 12, borderLeftWidth: 4 },
   trendTop: { flexDirection: 'row', alignItems: 'flex-start' },
-  trendIcon: { fontSize: TYPE.h2, marginRight: 12 },
+  trendIcon: { fontSize: TYPE.h3, marginRight: 12 },
   trendBody: { flex: 1 },
   trendTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
-  trendTitle: { fontSize: 15, fontWeight: TYPE.bold, color: '#fff', flex: 1, marginRight: 8 },
+  trendTitle: { fontSize: TYPE.md, fontWeight: TYPE.bold, color: '#fff', flex: 1, marginRight: 8 },
   categoryBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 12 },
   categoryBadgeText: { fontSize: TYPE.xs, fontWeight: TYPE.bold, textTransform: 'capitalize' },
-  trendMessage: { fontSize: TYPE.md, color: '#C0C0C0', lineHeight: 21 },
+  trendMessage: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.55)', lineHeight: 21 },
 
-  // Feature row
-  featureRow: { flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: 4, marginBottom: 14 },
-  featureBtn: { flex: 1, alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 14, paddingVertical: 14, marginHorizontal: 4 },
-  featureBtnEmoji: { fontSize: 24, marginBottom: 4 },
-  featureBtnText: { fontSize: TYPE.xs, color: '#ccc', fontWeight: TYPE.semibold },
-
-  // Disclaimer
-  disclaimerBox: { borderRadius: 12, padding: 16, flexDirection: 'row', alignItems: 'flex-start', marginTop: 10, marginBottom: 30 },
-  disclaimerIcon: { fontSize: TYPE.xxl, marginRight: 10, marginTop: 2 },
-  disclaimerText: { flex: 1, fontSize: TYPE.sm, color: '#888', lineHeight: 18 },
+  // ── Disclaimer ────────────────────────────
+  disclaimerBox: { borderRadius: 12, paddingVertical: 14, paddingHorizontal: 16, marginTop: 10, marginBottom: 30, backgroundColor: '#0C1228' },
+  disclaimerText: { fontSize: TYPE.xs, color: 'rgba(255,255,255,0.55)', lineHeight: 18, textAlign: 'center' },
 });

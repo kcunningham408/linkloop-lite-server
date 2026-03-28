@@ -480,42 +480,20 @@ router.get('/ai-summary', auth, async (req, res) => {
 - IMPORTANT: Look for correlations between mood/notes and glucose patterns. If the user noted something specific (like "pizza", "stress", "bad sleep"), reference it and connect it to any glucose patterns you see around that time. This is how you get to know the user over time.`;
     }
 
-    const prompt = `You are a friendly wellness companion in LinkLoop — a personal glucose journal app. Analyze this glucose data and give a brief, personalized summary.
+    const prompt = `Summarize ${stats.userName}'s glucose in ONE sentence (max 20 words + 1 emoji).
 
-RULES:
-- MAXIMUM 2 SENTENCES. This is an absolute hard limit. No exceptions.
-- Warm & conversational, like a knowledgeable friend
-- Be punchy — every word should earn its place
-- Highlight the single most interesting or important pattern you see
-- If mood/notes data is available, weave it in naturally — connect how they felt with glucose patterns
-- 1 emoji max
-- NEVER give medical advice, suggest medication or dosage changes, or recommend any specific actions
-- Do NOT suggest eating, snacking, correcting, or any treatment actions
-- If data looks good, celebrate it briefly
-- Refer to the app as a "wellness journal" not a "medical tool"
-- End on a positive or encouraging note, NOT a reminder to see a doctor
-- Do NOT use bullet points, numbered lists, or headers — just 1-2 flowing sentences
+DATA (${stats.hours}h): ${stats.readingCount} readings, avg ${stats.avg}, range ${stats.min}-${stats.max}, TIR ${stats.tir}%, lows ${stats.lowCount}, highs ${stats.highCount}, streak ${stats.inRangeStreak} in-range.${moodContext ? '\nMood: ' + moodContext.slice(0, 200) : ''}
 
-DATA (last ${stats.hours}h):
-- Name: ${stats.userName}
-- ${stats.readingCount} readings | Avg: ${stats.avg} mg/dL | Range: ${stats.min}-${stats.max}
-- Time in Range (${stats.low}-${stats.high}): ${stats.tir}%
-- Lows: ${stats.lowCount} | Highs: ${stats.highCount} | StdDev: ${stats.stdDev} | CV: ${stats.cv}%
-- ${stats.periodStats.map(p => p.text).join('\n- ')}
-- Last 5 readings: ${stats.recentValues.join(', ')} mg/dL
-- Recent trends: ${stats.recentTrends.join(', ') || 'none logged'}
-- Today avg: ${stats.todayAvg ?? 'N/A'} (${stats.todayCount} readings) | Yesterday avg: ${stats.yesterdayAvg ?? 'N/A'} (${stats.yesterdayCount} readings)
-- Current in-range streak: ${stats.inRangeStreak} consecutive readings
-- Rapid changes (>50 mg/dL jump): ${stats.spikes.length > 0 ? stats.spikes.map(s => `${s.direction} ${s.from}→${s.to} at ${formatLocalTime(s.time, tz)}`).join(', ') : 'none'}${moodContext}`;
+RULES: One flowing sentence. No lists. No medical advice. Highlight the most notable pattern. End positive.`;
 
     const chatCompletion = await groq.chat.completions.create({
       messages: [
-        { role: 'system', content: 'You are a friendly wellness companion in LinkLoop, a personal glucose journal app. You help users see patterns in the data they log. Keep responses to EXACTLY 1-2 sentences — never more. You NEVER give medical advice, suggest medication changes, or recommend specific health actions. You only observe patterns and celebrate progress.' },
+        { role: 'system', content: 'You write exactly ONE sentence glucose summaries (under 20 words). No advice. No lists. Just observe the most notable pattern and keep it positive.' },
         { role: 'user', content: prompt }
       ],
       model: 'llama-3.3-70b-versatile',
-      temperature: 0.7,
-      max_tokens: 80,
+      temperature: 0.8,
+      max_tokens: 50,
     });
 
     // Hard-limit: trim to 2 sentences max
@@ -648,32 +626,33 @@ Return the JSON array now:`;
 });
 
 // ============================================================
-// In-memory cache for daily motivation (per user, resets daily)
+// In-memory cache for motivation (per user, refreshes every visit)
 // ============================================================
-const motivationCache = new Map(); // key: `${userId}-${YYYY-MM-DD}` → { message, emoji }
+const motivationCache = new Map(); // key: userId → { data, ts }
+const MOTIVATION_TTL = 60 * 60 * 1000; // 1 hour
 
 // @route   GET /api/insights/daily-motivation
-// @desc    Get a daily T1D-positive motivational message
+// @desc    Get a short T1D-positive motivational message
 // @access  Private
 router.get('/daily-motivation', auth, async (req, res) => {
   try {
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    const cacheKey = `${req.user.userId}-${today}`;
+    const now = Date.now();
+    const cached = motivationCache.get(req.user.userId);
 
-    // Return cached if we already generated one today for this user
-    if (motivationCache.has(cacheKey)) {
-      return res.json(motivationCache.get(cacheKey));
+    // Return cached only if less than 1 hour old
+    if (cached && (now - cached.ts) < MOTIVATION_TTL) {
+      return res.json(cached.data);
     }
 
-    // Clean old cache entries (anything not from today)
-    for (const [key] of motivationCache) {
-      if (!key.endsWith(today)) motivationCache.delete(key);
+    // Clean expired entries
+    for (const [key, val] of motivationCache) {
+      if ((now - val.ts) >= MOTIVATION_TTL) motivationCache.delete(key);
     }
 
     const groq = getGroqClient();
     if (!groq) {
       const fallback = {
-        motivation: "You didn't choose T1D, but you face it head-on every single day. That takes more courage than most people will ever know. 💪",
+        motivation: "T1D picked the wrong one. You show up every day. 💪",
         emoji: '💪'
       };
       return res.json(fallback);
@@ -706,36 +685,29 @@ router.get('/daily-motivation', auth, async (req, res) => {
       dataContext += `\nTheir most recent mood was "${moodLabels[lastMood.label] || lastMood.label}" ${lastMood.emoji} at ${formatLocalTime(lastMood.timestamp, tz)}${lastMood.note ? ` with the note: "${lastMood.note}"` : ''}. Tailor the motivation to acknowledge how they're feeling — if they're tired or stressed, be extra compassionate.`;
     }
 
-    const prompt = `Generate a short, inspiring daily quote for ${name}, a person living with Type 1 Diabetes.
+    const prompt = `Write ONE short motivational sentence for ${name}, who has Type 1 Diabetes.
 
-STYLE:
-- Think motivational quote, NOT a paragraph — 1-2 lines max, like something you'd see on an inspirational poster
-- Examples of the right vibe:
-  • "${name}, life threw you lemons and you turned them into a whole lemonade stand. T1D doesn't slow you down — it proves how strong you are. 💪"
-  • "Some people never have to count a single carb. You do it daily without even thinking about it. That's pretty incredible, ${name}. 🌟"
-  • "T1D picked the wrong person to mess with. You show up every single day and handle it like a champ. 💙"
-- Short. Punchy. Real. Like a friend sending you a text to brighten your day.
-- DO NOT mention "logging readings", "checking your app", "tracking data", or anything about the app itself
-- Focus on the human experience: strength, resilience, humor, self-love, pride, the daily grind of T1D
-- Vary between: humor, warmth, pride, self-compassion, celebrating toughness
-- Include 1 emoji at the end
-- NEVER give medical advice or suggest any health actions
-- Do NOT be generic — make it feel personal to T1D life${dataContext}
+RULES:
+- MAX 15 words + 1 emoji at the end. Treat this like a text message, not a speech.
+- Good examples: "T1D picked the wrong one. You're tougher than you think. 💪" or "Every bolus is proof you don't quit. Keep going, ${name}. 🌟"
+- Vary tone each day: humor, warmth, pride, grit, self-compassion
+- NEVER mention apps, logging, tracking, or medical advice
+- Be specific to T1D life, not generic motivation${dataContext}
 
-Return ONLY the quote text, nothing else.`;
+Return ONLY the quote, nothing else.`;
 
     const chatCompletion = await groq.chat.completions.create({
       messages: [
-        { role: 'system', content: 'You write short, punchy motivational quotes (1-2 lines) for people with Type 1 Diabetes. Think inspirational text message, not essay. Never mention apps, logging, or tracking. Never give medical advice. Just genuine, heartfelt encouragement about living with T1D.' },
+        { role: 'system', content: 'You write very short motivational one-liners (under 15 words) for people with Type 1 Diabetes. One sentence max. Never mention apps or tracking. No medical advice.' },
         { role: 'user', content: prompt }
       ],
       model: 'llama-3.3-70b-versatile',
-      temperature: 0.9,
-      max_tokens: 100,
+      temperature: 1.0,
+      max_tokens: 50,
     });
 
     const message = chatCompletion.choices[0]?.message?.content?.trim() || 
-      `${name}, T1D picked the wrong one. You handle more before breakfast than most people deal with all day. 💙`;
+      `${name}, T1D picked the wrong one. You've got this. 💙`;
 
     // Pick an emoji from the message or default
     const emojiMatch = message.match(/[\u{1F300}-\u{1FAD6}\u{2600}-\u{27BF}]/u);
@@ -743,14 +715,14 @@ Return ONLY the quote text, nothing else.`;
 
     const result = { motivation: message, emoji };
 
-    // Cache it for the rest of the day
-    motivationCache.set(cacheKey, result);
+    // Cache it for 1 hour
+    motivationCache.set(req.user.userId, { data: result, ts: Date.now() });
 
     res.json(result);
   } catch (err) {
     console.error('Daily motivation error:', err);
     res.json({
-      motivation: "Some days are harder than others, but not a single one has beaten you yet. That's a pretty amazing track record. 💛",
+      motivation: "Tough days don't last — tough T1D warriors do. 💛",
       emoji: '💛'
     });
   }

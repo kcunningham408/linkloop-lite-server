@@ -8,11 +8,21 @@ import WatchConnectivity
 ///   <AppSandbox>/Documents/RCTAsyncLocalStorage_V1/manifest.json
 /// We read the auth token from there so the Watch can authenticate
 /// against the LinkLoop API without the user re-entering credentials.
+/// We also write to App Group for the Watch app to read directly.
 class WatchSessionManager: NSObject, WCSessionDelegate {
     static let shared = WatchSessionManager()
 
     /// Timer that periodically pushes fresh glucose to the Watch
     private var glucosePushTimer: Timer?
+
+    /// Track last complication transfer to rate-limit (Apple allows ~50/day)
+    private var lastComplicationTransferDate: Date = .distantPast
+
+    /// Track last glucose value sent via complication transfer to avoid duplicate pushes
+    private var lastComplicationGlucoseValue: Int?
+
+    /// App Group for sharing data with Watch
+    private let sharedDefaults = UserDefaults(suiteName: "group.com.vibecmd.linkloop.watch")
 
     private override init() {
         super.init()
@@ -50,6 +60,8 @@ class WatchSessionManager: NSObject, WCSessionDelegate {
         // Read auth token from AsyncStorage manifest
         if let token = readAsyncStorageValue(forKey: "authToken") {
             context["authToken"] = token
+            // Also write to App Group for direct Watch access
+            sharedDefaults?.set(token, forKey: "complication_authToken")
         }
 
         // Read thresholds from cached user profile
@@ -105,12 +117,12 @@ class WatchSessionManager: NSObject, WCSessionDelegate {
     /// (if reachable) or via complicationUserInfo (guaranteed delivery for complications).
     func startGlucosePushTimer() {
         stopGlucosePushTimer()
-        // Push immediately, then every 60 seconds while the app is in the foreground
+        // Push immediately, then every 30 seconds while the app is in the foreground
         pushGlucoseToWatch()
-        glucosePushTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+        glucosePushTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             self?.pushGlucoseToWatch()
         }
-        print("[WatchSession] Glucose push timer started (60s interval)")
+        print("[WatchSession] Glucose push timer started (30s interval)")
     }
 
     /// Stop the timer when the app goes to the background.
@@ -123,12 +135,17 @@ class WatchSessionManager: NSObject, WCSessionDelegate {
     /// Fetches directly from the LinkLoop server (same API the Watch uses), then sends via:
     ///   1. sendMessage — instant delivery if Watch is reachable
     ///   2. transferCurrentComplicationUserInfo — guaranteed delivery, wakes widget extension
-    func pushGlucoseToWatch() {
+    /// - Parameter completion: Called when the push finishes (or fails). Used by BGTask handler.
+    func pushGlucoseToWatch(completion: (() -> Void)? = nil) {
         guard WCSession.default.activationState == .activated,
-              WCSession.default.isWatchAppInstalled else { return }
+              WCSession.default.isWatchAppInstalled else {
+            completion?()
+            return
+        }
 
         guard let token = readAsyncStorageValue(forKey: "authToken") else {
             print("[WatchSession] No auth token for glucose push")
+            completion?()
             return
         }
 
@@ -144,7 +161,10 @@ class WatchSessionManager: NSObject, WCSessionDelegate {
         }
 
         let urlString = "https://linkloop-9l3x.onrender.com/api\(endpoint)"
-        guard let url = URL(string: urlString) else { return }
+        guard let url = URL(string: urlString) else {
+            completion?()
+            return
+        }
 
         var request = URLRequest(url: url)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -156,6 +176,7 @@ class WatchSessionManager: NSObject, WCSessionDelegate {
                   let httpResponse = response as? HTTPURLResponse,
                   httpResponse.statusCode == 200 else {
                 print("[WatchSession] Glucose fetch failed: \(error?.localizedDescription ?? "HTTP error")")
+                completion?()
                 return
             }
 
@@ -180,17 +201,20 @@ class WatchSessionManager: NSObject, WCSessionDelegate {
 
                 guard let glucoseValue = value else {
                     print("[WatchSession] No glucose value in response")
+                    completion?()
                     return
                 }
 
                 self?.deliverGlucoseToWatch(value: glucoseValue, trend: trend, timestamp: timestamp)
+                completion?()
             } catch {
                 print("[WatchSession] JSON parse error: \(error)")
+                completion?()
             }
         }.resume()
     }
 
-    private func deliverGlucoseToWatch(value: Int, trend: String, timestamp: String) {
+    func deliverGlucoseToWatch(value: Int, trend: String, timestamp: String) {
         let payload: [String: Any] = [
             "glucoseValue": value,
             "glucoseTrend": trend,
@@ -207,10 +231,20 @@ class WatchSessionManager: NSObject, WCSessionDelegate {
         }
 
         // Channel 2: Complication user info (guaranteed, wakes widget extension)
-        // Only send if remaining transfers are available (Apple limits to ~50/day)
-        if WCSession.default.remainingComplicationUserInfoTransfers > 0 {
+        // Rate-limit: only transfer if value changed OR 5+ minutes since last transfer
+        // Apple allows ~50/day — at every 5 min that's 288/day, so we also skip if
+        // the value hasn't changed significantly to conserve quota
+        let timeSinceLastTransfer = Date().timeIntervalSince(lastComplicationTransferDate)
+        let valueChanged = (lastComplicationGlucoseValue ?? -1) != value
+        let shouldTransfer = valueChanged || timeSinceLastTransfer >= 300  // 5 minutes
+
+        if shouldTransfer && WCSession.default.remainingComplicationUserInfoTransfers > 0 {
             WCSession.default.transferCurrentComplicationUserInfo(payload)
+            lastComplicationTransferDate = Date()
+            lastComplicationGlucoseValue = value
             print("[WatchSession] Transferred complication info: \(value) \(trend) (remaining: \(WCSession.default.remainingComplicationUserInfoTransfers))")
+        } else {
+            print("[WatchSession] SKIPPED complication transfer - shouldTransfer: \(shouldTransfer), remaining: \(WCSession.default.remainingComplicationUserInfoTransfers), valueChanged: \(valueChanged), timeSinceLast: \(timeSinceLastTransfer)s")
         }
     }
 
@@ -219,7 +253,7 @@ class WatchSessionManager: NSObject, WCSessionDelegate {
     /// Reads a value from React Native AsyncStorage's manifest.json file.
     /// RNCAsyncStorage stores small key-value pairs as [[key, value], ...] in manifest.json.
     /// Larger values are stored in individual files named by their key.
-    private func readAsyncStorageValue(forKey key: String) -> String? {
+    func readAsyncStorageValue(forKey key: String) -> String? {
         let documentsPath = NSSearchPathForDirectoriesInDomains(
             .documentDirectory, .userDomainMask, true
         ).first!

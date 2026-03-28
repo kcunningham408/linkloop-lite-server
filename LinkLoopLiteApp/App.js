@@ -1,14 +1,22 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+import { DarkTheme, NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
+import { CardStyleInterpolators, createStackNavigator } from '@react-navigation/stack';
 import { BlurView } from 'expo-blur';
 import * as Notifications from 'expo-notifications';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { ActivityIndicator, Platform, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Dimensions, Image, Platform, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { haptic } from './config/haptics';
+
+const LL_BG = require('./assets/finalbg2.png');
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('screen');
+
+const TransparentTheme = {
+  ...DarkTheme,
+  colors: { ...DarkTheme.colors, background: 'transparent', card: 'transparent' },
+};
 
 // Import context
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -16,7 +24,6 @@ import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { ViewingProvider, useViewing } from './context/ViewingContext';
 
 // Import screens
-import AIConsentModal from './components/AIConsentModal';
 import HealthDisclaimer from './components/HealthDisclaimer';
 import AchievementsScreen from './screens/AchievementsScreen';
 import AlertsScreen from './screens/AlertsScreen';
@@ -48,20 +55,23 @@ function MainTabs() {
   const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
+      sceneContainerStyle={{ backgroundColor: 'transparent' }}
       screenListeners={{ tabPress: () => haptic.light() }}
       screenOptions={{
-        tabBarActiveTintColor: palette.warrior,
-        tabBarInactiveTintColor: '#555',
+        lazy: false,
+        tabBarActiveTintColor: '#fff',
+        tabBarInactiveTintColor: 'rgba(255,255,255,0.65)',
         tabBarStyle: [styles.tabBar, { bottom: 12 + insets.bottom }],
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
         tabBarBackground: () => (
           Platform.OS === 'ios' ? (
-            <BlurView intensity={60} tint="dark" style={StyleSheet.absoluteFill} />
+            <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
           ) : (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(10,10,15,0.94)' }]} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(10,10,20,0.88)' }]} />
           )
         ),
         headerStyle: {
-          backgroundColor: '#0A0A0F',
+          backgroundColor: 'transparent',
           shadowColor: 'transparent',
           elevation: 0,
         },
@@ -73,6 +83,7 @@ function MainTabs() {
         name="Home"
         component={HomeScreen}
         options={{
+          headerShown: false,
           title: 'LinkLoop',
           tabBarLabel: 'Home',
           tabBarIcon: ({ color, focused }) => (
@@ -103,13 +114,13 @@ function MainTabs() {
         }}
       />
       <Tab.Screen
-        name="Supplies"
-        component={SuppliesScreen}
+        name="Messages"
+        component={MessagesScreen}
         options={{
-          title: 'My Supplies',
-          tabBarLabel: 'Supplies',
+          title: 'Messages',
+          tabBarLabel: 'Messages',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'medkit' : 'medkit-outline'} size={22} color={color} />
+            <Ionicons name={focused ? 'chatbubbles' : 'chatbubbles-outline'} size={22} color={color} />
           ),
         }}
       />
@@ -134,20 +145,23 @@ function LoopMemberTabs() {
   const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
+      sceneContainerStyle={{ backgroundColor: 'transparent' }}
       screenListeners={{ tabPress: () => haptic.light() }}
       screenOptions={{
-        tabBarActiveTintColor: palette.member,
-        tabBarInactiveTintColor: '#555',
+        lazy: false,
+        tabBarActiveTintColor: '#fff',
+        tabBarInactiveTintColor: 'rgba(255,255,255,0.65)',
         tabBarStyle: [styles.tabBar, { bottom: 12 + insets.bottom }],
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
         tabBarBackground: () => (
           Platform.OS === 'ios' ? (
-            <BlurView intensity={60} tint="dark" style={StyleSheet.absoluteFill} />
+            <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
           ) : (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(10,10,15,0.94)' }]} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(12,20,42,0.92)' }]} />
           )
         ),
         headerStyle: {
-          backgroundColor: '#0A0A0F',
+          backgroundColor: 'transparent',
           shadowColor: 'transparent',
           elevation: 0,
         },
@@ -159,21 +173,11 @@ function LoopMemberTabs() {
         name="Home"
         component={HomeScreen}
         options={{
-          title: 'Their Loop',
-          tabBarLabel: 'Loop',
+          headerShown: false,
+          title: 'Dashboard',
+          tabBarLabel: 'Dashboard',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'infinite' : 'infinite-outline'} size={24} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="CGM"
-        component={CGMScreen}
-        options={{
-          title: 'Live Glucose',
-          tabBarLabel: 'Glucose',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'pulse' : 'pulse-outline'} size={22} color={color} />
+            <Ionicons name={focused ? 'grid' : 'grid-outline'} size={22} color={color} />
           ),
         }}
       />
@@ -196,6 +200,17 @@ function LoopMemberTabs() {
           tabBarLabel: 'Circle',
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? 'people' : 'people-outline'} size={22} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Messages"
+        component={MessagesScreen}
+        options={{
+          title: 'Messages',
+          tabBarLabel: 'Messages',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'chatbubbles' : 'chatbubbles-outline'} size={22} color={color} />
           ),
         }}
       />
@@ -228,7 +243,15 @@ function AppNavigator() {
   }
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{
+      headerShown: false,
+      cardStyle: { backgroundColor: 'transparent' },
+      cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+      transitionSpec: {
+        open: { animation: 'timing', config: { duration: 200 } },
+        close: { animation: 'timing', config: { duration: 200 } },
+      },
+    }}>
       {isAuthenticated ? (
         <>
           <Stack.Screen
@@ -241,7 +264,18 @@ function AppNavigator() {
             options={{
               headerShown: true,
               title: 'Messages',
-              headerStyle: { backgroundColor: '#0A0A0F' },
+              headerStyle: { backgroundColor: 'transparent' },
+              headerTintColor: '#fff',
+              headerTitleStyle: { fontWeight: 'bold' },
+            }}
+          />
+          <Stack.Screen
+            name="Supplies"
+            component={SuppliesScreen}
+            options={{
+              headerShown: true,
+              title: 'My Supplies',
+              headerStyle: { backgroundColor: 'transparent' },
               headerTintColor: '#fff',
               headerTitleStyle: { fontWeight: 'bold' },
             }}
@@ -251,7 +285,7 @@ function AppNavigator() {
             component={ChatScreen}
             options={{
               headerShown: true,
-              headerStyle: { backgroundColor: '#0A0A0F' },
+              headerStyle: { backgroundColor: 'transparent' },
               headerTintColor: '#fff',
               headerTitleStyle: { fontWeight: 'bold' },
             }}
@@ -262,7 +296,7 @@ function AppNavigator() {
             options={{
               headerShown: true,
               title: 'Care Circle Group',
-              headerStyle: { backgroundColor: '#0A0A0F' },
+              headerStyle: { backgroundColor: 'transparent' },
               headerTintColor: '#fff',
               headerTitleStyle: { fontWeight: 'bold' },
             }}
@@ -273,7 +307,7 @@ function AppNavigator() {
             options={{
               headerShown: true,
               title: 'CGM Alerts',
-              headerStyle: { backgroundColor: '#0A0A0F' },
+              headerStyle: { backgroundColor: 'transparent' },
               headerTintColor: '#fff',
               headerTitleStyle: { fontWeight: 'bold' },
             }}
@@ -284,7 +318,7 @@ function AppNavigator() {
             options={{
               headerShown: true,
               title: 'AI Insights',
-              headerStyle: { backgroundColor: '#0A0A0F' },
+              headerStyle: { backgroundColor: 'transparent' },
               headerTintColor: '#fff',
               headerTitleStyle: { fontWeight: 'bold' },
             }}
@@ -295,7 +329,7 @@ function AppNavigator() {
             options={{
               headerShown: true,
               title: 'Mood & Notes',
-              headerStyle: { backgroundColor: '#0A0A0F' },
+              headerStyle: { backgroundColor: 'transparent' },
               headerTintColor: '#fff',
               headerTitleStyle: { fontWeight: 'bold' },
             }}
@@ -313,7 +347,7 @@ function AppNavigator() {
             options={{
               headerShown: true,
               title: 'Apple Watch',
-              headerStyle: { backgroundColor: '#0A0A0F' },
+              headerStyle: { backgroundColor: 'transparent' },
               headerTintColor: '#fff',
               headerTitleStyle: { fontWeight: 'bold' },
             }}
@@ -324,7 +358,7 @@ function AppNavigator() {
             options={{
               headerShown: true,
               title: 'Settings',
-              headerStyle: { backgroundColor: '#0A0A0F' },
+              headerStyle: { backgroundColor: 'transparent' },
               headerTintColor: '#fff',
               headerTitleStyle: { fontWeight: 'bold' },
             }}
@@ -335,7 +369,7 @@ function AppNavigator() {
             options={{
               headerShown: true,
               title: 'Achievements',
-              headerStyle: { backgroundColor: '#0A0A0F' },
+              headerStyle: { backgroundColor: 'transparent' },
               headerTintColor: '#fff',
               headerTitleStyle: { fontWeight: 'bold' },
             }}
@@ -346,7 +380,7 @@ function AppNavigator() {
             options={{
               headerShown: true,
               title: 'Ask Loop',
-              headerStyle: { backgroundColor: '#0A0A0F' },
+              headerStyle: { backgroundColor: 'transparent' },
               headerTintColor: '#fff',
               headerTitleStyle: { fontWeight: 'bold' },
             }}
@@ -357,7 +391,7 @@ function AppNavigator() {
             options={{
               headerShown: true,
               title: 'Weekly Report',
-              headerStyle: { backgroundColor: '#0A0A0F' },
+              headerStyle: { backgroundColor: 'transparent' },
               headerTintColor: '#fff',
               headerTitleStyle: { fontWeight: 'bold' },
             }}
@@ -368,7 +402,7 @@ function AppNavigator() {
             options={{
               headerShown: true,
               title: 'Glucose Story',
-              headerStyle: { backgroundColor: '#0A0A0F' },
+              headerStyle: { backgroundColor: 'transparent' },
               headerTintColor: '#fff',
               headerTitleStyle: { fontWeight: 'bold' },
             }}
@@ -379,7 +413,7 @@ function AppNavigator() {
             options={{
               headerShown: true,
               title: 'Challenges',
-              headerStyle: { backgroundColor: '#0A0A0F' },
+              headerStyle: { backgroundColor: 'transparent' },
               headerTintColor: '#fff',
               headerTitleStyle: { fontWeight: 'bold' },
             }}
@@ -405,7 +439,7 @@ export default function App() {
       } else if (data?.type === 'glucose_alert' || data?.type === 'alert_acknowledged' || data?.type === 'alert_resolved') {
         navigationRef.navigate('Alerts');
       } else if (data?.type === 'supply_low') {
-        navigationRef.navigate('Main', { screen: 'Supplies' });
+        navigationRef.navigate('Supplies');
       }
     });
     return () => subscription.remove();
@@ -416,12 +450,14 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <ViewingProvider>
-          <NavigationContainer ref={navigationRef}>
-            <StatusBar style="light" backgroundColor="#4A90D9" />
-            <AppNavigator />
-            <HealthDisclaimer />
-            <AIConsentModal />
-          </NavigationContainer>
+          <View style={styles.root}>
+            <Image source={LL_BG} style={styles.bgImage} resizeMode="contain" />
+            <NavigationContainer ref={navigationRef} theme={TransparentTheme}>
+              <StatusBar style="light" backgroundColor="#0F1F40" />
+              <AppNavigator />
+              <HealthDisclaimer />
+            </NavigationContainer>
+          </View>
         </ViewingProvider>
       </AuthProvider>
     </ThemeProvider>
@@ -430,6 +466,22 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#0F1F40' },
+  bgImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: SCREEN_W,
+    height: SCREEN_H,
+  },
+  scrim: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: SCREEN_W,
+    height: SCREEN_H,
+    backgroundColor: 'rgba(0,10,30,0.35)',
+  },
   tabBar: {
     position: 'absolute',
     bottom: 12,
@@ -439,10 +491,10 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     borderTopWidth: 0,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: 'rgba(255,255,255,0.18)',
     backgroundColor: 'transparent',
-    paddingBottom: 6,
-    paddingTop: 6,
+    paddingBottom: 4,
+    paddingTop: 4,
     shadowColor: '#4A90D9',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.20,
@@ -454,7 +506,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#0A0A0F',
+    backgroundColor: 'transparent',
   },
   loadingLogo: {
     fontSize: 36,

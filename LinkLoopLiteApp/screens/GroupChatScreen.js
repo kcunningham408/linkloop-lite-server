@@ -75,7 +75,7 @@ export default function GroupChatScreen({ navigation }) {
     const memberCount = groupInfo?.memberCount || '';
     navigation.setOptions({
       title: '\uD83D\uDC65 Care Circle Group',
-      headerStyle: { backgroundColor: '#1C1C1E' },
+      headerStyle: { backgroundColor: 'transparent' },
       headerTintColor: '#fff',
       headerTitleStyle: { fontWeight: TYPE.bold },
     });
@@ -238,7 +238,7 @@ export default function GroupChatScreen({ navigation }) {
       >
         {/* Group Banner */}
         <LinearGradient
-          colors={['#1C1C1E', '#161618']}
+          colors={['#1E1E32', '#1A1A2E']}
           style={styles.chatBanner}
         >
           <View style={[styles.bannerAvatar, { borderColor: '#34C75940' }]}>
@@ -288,7 +288,7 @@ export default function GroupChatScreen({ navigation }) {
             <TextInput
               style={styles.textInput}
               placeholder="Message the group..."
-              placeholderTextColor="#666"
+              placeholderTextColor="#888"
               value={text}
               onChangeText={setText}
               multiline
@@ -307,7 +307,7 @@ export default function GroupChatScreen({ navigation }) {
               </LinearGradient>
             ) : (
               <View style={styles.sendDisabledInner}>
-                <Text style={[styles.sendButtonText, { color: '#666' }]}>➤</Text>
+                <Text style={[styles.sendButtonText, { color: '#B0B0B0' }]}>➤</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -318,10 +318,10 @@ export default function GroupChatScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111111' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   flex: { flex: 1 },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 10, color: '#888', fontSize: TYPE.md },
+  loadingText: { marginTop: 10, color: 'rgba(255,255,255,0.45)', fontSize: TYPE.md },
 
   chatBanner: {
     flexDirection: 'row',
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#2C2C2E',
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   bannerAvatar: {
     width: 42,
@@ -338,22 +338,22 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1A2A44',
+    backgroundColor: 'rgba(26,42,68,0.45)',
     marginRight: 12,
   },
-  chatBannerEmoji: { fontSize: 22 },
+  chatBannerEmoji: { fontSize: TYPE.xxl },
   bannerTextWrap: { flex: 1 },
   chatBannerName: { fontSize: TYPE.lg, fontWeight: TYPE.bold, color: '#fff' },
   memberPills: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 4, gap: 4 },
   memberPill: {
-    backgroundColor: '#252528',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#2C2C2E',
+    borderColor: 'rgba(255,255,255,0.08)',
   },
-  memberPillText: { fontSize: 10, color: '#A0A0A0', fontWeight: TYPE.medium },
+  memberPillText: { fontSize: TYPE.xs, color: 'rgba(255,255,255,0.55)', fontWeight: TYPE.medium },
 
   messagesList: { paddingHorizontal: 12, paddingVertical: 8 },
 
@@ -363,52 +363,52 @@ const styles = StyleSheet.create({
 
   avatarCircle: {
     width: 30, height: 30, borderRadius: 15,
-    backgroundColor: '#1A2235', borderWidth: 1.5, justifyContent: 'center', alignItems: 'center', marginRight: 6,
+    backgroundColor: 'rgba(26,34,53,0.4)', borderWidth: 1.5, justifyContent: 'center', alignItems: 'center', marginRight: 6,
   },
-  avatarText: { fontSize: 14 },
+  avatarText: { fontSize: TYPE.md },
 
   bubble: { maxWidth: '80%', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 10 },
   bubbleMe: { borderBottomRightRadius: 6 },
-  bubbleOther: { backgroundColor: '#1C1C1E', borderBottomLeftRadius: 6, borderWidth: 1, borderColor: '#2C2C2E' },
+  bubbleOther: { backgroundColor: 'rgba(10,18,40,0.85)', borderBottomLeftRadius: 6, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
   bubbleSending: { opacity: 0.6 },
 
-  senderName: { fontSize: 10, fontWeight: TYPE.bold, marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.3 },
+  senderName: { fontSize: TYPE.xs, fontWeight: TYPE.bold, marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.3 },
 
   msgText: { fontSize: TYPE.md, lineHeight: 20 },
   msgTextMe: { color: '#fff' },
-  msgTextOther: { color: '#E0E0E0' },
+  msgTextOther: { color: 'rgba(255,255,255,0.85)' },
 
-  timeText: { fontSize: 9, marginTop: 4 },
-  timeTextMe: { color: 'rgba(255,255,255,0.6)', textAlign: 'right' },
-  timeTextOther: { color: '#555' },
+  timeText: { fontSize: TYPE.xs, marginTop: 4 },
+  timeTextMe: { color: 'rgba(255,255,255,0.85)', textAlign: 'right' },
+  timeTextOther: { color: 'rgba(255,255,255,0.40)' },
 
   systemMsgContainer: {
-    alignSelf: 'center', backgroundColor: '#1C1C1E', borderRadius: 12,
-    paddingHorizontal: 14, paddingVertical: 6, marginVertical: 8, borderWidth: 1, borderColor: '#2C2C2E',
+    alignSelf: 'center', backgroundColor: 'rgba(10,18,40,0.85)', borderRadius: 12,
+    paddingHorizontal: 14, paddingVertical: 6, marginVertical: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
   },
-  systemMsgText: { fontSize: TYPE.xs, color: '#A0A0A0', textAlign: 'center' },
+  systemMsgText: { fontSize: TYPE.xs, color: 'rgba(255,255,255,0.55)', textAlign: 'center' },
 
   alertMsgContainer: {
-    flexDirection: 'row', backgroundColor: '#2A1A1A', borderRadius: 16,
+    flexDirection: 'row', backgroundColor: 'rgba(42,26,26,0.5)', borderRadius: 16,
     padding: 14, marginVertical: 6, borderLeftWidth: 4, borderLeftColor: '#D32F2F', alignSelf: 'stretch',
     borderWidth: 1, borderColor: '#3A2020',
   },
   alertMsgIcon: { fontSize: TYPE.h3, marginRight: 10 },
   alertMsgContent: { flex: 1 },
-  alertMsgLabel: { fontSize: 10, fontWeight: TYPE.extrabold, color: '#FF6B6B', marginBottom: 4, letterSpacing: 0.8, textTransform: 'uppercase' },
-  alertMsgText: { fontSize: TYPE.md, color: '#E0E0E0', lineHeight: 20 },
-  alertMsgTime: { fontSize: 9, color: '#666', marginTop: 4 },
+  alertMsgLabel: { fontSize: TYPE.xs, fontWeight: TYPE.extrabold, color: '#FF6B6B', marginBottom: 4, letterSpacing: 0.8, textTransform: 'uppercase' },
+  alertMsgText: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.85)', lineHeight: 20 },
+  alertMsgTime: { fontSize: TYPE.xs, color: 'rgba(255,255,255,0.40)', marginTop: 4 },
 
   ackMsgContainer: {
-    flexDirection: 'row', backgroundColor: '#1A2E1A', borderRadius: 16,
+    flexDirection: 'row', backgroundColor: 'rgba(26,46,26,0.5)', borderRadius: 16,
     padding: 14, marginVertical: 6, borderLeftWidth: 4, borderLeftColor: '#4CAF50', alignSelf: 'stretch',
     borderWidth: 1, borderColor: '#1E3A1E',
   },
   ackMsgIcon: { fontSize: TYPE.h3, marginRight: 10 },
   ackMsgContent: { flex: 1 },
-  ackMsgLabel: { fontSize: 10, fontWeight: TYPE.extrabold, color: '#4CAF50', marginBottom: 4, letterSpacing: 0.5, textTransform: 'uppercase' },
-  ackMsgText: { fontSize: TYPE.md, color: '#E0E0E0', lineHeight: 20 },
-  ackMsgTime: { fontSize: 9, color: '#666', marginTop: 4 },
+  ackMsgLabel: { fontSize: TYPE.xs, fontWeight: TYPE.extrabold, color: '#4CAF50', marginBottom: 4, letterSpacing: 0.5, textTransform: 'uppercase' },
+  ackMsgText: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.85)', lineHeight: 20 },
+  ackMsgTime: { fontSize: TYPE.xs, color: 'rgba(255,255,255,0.40)', marginTop: 4 },
 
   emptyChat: {
     alignItems: 'center', paddingVertical: 60,
@@ -416,17 +416,17 @@ const styles = StyleSheet.create({
   },
   emptyChatEmoji: { fontSize: 50, marginBottom: 12 },
   emptyChatTitle: { fontSize: TYPE.xl, fontWeight: TYPE.bold, color: '#fff', marginBottom: 6 },
-  emptyChatText: { fontSize: TYPE.md, color: '#888', textAlign: 'center' },
+  emptyChatText: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.55)', textAlign: 'center' },
 
   inputBar: {
     flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 10,
-    paddingVertical: 8, backgroundColor: '#161618', borderTopWidth: 1, borderTopColor: '#2C2C2E',
+    paddingVertical: 8, backgroundColor: 'rgba(10,18,40,0.88)', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)',
   },
   inputWrap: { flex: 1, marginRight: 8 },
   textInput: {
-    minHeight: 40, maxHeight: 100, backgroundColor: '#1C1C1E',
+    minHeight: 40, maxHeight: 100, backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, fontSize: TYPE.md, color: '#fff',
-    borderWidth: 1, borderColor: '#2C2C2E',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)',
   },
   sendButton: {
     width: 42, height: 42, borderRadius: 21, overflow: 'hidden',
@@ -435,8 +435,8 @@ const styles = StyleSheet.create({
     width: 42, height: 42, borderRadius: 21, justifyContent: 'center', alignItems: 'center',
   },
   sendDisabledInner: {
-    width: 42, height: 42, borderRadius: 21, backgroundColor: '#1C1C1E', justifyContent: 'center', alignItems: 'center',
+    width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(10,18,40,0.85)', justifyContent: 'center', alignItems: 'center',
   },
   sendButtonDisabled: {},
-  sendButtonText: { fontSize: 20, color: '#fff', fontWeight: TYPE.bold },
+  sendButtonText: { fontSize: TYPE.xl, color: '#fff', fontWeight: TYPE.bold },
 });

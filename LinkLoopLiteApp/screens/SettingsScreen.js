@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Animated as RNAnimated, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import GlassCard from '../components/GlassCard';
 import { FadeIn, stagger } from '../config/animations';
 import { haptic } from '../config/haptics';
 import TYPE from '../config/typography';
@@ -12,7 +11,7 @@ import { circleAPI, glucoseAPI, usersAPI } from '../services/api';
 export default function SettingsScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { user, updateUser } = useAuth();
-  const { palette, setTheme, palettes, getGradient } = useTheme();
+  const { palette, setTheme, palettes } = useTheme();
   const isMember = user?.role === 'member';
   const accent = isMember ? palette.member : palette.warrior;
 
@@ -132,7 +131,7 @@ export default function SettingsScreen({ navigation }) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#0A0A0F' }}>
+    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
     {savedToast && (
       <RNAnimated.View style={[styles.savedToast, { opacity: toastOpacity }]}>
         <Text style={styles.savedToastText}>✓ Saved</Text>
@@ -143,223 +142,197 @@ export default function SettingsScreen({ navigation }) {
 
         {/* ── Alert Thresholds ── */}
         <FadeIn delay={0}>
-        <GlassCard style={styles.card}>
-          <Text style={styles.sectionTitle}>🎯 Alert Thresholds</Text>
-          <Text style={[styles.description, { marginBottom: 14 }]}>
-            {isMember
-              ? 'Set your personal alert levels. You\'ll only get push notifications when glucose crosses YOUR thresholds.'
-              : 'Set your low and high glucose alert levels. Circle members can also set their own thresholds independently.'}
-          </Text>
+          <View style={[styles.opaqueCard, { borderLeftWidth: 5, borderLeftColor: accent }]}>
+            <Text style={styles.cardHeaderTitle}>ALERT THRESHOLDS</Text>
+            <Text style={[styles.desc, { marginBottom: 12 }]}>
+              {isMember
+                ? 'Set your personal alert levels. You\'ll only get push notifications when glucose crosses YOUR thresholds.'
+                : 'Set your low and high glucose alert levels. Circle members can also set their own thresholds independently.'}
+            </Text>
 
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingIcon}>📉</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.settingTitle}>Low Alert (mg/dL)</Text>
-                <Text style={styles.description}>Get alerted when glucose drops below this</Text>
+            {[
+              { icon: '📉', title: 'Low Alert (mg/dL)', hint: 'Get alerted when glucose drops below this', value: lowThreshold, setter: setLowThreshold },
+              { icon: '📈', title: 'High Alert (mg/dL)', hint: 'Get alerted when glucose goes above this', value: highThreshold, setter: setHighThreshold },
+              { icon: '⏱️', title: 'High Alert Delay (min)', hint: 'Wait this many minutes above threshold before alerting. 0 = immediate.', value: highAlertDelay, setter: setHighAlertDelay, placeholder: '0' },
+            ].map((item, idx, arr) => (
+              <View key={idx}>
+                <View style={styles.settingRow}>
+                  <View style={[styles.iconCircle, { backgroundColor: accent + '15' }]}>
+                    <Text style={{ fontSize: 16 }}>{item.icon}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.settingTitle}>{item.title}</Text>
+                    <Text style={styles.desc}>{item.hint}</Text>
+                  </View>
+                  <TextInput
+                    style={[styles.thresholdInput, { borderColor: accent }]}
+                    value={item.value}
+                    onChangeText={item.setter}
+                    keyboardType="number-pad"
+                    maxLength={3}
+                    selectTextOnFocus
+                    placeholder={item.placeholder}
+                    placeholderTextColor="#888"
+                  />
+                </View>
+                {idx < arr.length - 1 && <View style={styles.rowDivider} />}
               </View>
-            </View>
-            <TextInput
-              style={[styles.thresholdInput, { borderColor: accent }]}
-              value={lowThreshold}
-              onChangeText={setLowThreshold}
-              keyboardType="number-pad"
-              maxLength={3}
-              selectTextOnFocus
-            />
-          </View>
+            ))}
 
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingIcon}>📈</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.settingTitle}>High Alert (mg/dL)</Text>
-                <Text style={styles.description}>Get alerted when glucose goes above this</Text>
-              </View>
-            </View>
-            <TextInput
-              style={[styles.thresholdInput, { borderColor: accent }]}
-              value={highThreshold}
-              onChangeText={setHighThreshold}
-              keyboardType="number-pad"
-              maxLength={3}
-              selectTextOnFocus
-            />
+            <TouchableOpacity
+              style={[styles.saveBtn, { backgroundColor: accent }]}
+              onPress={handleSaveThresholds}
+              disabled={savingThresholds}
+            >
+              <Text style={styles.saveBtnText}>{savingThresholds ? 'Saving...' : 'Save Alert Settings'}</Text>
+            </TouchableOpacity>
           </View>
-
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingIcon}>⏱️</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.settingTitle}>High Alert Delay (min)</Text>
-                <Text style={styles.description}>Wait this many minutes above your high threshold before alerting. Set to 0 for immediate. Lows always alert immediately.</Text>
-              </View>
-            </View>
-            <TextInput
-              style={[styles.thresholdInput, { borderColor: accent }]}
-              value={highAlertDelay}
-              onChangeText={setHighAlertDelay}
-              keyboardType="number-pad"
-              maxLength={3}
-              selectTextOnFocus
-              placeholder="0"
-              placeholderTextColor="#666"
-            />
-          </View>
-
-          <TouchableOpacity
-            style={[styles.saveBtn, { backgroundColor: accent }]}
-            onPress={handleSaveThresholds}
-            disabled={savingThresholds}
-          >
-            <Text style={styles.saveBtnText}>{savingThresholds ? 'Saving...' : 'Save Alert Settings'}</Text>
-          </TouchableOpacity>
-        </GlassCard>
         </FadeIn>
 
         {/* ── Notification Preferences ── */}
         <FadeIn delay={stagger(1, 100)}>
-        <GlassCard style={styles.card}>
-          <Text style={styles.sectionTitle}>🔔 Notification Preferences</Text>
-          <Text style={[styles.description, { marginBottom: 12 }]}>
-            Control which push notifications you receive
-          </Text>
+          <View style={styles.opaqueCard}>
+            <Text style={styles.cardHeaderTitle}>NOTIFICATIONS</Text>
+            <View style={styles.rowDivider} />
 
-          {[
-            { key: 'glucoseAlerts', icon: '📉', title: 'Glucose Alerts', desc: 'Low, high, urgent & rapid changes' },
-            { key: 'acknowledgments', icon: '✅', title: 'Acknowledgments', desc: 'Someone acknowledged an alert' },
-            { key: 'alertResolved', icon: '☑️', title: 'Alert Resolved', desc: 'Warrior resolved an active alert' },
-            { key: 'newMessages', icon: '💬', title: 'Direct Messages', desc: '1-on-1 chat messages' },
-            { key: 'groupMessages', icon: '👥', title: 'Group Messages', desc: 'Care Circle group chat messages' },
-            ...(!isMember ? [{ key: 'dailyInsights', icon: '✨', title: 'Evening Recap', desc: 'AI glucose recap at 7 PM daily' }] : []),
-          ].map((item) => (
-            <View key={item.key} style={styles.settingItem}>
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingIcon}>{item.icon}</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.settingTitle}>{item.title}</Text>
-                  <Text style={styles.description}>{item.desc}</Text>
+            {[
+              { key: 'glucoseAlerts', icon: '📉', title: 'Glucose Alerts', desc: 'Low, high, urgent & rapid changes' },
+              { key: 'acknowledgments', icon: '✅', title: 'Acknowledgments', desc: 'Someone acknowledged an alert' },
+              { key: 'alertResolved', icon: '☑️', title: 'Alert Resolved', desc: 'Warrior resolved an active alert' },
+              { key: 'newMessages', icon: '💬', title: 'Direct Messages', desc: '1-on-1 chat messages' },
+              { key: 'groupMessages', icon: '👥', title: 'Group Messages', desc: 'Care Circle group chat' },
+              ...(!isMember ? [{ key: 'dailyInsights', icon: '✨', title: 'Evening Recap', desc: 'AI glucose recap at 7 PM daily' }] : []),
+            ].map((item, idx, arr) => (
+              <View key={item.key}>
+                <View style={styles.settingRow}>
+                  <View style={[styles.iconCircle, { backgroundColor: accent + '15' }]}>
+                    <Text style={{ fontSize: 16 }}>{item.icon}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.settingTitle}>{item.title}</Text>
+                    <Text style={styles.desc}>{item.desc}</Text>
+                  </View>
+                  <Switch
+                    value={pushPrefs[item.key]}
+                    onValueChange={(val) => {
+                      setPushPrefs(p => ({ ...p, [item.key]: val }));
+                      usersAPI.savePushPreferences({ [item.key]: val }).then(() => showSavedToast()).catch(console.log);
+                    }}
+                    trackColor={{ false: '#3E3E58', true: accent }}
+                    thumbColor="#fff"
+                    style={{ transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }] }}
+                  />
                 </View>
+                {idx < arr.length - 1 && <View style={styles.rowDivider} />}
               </View>
-              <Switch
-                value={pushPrefs[item.key]}
-                onValueChange={(val) => {
-                  setPushPrefs(p => ({ ...p, [item.key]: val }));
-                  usersAPI.savePushPreferences({ [item.key]: val }).then(() => showSavedToast()).catch(console.log);
-                }}
-                trackColor={{ false: '#3A3A3C', true: accent }}
-                thumbColor="#fff"
-              />
-            </View>
-          ))}
-        </GlassCard>
+            ))}
+          </View>
         </FadeIn>
 
         {/* ── Pause Alerts (Members only) ── */}
         {isMember && (
           <FadeIn delay={stagger(2, 100)}>
-          <GlassCard style={styles.card}>
-            <Text style={styles.sectionTitle}>⏸️ Pause Alerts</Text>
-            <View style={styles.settingItem}>
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingIcon}>🔇</Text>
+            <View style={styles.opaqueCard}>
+              <Text style={styles.cardHeaderTitle}>PAUSE ALERTS</Text>
+              <View style={styles.rowDivider} />
+              <View style={styles.settingRow}>
+                <View style={[styles.iconCircle, { backgroundColor: '#FF980015' }]}>
+                  <Text style={{ fontSize: 16 }}>🔇</Text>
+                </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.settingTitle}>Pause My Alerts</Text>
-                  <Text style={styles.description}>
+                  <Text style={styles.desc}>
                     {alertsPaused
                       ? 'Your alerts are paused. You won\'t receive glucose notifications.'
                       : 'Temporarily stop receiving glucose alerts from this circle.'}
                   </Text>
                 </View>
+                <Switch
+                  value={alertsPaused}
+                  onValueChange={handleTogglePauseAlerts}
+                  disabled={pauseLoading}
+                  trackColor={{ false: '#3E3E58', true: '#FF9800' }}
+                  thumbColor="#fff"
+                  style={{ transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }] }}
+                />
               </View>
-              <Switch
-                value={alertsPaused}
-                onValueChange={handleTogglePauseAlerts}
-                disabled={pauseLoading}
-                trackColor={{ false: '#3A3A3C', true: '#FF9800' }}
-                thumbColor="#fff"
-              />
             </View>
-          </GlassCard>
           </FadeIn>
         )}
 
         {/* ── Export Data (Warriors only) ── */}
         {!isMember && (
           <FadeIn delay={stagger(2, 100)}>
-          <GlassCard style={styles.card}>
-            <Text style={styles.sectionTitle}>📤 Export Data</Text>
-            <TouchableOpacity
-              style={[styles.settingItem, { justifyContent: 'center' }]}
-              onPress={handleExportData}
-              disabled={exporting}
-            >
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingIcon}>📊</Text>
+            <View style={styles.opaqueCard}>
+              <Text style={styles.cardHeaderTitle}>EXPORT DATA</Text>
+              <View style={styles.rowDivider} />
+              <TouchableOpacity style={styles.settingRow} onPress={handleExportData} disabled={exporting}>
+                <View style={[styles.iconCircle, { backgroundColor: accent + '15' }]}>
+                  <Text style={{ fontSize: 16 }}>📊</Text>
+                </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.settingTitle}>{exporting ? 'Exporting...' : 'Export Glucose Data (CSV)'}</Text>
-                  <Text style={styles.description}>Download last 30 days of glucose readings</Text>
+                  <Text style={styles.desc}>Download last 30 days of glucose readings</Text>
                 </View>
-              </View>
-              <Text style={styles.chevron}>›</Text>
-            </TouchableOpacity>
-          </GlassCard>
+                <Text style={styles.chevron}>›</Text>
+              </TouchableOpacity>
+            </View>
           </FadeIn>
         )}
 
         {/* ── Theme Picker ── */}
         <FadeIn delay={stagger(3, 100)}>
-        <GlassCard style={styles.card}>
-          <Text style={styles.sectionTitle}>🎨 App Theme</Text>
-          <Text style={[styles.description, { marginBottom: 16 }]}>
-            Choose a color palette for your LinkLoop experience
-          </Text>
-          <View style={styles.themeGrid}>
-            {palettes.map((p) => {
-              const isActive = palette.id === p.id;
-              const displayColor = isMember ? p.member : p.warrior;
-              const displayDark = isMember ? p.memberDark : p.warriorDark;
-              return (
-                <TouchableOpacity
-                  key={p.id}
-                  style={[
-                    styles.themeOption,
-                    isActive && { borderColor: displayColor, borderWidth: 2 },
-                  ]}
-                  onPress={() => { haptic.selection(); setTheme(p.id); }}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.themeColorRow}>
-                    <View style={[styles.themeColorDot, { backgroundColor: displayColor }]} />
-                    <View style={[styles.themeColorDot, { backgroundColor: displayDark }]} />
-                  </View>
-                  <Text style={[
-                    styles.themeOptionLabel,
-                    isActive && { color: displayColor, fontWeight: TYPE.bold },
-                  ]} numberOfLines={1}>
-                    {p.name}
-                  </Text>
-                  {isActive && (
-                    <Text style={[styles.themeActiveCheck, { color: displayColor }]}>✓</Text>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-          {/* Preview */}
-          <View style={[styles.themePreview, { borderColor: accent }]}>
-            <Text style={styles.themePreviewLabel}>Preview</Text>
-            <View style={styles.themePreviewRow}>
-              <View style={[styles.themePreviewBtn, { backgroundColor: accent }]}>
-                <Text style={styles.themePreviewBtnText}>Button</Text>
+          <View style={styles.opaqueCard}>
+            <Text style={styles.cardHeaderTitle}>APP THEME</Text>
+            <Text style={[styles.desc, { marginBottom: 14 }]}>
+              Choose a color palette for your LinkLoop experience
+            </Text>
+            <View style={styles.themeGrid}>
+              {palettes.map((p) => {
+                const isActive = palette.id === p.id;
+                const displayColor = isMember ? p.member : p.warrior;
+                const displayDark = isMember ? p.memberDark : p.warriorDark;
+                return (
+                  <TouchableOpacity
+                    key={p.id}
+                    style={[
+                      styles.themeOption,
+                      isActive && { borderColor: displayColor, borderWidth: 2 },
+                    ]}
+                    onPress={() => { haptic.selection(); setTheme(p.id); }}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.themeColorRow}>
+                      <View style={[styles.themeColorDot, { backgroundColor: displayColor }]} />
+                      <View style={[styles.themeColorDot, { backgroundColor: displayDark }]} />
+                    </View>
+                    <Text style={[
+                      styles.themeOptionLabel,
+                      isActive && { color: displayColor, fontWeight: TYPE.bold },
+                    ]} numberOfLines={1}>
+                      {p.name}
+                    </Text>
+                    {isActive && (
+                      <Text style={[styles.themeActiveCheck, { color: displayColor }]}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            {/* Preview */}
+            <View style={[styles.themePreview, { borderColor: accent }]}>
+              <Text style={styles.themePreviewLabel}>Preview</Text>
+              <View style={styles.themePreviewRow}>
+                <View style={[styles.themePreviewBtn, { backgroundColor: accent }]}>
+                  <Text style={styles.themePreviewBtnText}>Button</Text>
+                </View>
+                <View style={[styles.themePreviewBadge, { borderColor: accent }]}>
+                  <Text style={[styles.themePreviewBadgeText, { color: accent }]}>Badge</Text>
+                </View>
+                <View style={[styles.themePreviewDot, { backgroundColor: accent }]} />
               </View>
-              <View style={[styles.themePreviewBadge, { borderColor: accent }]}>
-                <Text style={[styles.themePreviewBadgeText, { color: accent }]}>Badge</Text>
-              </View>
-              <View style={[styles.themePreviewDot, { backgroundColor: accent }]} />
             </View>
           </View>
-        </GlassCard>
         </FadeIn>
 
       </View>
@@ -369,8 +342,8 @@ export default function SettingsScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0A0A0F' },
-  content: { padding: 20 },
+  container: { flex: 1, backgroundColor: 'transparent' },
+  content: { padding: 16 },
 
   savedToast: {
     position: 'absolute', top: 50, alignSelf: 'center', zIndex: 100,
@@ -379,52 +352,53 @@ const styles = StyleSheet.create({
   },
   savedToastText: { color: '#fff', fontSize: 15, fontWeight: '700' },
 
-  card: { borderRadius: 12, padding: 20, marginBottom: 20 },
-  sectionTitle: { fontSize: TYPE.xl, fontWeight: TYPE.bold, color: '#fff', marginBottom: 15 },
-  description: { fontSize: TYPE.sm, color: '#888' },
-
-  settingItem: {
-    flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 15,
-    borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)',
+  /* Opaque card */
+  opaqueCard: {
+    backgroundColor: 'rgba(10,18,40,0.94)',
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
-  settingInfo: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  settingIcon: { fontSize: TYPE.h3, marginRight: 14 },
+  cardHeaderTitle: { fontSize: 13, fontWeight: TYPE.bold, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8 },
+  rowDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginVertical: 2 },
+  desc: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.45)', lineHeight: 16 },
+
+  /* Setting rows */
+  settingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12 },
+  iconCircle: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
   settingTitle: { fontSize: 15, fontWeight: TYPE.semibold, color: '#fff', marginBottom: 2 },
-  chevron: { fontSize: TYPE.h3, color: '#555', fontWeight: '300' },
+  chevron: { fontSize: 22, color: 'rgba(255,255,255,0.3)', fontWeight: '300' },
 
   thresholdInput: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8,
     fontSize: TYPE.xl, fontWeight: TYPE.bold, color: '#fff',
-    textAlign: 'center', width: 70, borderWidth: 1,
+    textAlign: 'center', width: 64, borderWidth: 1,
   },
 
-  saveBtn: {
-    borderRadius: 10, paddingHorizontal: 20, paddingVertical: 10,
-    alignSelf: 'flex-end', marginTop: 10,
-  },
+  saveBtn: { borderRadius: 10, paddingHorizontal: 20, paddingVertical: 10, alignSelf: 'flex-end', marginTop: 12 },
   saveBtnText: { color: '#fff', fontSize: 13, fontWeight: TYPE.semibold },
 
-  // Theme
+  /* Theme */
   themeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 },
   themeOption: {
     width: '47%',
     backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: 12, padding: 12,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
     position: 'relative',
   },
   themeColorRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
   themeColorDot: { width: 24, height: 24, borderRadius: 12 },
-  themeOptionLabel: { fontSize: 13, color: '#A0A0A0', fontWeight: TYPE.medium },
+  themeOptionLabel: { fontSize: 13, color: 'rgba(255,255,255,0.6)', fontWeight: TYPE.medium },
   themeActiveCheck: { position: 'absolute', top: 10, right: 12, fontSize: TYPE.lg, fontWeight: TYPE.bold },
   themePreview: {
     backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: 12, padding: 14, borderWidth: 1, alignItems: 'center',
   },
-  themePreviewLabel: { fontSize: TYPE.sm, color: '#888', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1 },
+  themePreviewLabel: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.45)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1 },
   themePreviewRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   themePreviewBtn: { paddingHorizontal: 20, paddingVertical: 8, borderRadius: 8 },
   themePreviewBtnText: { color: '#fff', fontSize: 13, fontWeight: TYPE.bold },

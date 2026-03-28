@@ -1,6 +1,6 @@
 /**
  * dexcomSync.js
- * Background cron job — runs every 5 minutes, syncs all connected Dexcom users.
+ * Background cron job — runs every 3 minutes, syncs all connected Dexcom users.
  */
 
 const cron   = require('node-cron');
@@ -203,9 +203,9 @@ async function syncUser(user) {
   }
 }
 
-// ── Main cron job — every 5 minutes ───────────────────────────────
+// ── Main cron job — every 3 minutes ───────────────────────────────
 function startDexcomSyncJob() {
-  cron.schedule('*/5 * * * *', async () => {
+  cron.schedule('*/3 * * * *', async () => {
     console.log('[DexcomSync] Running scheduled sync...');
     try {
       // Find all users with either Dexcom connection active
@@ -227,7 +227,7 @@ function startDexcomSyncJob() {
     }
   });
 
-  console.log('⏱  Dexcom auto-sync cron job started (every 5 minutes)');
+  console.log('⏱  Dexcom auto-sync cron job started (every 3 minutes)');
 }
 
 module.exports = { startDexcomSyncJob };

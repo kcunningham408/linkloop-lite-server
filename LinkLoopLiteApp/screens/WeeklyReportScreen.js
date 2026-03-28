@@ -67,7 +67,7 @@ export default function WeeklyReportScreen() {
   };
 
   const getTrendColor = (val, goodDirection = 'up') => {
-    if (val === 0) return '#888';
+    if (val === 0) return '#C8C8C8';
     if (goodDirection === 'up') return val > 0 ? '#4CAF50' : '#FF6B6B';
     return val < 0 ? '#4CAF50' : '#FF6B6B';
   };
@@ -150,12 +150,12 @@ export default function WeeklyReportScreen() {
               <GlassCard>
                 <Text style={styles.sectionTitle}>This Week's Numbers</Text>
                 <View style={styles.statsGrid}>
-                  <StatBox label="Avg Glucose" value={`${report.thisWeek.avg}`} unit="mg/dL" color="#FFA500" />
+                  <StatBox label="Avg Glucose" value={`${report.thisWeek.avg}`} unit="mg/dL" color="#FF7B93" />
                   <StatBox label="TIR" value={`${report.thisWeek.tir}%`} color="#4CAF50" />
                   <StatBox label="Lows" value={`${report.thisWeek.lowCount}`} color="#FF6B6B" />
-                  <StatBox label="Highs" value={`${report.thisWeek.highCount}`} color="#FFA500" />
-                  <StatBox label="CV" value={`${report.thisWeek.cv}%`} color="#888" />
-                  <StatBox label="Est. GMI" value={`${report.thisWeek.gmi}%`} color="#4A90D9" />
+                  <StatBox label="Highs" value={`${report.thisWeek.highCount}`} color="#FF7B93" />
+                  <StatBox label="CV" value={`${report.thisWeek.cv}%`} color="#B0B0B0" />
+                  <StatBox label="Est. GMI" value={`${report.thisWeek.gmi}%`} color={accent} />
                 </View>
               </GlassCard>
             </FadeIn>
@@ -213,7 +213,7 @@ export default function WeeklyReportScreen() {
                           <Text style={styles.dayDate}>{day.readingCount} readings</Text>
                         </View>
                         <View style={styles.dayStats}>
-                          <Text style={[styles.dayTir, { color: day.tir >= 70 ? '#4CAF50' : day.tir >= 50 ? '#FFA500' : '#FF6B6B' }]}>
+                          <Text style={[styles.dayTir, { color: day.tir >= 70 ? '#4CAF50' : day.tir >= 50 ? '#FF7B93' : '#FF6B6B' }]}>
                             {day.tir}%
                           </Text>
                           <Text style={styles.dayAvg}>avg {day.avg}</Text>
@@ -222,7 +222,7 @@ export default function WeeklyReportScreen() {
                         <View style={styles.dayBarBg}>
                           <View style={[styles.dayBarFill, {
                             width: `${Math.max(day.tir, 3)}%`,
-                            backgroundColor: day.tir >= 70 ? '#4CAF50' : day.tir >= 50 ? '#FFA500' : '#FF6B6B',
+                            backgroundColor: day.tir >= 70 ? '#4CAF50' : day.tir >= 50 ? '#FF7B93' : '#FF6B6B',
                           }]} />
                         </View>
                       </View>
@@ -288,7 +288,7 @@ function TrendRow({ label, value, suffix, good }) {
   const icon = value > 0 ? '⬆️' : value < 0 ? '⬇️' : '➡️';
   const isGood = good === 'up' ? value > 0 : good === 'down' ? value < 0 : false;
   const isBad = good === 'up' ? value < 0 : good === 'down' ? value > 0 : false;
-  const color = value === 0 ? '#888' : isGood ? '#4CAF50' : isBad ? '#FF6B6B' : '#888';
+  const color = value === 0 ? '#C8C8C8' : isGood ? '#4CAF50' : isBad ? '#FF6B6B' : '#B0B0B0';
 
   return (
     <View style={styles.trendRow}>
@@ -301,28 +301,28 @@ function TrendRow({ label, value, suffix, good }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0A0A0F' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   content: { padding: 16, paddingBottom: 40 },
 
   // Loading / Empty
   loadingBox: { alignItems: 'center', paddingVertical: 60 },
-  loadingText: { fontSize: TYPE.md, color: '#888', marginTop: 15 },
+  loadingText: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.45)', marginTop: 15 },
   emptyState: { alignItems: 'center', paddingVertical: 60 },
   emptyEmoji: { fontSize: 60, marginBottom: 15 },
   emptyTitle: { fontSize: TYPE.xxl, fontWeight: TYPE.bold, color: '#fff', marginBottom: 8 },
-  emptyText: { fontSize: TYPE.md, color: '#888', textAlign: 'center', lineHeight: 22, paddingHorizontal: 20 },
+  emptyText: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.55)', textAlign: 'center', lineHeight: 22, paddingHorizontal: 20 },
 
   // Grade Card
   gradeCard: { alignItems: 'center', paddingVertical: 10 },
   gradeEmoji: { fontSize: 60, marginBottom: 8 },
   gradeLabel: { fontSize: TYPE.h2, fontWeight: TYPE.bold, color: '#fff', marginBottom: 4 },
-  gradeSub: { fontSize: TYPE.md, color: '#B0B0B0', marginBottom: 6 },
-  dateRange: { fontSize: TYPE.sm, color: '#666' },
+  gradeSub: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.40)', marginBottom: 6 },
+  dateRange: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.40)' },
 
   // AI Narrative
   narrativeCard: { flexDirection: 'row', alignItems: 'flex-start' },
   narrativeIcon: { fontSize: TYPE.h2, marginRight: 12, marginTop: 2 },
-  narrativeText: { flex: 1, fontSize: TYPE.md, color: '#C0C0C0', lineHeight: 22, fontStyle: 'italic' },
+  narrativeText: { flex: 1, fontSize: TYPE.md, color: 'rgba(255,255,255,0.55)', lineHeight: 22, fontStyle: 'italic' },
 
   // Section
   sectionTitle: { fontSize: TYPE.lg, fontWeight: TYPE.bold, color: '#fff', marginBottom: 14 },
@@ -331,13 +331,13 @@ const styles = StyleSheet.create({
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 0 },
   statBox: { width: '33.3%', alignItems: 'center', paddingVertical: 10 },
   statValue: { fontSize: TYPE.h2, fontWeight: TYPE.bold },
-  statUnit: { fontSize: TYPE.xs, color: '#666', marginTop: 1 },
-  statLabel: { fontSize: TYPE.xs, color: '#888', marginTop: 4 },
+  statUnit: { fontSize: TYPE.xs, color: 'rgba(255,255,255,0.40)', marginTop: 1 },
+  statLabel: { fontSize: TYPE.xs, color: 'rgba(255,255,255,0.45)', marginTop: 4 },
 
   // Trends
   trendsGrid: {},
   trendRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)' },
-  trendLabel: { fontSize: TYPE.md, color: '#B0B0B0' },
+  trendLabel: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.40)' },
   trendValue: { fontSize: TYPE.md, fontWeight: TYPE.bold },
 
   // Daily breakdown
@@ -345,16 +345,16 @@ const styles = StyleSheet.create({
   dayRowBorder: { borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)' },
   dayInfo: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
   dayName: { fontSize: TYPE.md, fontWeight: TYPE.bold, color: '#fff' },
-  dayDate: { fontSize: TYPE.sm, color: '#666' },
+  dayDate: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.40)' },
   dayStats: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
   dayTir: { fontSize: TYPE.lg, fontWeight: TYPE.bold },
-  dayAvg: { fontSize: TYPE.sm, color: '#888' },
+  dayAvg: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.45)' },
   dayBarBg: { height: 6, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 3 },
   dayBarFill: { height: 6, borderRadius: 3 },
 
   // Mood
   moodRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  moodStat: { fontSize: TYPE.md, color: '#B0B0B0' },
+  moodStat: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.40)' },
   moodTop: { fontSize: TYPE.md, color: '#fff', fontWeight: TYPE.semibold },
 
   // Share
@@ -364,5 +364,5 @@ const styles = StyleSheet.create({
   // Disclaimer
   disclaimerRow: { flexDirection: 'row', alignItems: 'flex-start' },
   disclaimerIcon: { fontSize: TYPE.xxl, marginRight: 10, marginTop: 2 },
-  disclaimerText: { flex: 1, fontSize: TYPE.sm, color: '#888', lineHeight: 18 },
+  disclaimerText: { flex: 1, fontSize: TYPE.sm, color: 'rgba(255,255,255,0.45)', lineHeight: 18 },
 });

@@ -1,9 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Clipboard, Linking, Modal, Platform, RefreshControl, ScrollView, Share, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Clipboard, Dimensions, Linking, Modal, Platform, RefreshControl, ScrollView, Share, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import GlassCard from '../components/GlassCard';
-import ScreenHeader from '../components/ScreenHeader';
 import { FadeIn, stagger } from '../config/animations';
 import { haptic } from '../config/haptics';
 import TYPE from '../config/typography';
@@ -11,6 +9,8 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useViewing } from '../context/ViewingContext';
 import { alertsAPI, circleAPI } from '../services/api';
+
+const SCREEN_W = Dimensions.get('window').width;
 
 // TODO: Replace with actual App Store / Play Store URLs when live
 const APP_DOWNLOAD_URL = 'https://apps.apple.com/app/linkloop/id6746382498'; // App Store listing
@@ -28,11 +28,12 @@ const RELATIONSHIPS = [
 export default function CareCircleScreen() {
   const insets = useSafeAreaInsets();
   const { user, updateUser, checkAuth } = useAuth();
-  const { getAccent } = useTheme();
+  const { getAccent, getGradient } = useTheme();
   const { isViewingOther, viewingId } = useViewing();
   const isMember = isViewingOther || user?.role === 'member';
   const isLinked = !!(viewingId || user?.linkedOwnerId || user?.activeViewingId);
   const accent = getAccent(isMember);
+  const gradient = getGradient(isMember);
   const navigation = useNavigation();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -206,396 +207,434 @@ export default function CareCircleScreen() {
   const activeMembers = members.filter(m => m.status === 'active');
   const pendingMembers = members.filter(m => m.status === 'pending');
 
+  // ── Premium avatar circle helper ──
+  const AvatarCircle = ({ emoji, size = 52, accentColor = accent }) => (
+    <View style={[styles.avatarCircle, { width: size, height: size, borderRadius: size / 2, borderColor: accentColor + '50' }]}>
+      <View style={[styles.avatarCircleInner, { width: size - 6, height: size - 6, borderRadius: (size - 6) / 2 }]}>
+        <Text style={{ fontSize: size * 0.45 }}>{emoji}</Text>
+      </View>
+    </View>
+  );
+
+  // ── Section header helper ──
+  const SectionLabel = ({ label, count }) => (
+    <View style={styles.sectionLabelRow}>
+      <View style={[styles.sectionDot, { backgroundColor: accent }]} />
+      <Text style={styles.sectionLabel}>{label}</Text>
+      {count !== undefined && (
+        <View style={[styles.countBadge, { backgroundColor: accent + '20', borderColor: accent + '40' }]}>
+          <Text style={[styles.countBadgeText, { color: accent }]}>{count}</Text>
+        </View>
+      )}
+    </View>
+  );
+
+  const txtShadow = { textShadowColor: 'rgba(0,0,0,0.9)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 6 };
+
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={{ paddingBottom: 90 + insets.bottom }}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[accent]} />}
+      contentContainerStyle={{ paddingBottom: 90 + insets.bottom, paddingTop: insets.top + 16 }}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accent} colors={[accent]} />}
     >
-      <ScreenHeader
-        title={isMember ? 'Care Circle' : 'Your Care Circle'}
-        subtitle={isMember
-          ? "You're part of a Care Circle — here's who else is in the loop"
-          : 'Share your glucose data and updates with trusted caregivers'}
-      />
+      {/* ── Page Title ── */}
+      <View style={styles.pageHeader}>
+        <Text style={[styles.pageTitle, txtShadow]}>{isMember ? 'Care Circle' : 'Your Care Circle'}</Text>
+        <Text style={[styles.pageSubtitle, txtShadow]}>
+          {isMember ? "You're part of a Care Circle" : 'Share with trusted caregivers'}
+        </Text>
+      </View>
 
       <View style={styles.content}>
-        <FadeIn delay={stagger(0, 100)}>
-        {/* Notifications Banner */}
-        <GlassCard accent={activeAlertCount > 0 ? '#FF6B6B' : accent} glow={activeAlertCount > 0} style={{ marginBottom: 20 }} noPadding>
-        <TouchableOpacity
-          style={styles.alertBanner}
-          onPress={() => navigation.navigate('Alerts')}
-        >
-          <Text style={styles.alertBannerIcon}>{activeAlertCount > 0 ? '🔔' : '✅'}</Text>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.alertBannerTitle}>
-              {activeAlertCount > 0 ? `${activeAlertCount} New Notification${activeAlertCount > 1 ? 's' : ''}` : 'No New Notifications'}
-            </Text>
-            <Text style={styles.alertBannerSub}>
-              {activeAlertCount > 0 ? 'Tap to view & acknowledge' : 'View notification history'}
-            </Text>
-          </View>
-          <Text style={styles.alertBannerArrow}>›</Text>
-        </TouchableOpacity>
-        </GlassCard>
 
-        {/* Add Member — compact inline button at the top */}
+        {/* ═══ WARRIOR VIEW ═══ */}
         {!isMember && (
-          <GlassCard accent={accent} style={{ marginBottom: 20 }} noPadding>
-          <TouchableOpacity style={styles.addMemberRow} onPress={() => setShowInviteModal(true)}>
-            <View style={[styles.addMemberIcon, { backgroundColor: accent }]}>
-              <Text style={{ fontSize: TYPE.xl, color: '#fff' }}>+</Text>
-            </View>
-            <Text style={[styles.addMemberText, { color: accent }]}>Add Circle Member</Text>
-            <Text style={[styles.addMemberChevron, { color: accent }]}>›</Text>
-          </TouchableOpacity>
-          </GlassCard>
-        )}
-
-        {/* Members Section — warrior only (members see the roster below) */}
-        {!isMember && (
-        <View style={styles.membersSection}>
-          <Text style={styles.sectionTitle}>Circle Members ({activeMembers.length})</Text>
-
-          {loading ? (
-            <ActivityIndicator size="large" color={accent} style={{ paddingVertical: 40 }} />
-          ) : activeMembers.length === 0 && pendingMembers.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyEmoji}>👥</Text>
-              <Text style={styles.emptyTitle}>No circle members yet</Text>
-              <Text style={styles.emptyText}>Invite family, friends, or caregivers to stay connected.</Text>
-            </View>
-          ) : (
-            activeMembers.map((member) => (
-              <GlassCard key={member._id} accent={accent} style={{ marginBottom: 12 }} noPadding>
-              <View style={styles.memberCard}>
-                <View style={styles.memberCardTop}>
-                  <Text style={styles.memberEmoji}>{member.memberEmoji}</Text>
-                  <View style={styles.memberInfo}>
-                    <Text style={styles.memberName} numberOfLines={1}>{member.memberName}</Text>
-                    <Text style={styles.memberRelationship} numberOfLines={1}>
-                      {RELATIONSHIPS.find(r => r.value === member.relationship)?.label || 'Circle Member'}
-                    </Text>
+          <>
+            {/* ── Circle Members ── */}
+            <FadeIn delay={stagger(0, 100)}>
+              {loading ? (
+                <ActivityIndicator size="large" color={accent} style={{ paddingVertical: 40 }} />
+              ) : activeMembers.length === 0 && pendingMembers.length === 0 ? (
+                <View style={styles.opaqueCard}>
+                  <View style={styles.cardHeader}>
+                    <Text style={styles.cardHeaderTitle}>CIRCLE MEMBERS</Text>
+                    <TouchableOpacity
+                      style={[styles.inviteBtnSmall, { backgroundColor: accent }]}
+                      onPress={() => setShowInviteModal(true)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.inviteBtnSmallText}>+ Invite</Text>
+                    </TouchableOpacity>
                   </View>
-                  <View style={styles.memberToggles}>
-                    <View style={styles.toggleRow}>
-                      <Text style={styles.toggleLabel}>Glucose</Text>
+                  <View style={styles.rowDivider} />
+                  <View style={{ alignItems: 'center', paddingVertical: 24 }}>
+                    <Text style={{ fontSize: 44, marginBottom: 10 }}>👥</Text>
+                    <Text style={styles.emptyTitle}>No circle members yet</Text>
+                    <Text style={styles.emptyText}>Invite family, friends, or caregivers to stay connected.</Text>
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.opaqueCard}>
+                  <View style={styles.cardHeader}>
+                    <Text style={styles.cardHeaderTitle}>CIRCLE MEMBERS</Text>
+                    <TouchableOpacity
+                      style={[styles.inviteBtnSmall, { backgroundColor: accent }]}
+                      onPress={() => setShowInviteModal(true)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.inviteBtnSmallText}>+ Invite</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.rowDivider} />
+                  {activeMembers.map((member, idx) => (
+                    <View key={member._id}>
+                      <View style={styles.memberRow}>
+                        <View style={styles.memberRowLeft}>
+                          <View style={[styles.avatarCircle, { borderColor: accent + '50' }]}>
+                            <Text style={{ fontSize: 22 }}>{member.memberEmoji}</Text>
+                          </View>
+                          <View style={styles.memberRowInfo}>
+                            <Text style={styles.memberRowName} numberOfLines={1}>{member.memberName}</Text>
+                            <Text style={styles.memberRowRelation}>
+                              {RELATIONSHIPS.find(r => r.value === member.relationship)?.label || 'Circle Member'}
+                            </Text>
+                          </View>
+                        </View>
+                        <View style={styles.memberRowActions}>
+                          <TouchableOpacity
+                            style={[styles.iconBtn, { backgroundColor: accent + '20' }]}
+                            onPress={() => navigation.navigate('Chat', {
+                              circleId: member._id,
+                              memberName: member.memberName,
+                              memberEmoji: member.memberEmoji || '👤',
+                              relationship: member.relationship,
+                            })}
+                          >
+                            <Text style={{ fontSize: 16 }}>💬</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.removeBtn}
+                            onPress={() => handleRemoveMember(member._id, member.memberName)}
+                          >
+                            <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>✕</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+
+                      {/* Compact permission toggles */}
+                      <View style={styles.permToggles}>
+                        <View style={styles.permToggleItem}>
+                          <Text style={styles.permToggleLabel}>Glucose</Text>
+                          <Switch
+                            value={member.permissions?.viewGlucose ?? true}
+                            onValueChange={() => handleTogglePermission(member._id, 'viewGlucose', member.permissions?.viewGlucose)}
+                            trackColor={{ false: 'rgba(255,255,255,0.10)', true: accent + '90' }}
+                            thumbColor="#fff"
+                            style={{ transform: [{ scaleX: 0.7 }, { scaleY: 0.7 }] }}
+                          />
+                        </View>
+                        <View style={styles.permToggleItem}>
+                          <Text style={styles.permToggleLabel}>Alerts</Text>
+                          <Switch
+                            value={member.permissions?.receiveLowAlerts ?? true}
+                            onValueChange={() => handleTogglePermission(member._id, 'receiveLowAlerts', member.permissions?.receiveLowAlerts)}
+                            trackColor={{ false: 'rgba(255,255,255,0.10)', true: accent + '90' }}
+                            thumbColor="#fff"
+                            style={{ transform: [{ scaleX: 0.7 }, { scaleY: 0.7 }] }}
+                          />
+                        </View>
+                      </View>
+
+                      {idx < activeMembers.length - 1 && <View style={styles.rowDivider} />}
+                    </View>
+                  ))}
+
+                  {/* Pending members inline */}
+                  {pendingMembers.length > 0 && (
+                    <>
+                      <View style={styles.rowDivider} />
+                      <Text style={styles.pendingSectionLabel}>PENDING</Text>
+                      {pendingMembers.map((member, idx) => (
+                        <View key={member._id}>
+                          <View style={styles.memberRow}>
+                            <View style={styles.memberRowLeft}>
+                              <View style={[styles.avatarCircle, { borderColor: '#FF7B93' + '50' }]}>
+                                <Text style={{ fontSize: 22 }}>{member.memberEmoji}</Text>
+                              </View>
+                              <View style={styles.memberRowInfo}>
+                                <Text style={styles.memberRowName} numberOfLines={1}>{member.memberName}</Text>
+                                <Text style={[styles.memberRowRelation, { color: '#FF7B93' }]}>⏳ Waiting to join…</Text>
+                              </View>
+                            </View>
+                            <View style={styles.memberRowActions}>
+                              {member.inviteCode && (
+                                <TouchableOpacity
+                                  style={[styles.codeChip, { borderColor: accent + '40' }]}
+                                  onPress={() => { Clipboard.setString(member.inviteCode); Alert.alert('Copied!', `Code ${member.inviteCode} copied.`); }}
+                                >
+                                  <Text style={[styles.codeChipText, { color: accent }]}>📋 {member.inviteCode}</Text>
+                                </TouchableOpacity>
+                              )}
+                              <TouchableOpacity
+                                style={styles.removeBtn}
+                                onPress={() => handleRemoveMember(member._id, member.memberName)}
+                              >
+                                <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>✕</Text>
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                          {idx < pendingMembers.length - 1 && <View style={styles.rowDivider} />}
+                        </View>
+                      ))}
+                    </>
+                  )}
+                </View>
+              )}
+            </FadeIn>
+
+            {/* ── Sharing Settings ── */}
+            <FadeIn delay={stagger(1, 100)}>
+              <View style={styles.opaqueCard}>
+                <Text style={styles.cardHeaderTitle}>SHARING SETTINGS</Text>
+                <View style={[styles.rowDivider, { marginTop: 8 }]} />
+                {[
+                  { key: 'shareRealTimeGlucose', title: 'Real-Time Glucose', desc: 'Circle sees your current reading', icon: '📊', value: shareGlucose, setter: setShareGlucose, color: accent },
+                  { key: 'lowAlerts', title: 'Low Glucose Alerts', desc: `Notify below ${user?.settings?.lowThreshold ?? 70} mg/dL`, icon: '🔴', value: shareLowAlerts, setter: setShareLowAlerts, color: '#FF6B6B' },
+                  { key: 'highAlerts', title: 'High Glucose Alerts', desc: `Notify above ${user?.settings?.highThreshold ?? 180} mg/dL`, icon: '🟠', value: shareHighAlerts, setter: setShareHighAlerts, color: '#FF7B93' },
+                ].map((setting, idx) => (
+                  <View key={setting.key}>
+                    <View style={styles.settingRow}>
+                      <View style={[styles.settingIcon, { backgroundColor: setting.color + '20' }]}>
+                        <Text style={{ fontSize: 18 }}>{setting.icon}</Text>
+                      </View>
+                      <View style={{ flex: 1, marginRight: 10 }}>
+                        <Text style={styles.settingTitle}>{setting.title}</Text>
+                        <Text style={styles.settingDesc}>{setting.desc}</Text>
+                      </View>
                       <Switch
-                        value={member.permissions?.viewGlucose ?? true}
-                        onValueChange={() => handleTogglePermission(member._id, 'viewGlucose', member.permissions?.viewGlucose)}
-                        trackColor={{ false: '#ccc', true: accent }}
+                        value={setting.value}
+                        onValueChange={() => handleToggleSetting(setting.key, setting.value, setting.setter)}
+                        trackColor={{ false: 'rgba(255,255,255,0.12)', true: setting.color }}
                         thumbColor="#fff"
+                        style={{ transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }] }}
                       />
                     </View>
-                    <View style={styles.toggleRow}>
-                      <Text style={styles.toggleLabel}>Low Alert</Text>
-                      <Switch
-                        value={member.permissions?.receiveLowAlerts ?? true}
-                        onValueChange={() => handleTogglePermission(member._id, 'receiveLowAlerts', member.permissions?.receiveLowAlerts)}
-                        trackColor={{ false: '#ccc', true: '#FF6B6B' }}
-                        thumbColor="#fff"
-                      />
-                    </View>
+                    {idx < 2 && <View style={styles.rowDivider} />}
                   </View>
-                </View>
-                <View style={styles.memberCardActions}>
-                  <TouchableOpacity
-                    style={[styles.messageButton, { borderColor: accent }]}
-                    onPress={() => navigation.navigate('Chat', {
-                      circleId: member._id,
-                      memberName: member.memberName,
-                      memberEmoji: member.memberEmoji || '\uD83D\uDC64',
-                      relationship: member.relationship,
-                    })}
-                  >
-                    <Text style={[styles.messageButtonText, { color: accent }]}>{'\uD83D\uDCAC'} Message</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.removeButton}
-                    onPress={() => handleRemoveMember(member._id, member.memberName)}
-                  >
-                    <Text style={styles.removeButtonText}>Remove</Text>
-                  </TouchableOpacity>
-                </View>
+                ))}
               </View>
-              </GlassCard>
-            ))
-          )}
-
-          {pendingMembers.length > 0 && (
-            <>
-              <Text style={[styles.sectionTitle, { marginTop: 10 }]}>Pending ({pendingMembers.length})</Text>
-              {pendingMembers.map((member) => (
-                <GlassCard key={member._id} accent="#FFA500" style={{ marginBottom: 12, opacity: 0.85 }} noPadding>
-                <View style={styles.pendingCard}>
-                  <Text style={styles.memberEmoji}>{member.memberEmoji}</Text>
-                  <View style={styles.memberInfo}>
-                    <Text style={styles.memberName} numberOfLines={1}>{member.memberName}</Text>
-                    <Text style={{ fontSize: 13, color: '#FFA500', fontStyle: 'italic', marginBottom: 6 }}>Waiting to join…</Text>
-                    {member.inviteCode ? (
-                      <TouchableOpacity
-                        style={[styles.copyCodeButton, { borderColor: accent }]}
-                        onPress={() => {
-                          Clipboard.setString(member.inviteCode);
-                          Alert.alert('Copied!', `Code ${member.inviteCode} copied to clipboard.`);
-                        }}
-                      >
-                        <Text style={[styles.copyCodeText, { color: accent }]}>📋 {member.inviteCode}</Text>
-                      </TouchableOpacity>
-                    ) : null}
-                  </View>
-                  <TouchableOpacity
-                    style={{ paddingHorizontal: 12, paddingVertical: 8 }}
-                    onPress={() => handleRemoveMember(member._id, member.memberName)}
-                  >
-                    <Text style={{ fontSize: 13, color: '#FF6B6B' }}>Remove</Text>
-                  </TouchableOpacity>
-                </View>
-                </GlassCard>
-              ))}
-            </>
-          )}
-        </View>
+            </FadeIn>
+          </>
         )}
 
-        {/* Sharing Settings — warriors only, real values from DB */}
-        {!isMember && (
-          <GlassCard accent={accent} style={{ marginBottom: 20 }}>
-            <Text style={styles.sectionTitle}>Sharing Settings</Text>
-
-            <View style={styles.settingItem}>
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingTitle}>Share Real-Time Glucose</Text>
-                <Text style={styles.settingDescription}>Allow circle members to see your current glucose reading</Text>
-              </View>
-              <Switch
-                value={shareGlucose}
-                onValueChange={() => handleToggleSetting('shareRealTimeGlucose', shareGlucose, setShareGlucose)}
-                trackColor={{ false: '#ccc', true: accent }}
-                thumbColor="#fff"
-              />
-            </View>
-
-            <View style={styles.settingItem}>
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingTitle}>Low Glucose Alerts</Text>
-                <Text style={styles.settingDescription}>Notify circle when glucose drops below {user?.settings?.lowThreshold ?? 70} mg/dL</Text>
-              </View>
-              <Switch
-                value={shareLowAlerts}
-                onValueChange={() => handleToggleSetting('lowAlerts', shareLowAlerts, setShareLowAlerts)}
-                trackColor={{ false: '#ccc', true: '#FF6B6B' }}
-                thumbColor="#fff"
-              />
-            </View>
-
-            <View style={styles.settingItem}>
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingTitle}>High Glucose Alerts</Text>
-                <Text style={styles.settingDescription}>Notify circle when glucose goes above {user?.settings?.highThreshold ?? 180} mg/dL</Text>
-              </View>
-              <Switch
-                value={shareHighAlerts}
-                onValueChange={() => handleToggleSetting('highAlerts', shareHighAlerts, setShareHighAlerts)}
-                trackColor={{ false: '#ccc', true: '#FFA500' }}
-                thumbColor="#fff"
-              />
-            </View>
-          </GlassCard>
-        )}
-
-        {/* Quick Actions — Join is only for members who are NOT yet linked */}
+        {/* ═══ MEMBER VIEW: Unlinked ═══ */}
         {isMember && !isLinked && (
-          <View style={{ marginBottom: 20 }}>
-            {/* Hero for unlinked members */}
-            <GlassCard accent={accent} style={{ marginBottom: 20 }}>
-              <View style={styles.memberHero}>
-                <Text style={styles.memberHeroEmoji}>🔗</Text>
-                <Text style={styles.memberHeroTitle}>Join a Care Circle</Text>
-                <Text style={styles.memberHeroSub}>Enter an invite code from a T1D warrior to join their circle and stay in the loop.</Text>
+          <FadeIn delay={stagger(0, 100)}>
+            <View style={styles.opaqueCard}>
+              <View style={{ alignItems: 'center', paddingVertical: 24 }}>
+                <Text style={{ fontSize: 48, marginBottom: 14 }}>🔗</Text>
+                <Text style={styles.emptyTitle}>Join a Care Circle</Text>
+                <Text style={styles.emptyText}>Enter an invite code from a T1D warrior to join their circle.</Text>
+                <TouchableOpacity
+                  style={[styles.inviteBtnSmall, { backgroundColor: accent, marginTop: 18, alignSelf: 'center', paddingHorizontal: 24, paddingVertical: 12 }]}
+                  onPress={() => setShowJoinModal(true)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.inviteBtnSmallText}>🔑 Enter Invite Code</Text>
+                </TouchableOpacity>
               </View>
-            </GlassCard>
-
-            <GlassCard accent={accent} glow noPadding>
-            <TouchableOpacity style={styles.actionButtonPrimary} onPress={() => setShowJoinModal(true)}>
-              <Text style={styles.actionButtonIcon}>�</Text>
-              <Text style={[styles.actionButtonPrimaryText, { color: accent }]}>Enter Invite Code</Text>
-            </TouchableOpacity>
-            </GlassCard>
-          </View>
+            </View>
+          </FadeIn>
         )}
 
-        {/* ─── MEMBER VIEW: Linked to a circle ─── */}
+        {/* ═══ MEMBER VIEW: Linked ═══ */}
         {isMember && isLinked && (
-          <View style={{ marginBottom: 0 }}>
-
-            {/* Warrior Hero Card */}
+          <>
+            {/* Warrior card */}
             {(() => {
               const warrior = roster.find(m => m.isWarrior);
               return warrior ? (
-                <>
-                <GlassCard accent={accent} glow style={{ marginBottom: 20 }}>
-                  <View style={styles.warriorHero}>
-                    <Text style={styles.warriorHeroEmoji}>{warrior.emoji || '💪'}</Text>
-                    <Text style={styles.warriorHeroName} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{warrior.name}'s Circle</Text>
-                    <Text style={styles.warriorHeroSub}>You're supporting {warrior.name} as part of their T1D care team</Text>
-                    <View style={[styles.warriorBadge, { backgroundColor: accent + '20', borderColor: accent + '40' }]}>
-                      <Text style={[styles.warriorBadgeText, { color: accent }]}>💪 T1D Warrior</Text>
+                <FadeIn delay={stagger(0, 100)}>
+                  <View style={[styles.warriorCard, { borderLeftColor: accent }]}>
+                    <View style={styles.warriorCardContent}>
+                      <View style={[styles.avatarCircle, { borderColor: accent + '60', width: 56, height: 56, borderRadius: 28 }]}>
+                        <Text style={{ fontSize: 28 }}>{warrior.emoji || '💪'}</Text>
+                      </View>
+                      <View style={{ flex: 1, marginLeft: 14 }}>
+                        <Text style={styles.warriorName}>{warrior.name}'s Circle</Text>
+                        <Text style={styles.warriorSub}>You're supporting {warrior.name}</Text>
+                        <View style={[styles.warriorBadge, { backgroundColor: accent + '20' }]}>
+                          <Text style={[styles.warriorBadgeText, { color: accent }]}>💪 T1D Warrior</Text>
+                        </View>
+                      </View>
                     </View>
+                    {/* Message warrior inline */}
+                    <TouchableOpacity
+                      style={[styles.messageBtn, { backgroundColor: accent + '20' }]}
+                      onPress={() => {
+                        haptic.light();
+                        navigation.navigate('Chat', {
+                          circleId: warrior.userId,
+                          memberName: warrior.name,
+                          memberEmoji: warrior.emoji || '💪',
+                          relationship: 'warrior',
+                        });
+                      }}
+                    >
+                      <Text style={{ fontSize: 16 }}>💬</Text>
+                      <Text style={[styles.messageBtnText, { color: accent }]}>Message {warrior.name}</Text>
+                    </TouchableOpacity>
                   </View>
-                </GlassCard>
-
-                {/* Message Warrior shortcut */}
-                <GlassCard accent={accent} noPadding style={{ marginBottom: 20 }}>
-                  <TouchableOpacity
-                    style={styles.messageWarriorBtn}
-                    onPress={() => {
-                      haptic.light();
-                      navigation.navigate('Chat', {
-                        circleId: warrior.userId,
-                        memberName: warrior.name,
-                        memberEmoji: warrior.emoji || '💪',
-                        relationship: 'warrior',
-                      });
-                    }}
-                  >
-                    <Text style={styles.messageWarriorEmoji}>💬</Text>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.messageWarriorTitle}>Message {warrior.name}</Text>
-                      <Text style={styles.messageWarriorSub}>Send a quick check-in or encouragement</Text>
-                    </View>
-                    <Text style={[styles.groupChatArrow, { color: accent }]}>›</Text>
-                  </TouchableOpacity>
-                </GlassCard>
-                </>
+                </FadeIn>
               ) : null;
             })()}
 
-            {/* Circle Roster */}
-            <View style={styles.membersSection}>
-              <Text style={styles.sectionTitle}>
-                Circle Team ({roster.filter(m => !m.isWarrior).length})
-              </Text>
+            {/* Circle Team */}
+            <FadeIn delay={stagger(1, 100)}>
+              <Text style={[styles.sectionTitle, txtShadow]}>CIRCLE TEAM</Text>
               {loading ? (
                 <ActivityIndicator size="large" color={accent} style={{ paddingVertical: 40 }} />
               ) : roster.filter(m => !m.isWarrior).length === 0 ? (
-                <GlassCard accent={accent} style={{ marginBottom: 12 }}>
-                  <View style={styles.emptyState}>
-                    <Text style={styles.emptyEmoji}>👥</Text>
+                <View style={styles.opaqueCard}>
+                  <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+                    <Text style={{ fontSize: 44, marginBottom: 10 }}>👥</Text>
                     <Text style={styles.emptyTitle}>Just you for now</Text>
-                    <Text style={styles.emptyText}>You're the only member in this Care Circle right now. Others can join with an invite code.</Text>
+                    <Text style={styles.emptyText}>You're the only member. Others can join with an invite code.</Text>
                   </View>
-                </GlassCard>
+                </View>
               ) : (
-                roster.filter(m => !m.isWarrior).map((member, idx) => (
-                  <GlassCard key={idx} accent={member.isYou ? accent : accent} glow={member.isYou} style={{ marginBottom: 12 }} noPadding>
-                  <View style={styles.rosterCard}>
-                    <Text style={styles.rosterEmoji}>{member.emoji || '👤'}</Text>
-                    <View style={styles.rosterInfo}>
-                      <View style={styles.rosterNameRow}>
-                        <Text style={styles.rosterName} numberOfLines={1}>
-                          {member.name}
-                        </Text>
-                        {member.isYou && (
-                          <View style={[styles.youBadge, { backgroundColor: accent + '25', borderColor: accent + '50' }]}>
-                            <Text style={[styles.youBadgeText, { color: accent }]}>You</Text>
+                <View style={styles.opaqueCard}>
+                  {roster.filter(m => !m.isWarrior).map((member, idx, arr) => (
+                    <View key={idx}>
+                      <View style={styles.memberRow}>
+                        <View style={styles.memberRowLeft}>
+                          <View style={[styles.avatarCircle, { borderColor: member.isYou ? accent + '60' : 'rgba(255,255,255,0.2)' }]}>
+                            <Text style={{ fontSize: 22 }}>{member.emoji || '👤'}</Text>
                           </View>
-                        )}
+                          <View style={styles.memberRowInfo}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                              <Text style={styles.memberRowName} numberOfLines={1}>{member.name}</Text>
+                              {member.isYou && (
+                                <View style={[styles.youBadge, { backgroundColor: accent + '20' }]}>
+                                  <Text style={[styles.youBadgeText, { color: accent }]}>You</Text>
+                                </View>
+                              )}
+                            </View>
+                            <Text style={styles.memberRowRelation}>
+                              {RELATIONSHIPS.find(r => r.value === member.relationship)?.emoji || '👤'}{' '}
+                              {RELATIONSHIPS.find(r => r.value === member.relationship)?.label || 'Circle Member'}
+                            </Text>
+                          </View>
+                        </View>
                       </View>
-                      <Text style={styles.rosterRelationship}>
-                        {RELATIONSHIPS.find(r => r.value === member.relationship)?.emoji || '👤'}{' '}
-                        {RELATIONSHIPS.find(r => r.value === member.relationship)?.label || 'Circle Member'}
-                      </Text>
+                      {idx < arr.length - 1 && <View style={styles.rowDivider} />}
                     </View>
-                  </View>
-                  </GlassCard>
-                ))
+                  ))}
+                </View>
               )}
-            </View>
+            </FadeIn>
 
-            {/* Group Chat Button */}
-            <GlassCard accent={accent} style={{ marginBottom: 20 }} noPadding>
+            {/* Group Chat */}
+            <FadeIn delay={stagger(2, 100)}>
               <TouchableOpacity
-                style={styles.groupChatButton}
+                style={styles.groupChatBtn}
                 onPress={() => navigation.navigate('Chat', {
                   circleId: 'group',
                   memberName: 'Group Chat',
                   memberEmoji: '💬',
                   relationship: 'group',
                 })}
+                activeOpacity={0.8}
               >
-                <Text style={styles.groupChatEmoji}>💬</Text>
-                <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 20 }}>💬</Text>
+                <View style={{ flex: 1, marginLeft: 12 }}>
                   <Text style={styles.groupChatTitle}>Circle Group Chat</Text>
-                  <Text style={styles.groupChatSub}>Message everyone in the circle</Text>
+                  <Text style={styles.groupChatSub}>Message everyone</Text>
                 </View>
-                <Text style={[styles.groupChatArrow, { color: accent }]}>›</Text>
+                <Text style={{ fontSize: 22, color: 'rgba(255,255,255,0.4)' }}>›</Text>
               </TouchableOpacity>
-            </GlassCard>
-          </View>
+            </FadeIn>
+          </>
         )}
-
-        {/* Info Card */}
-        <GlassCard accent={accent} style={{ marginBottom: 20 }}>
-          <View style={styles.infoCardInner}>
-            <Text style={styles.infoCardIcon}>🛡️</Text>
-            <Text style={[styles.infoCardTitle, { color: accent }]}>Stay Connected</Text>
-            <Text style={styles.infoCardDescription}>Your Care Circle helps you share updates with the people who care about you most.</Text>
-          </View>
-        </GlassCard>
-        </FadeIn>
       </View>
+
+      {/* ═══ MODALS ═══ */}
 
       {/* Create Invite Modal */}
       <Modal visible={showInviteModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
+            <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>Invite to Care Circle</Text>
+
             <Text style={styles.inputLabel}>Their Name</Text>
-            <TextInput style={styles.input} placeholder="e.g. Mom, Dr. Smith" value={newName} onChangeText={setNewName} />
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. Mom, Dr. Smith"
+              placeholderTextColor="rgba(255,255,255,0.35)"
+              value={newName}
+              onChangeText={setNewName}
+            />
+
             <Text style={styles.inputLabel}>Relationship</Text>
             <View style={styles.relGrid}>
               {RELATIONSHIPS.map(r => (
-                <TouchableOpacity key={r.value} style={[styles.relChip, newRelationship === r.value && [styles.relChipActive, { backgroundColor: accent, borderColor: accent }]]} onPress={() => setNewRelationship(r.value)}>
+                <TouchableOpacity
+                  key={r.value}
+                  style={[
+                    styles.relChip,
+                    newRelationship === r.value && { backgroundColor: accent, borderColor: accent },
+                  ]}
+                  onPress={() => setNewRelationship(r.value)}
+                >
                   <Text style={styles.relEmoji}>{r.emoji}</Text>
                   <Text style={[styles.relLabel, newRelationship === r.value && styles.relLabelActive]}>{r.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
+
             <View style={styles.modalButtons}>
               <TouchableOpacity style={styles.cancelButton} onPress={() => setShowInviteModal(false)}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.saveButton, { backgroundColor: accent }]} onPress={handleCreateInvite} disabled={saving}>
-                {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveButtonText}>Create Invite</Text>}
+              <TouchableOpacity
+                style={[styles.primaryButton, { backgroundColor: accent }]}
+                onPress={handleCreateInvite}
+                disabled={saving}
+              >
+                {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Create Invite</Text>}
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
 
-      {/* Invite Code Display */}
+      {/* Invite Code Display Modal */}
       <Modal visible={showCodeModal} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
+            <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>🎉 Invite Created!</Text>
             <Text style={styles.codeLabel}>Share this code with your circle member:</Text>
-            <View style={[styles.codeBox, { borderColor: accent }]}>
+
+            <View style={[styles.codeBox, { borderColor: accent + '60' }]}>
               <Text style={[styles.codeText, { color: accent }]}>{inviteCode}</Text>
             </View>
 
-            <TouchableOpacity style={[styles.textInviteButton, { backgroundColor: accent }]} onPress={handleTextInvite}>
-              <Text style={styles.textInviteIcon}>📱</Text>
+            <TouchableOpacity
+              style={[styles.textInviteButton, { backgroundColor: accent }]}
+              onPress={handleTextInvite}
+            >
+              <Text style={{ fontSize: 22, marginRight: 12 }}>📱</Text>
               <View style={{ flex: 1 }}>
                 <Text style={styles.textInviteTitle}>Text Invite</Text>
-                <Text style={styles.textInviteSubtitle}>Send download link + code via text message</Text>
+                <Text style={styles.textInviteSubtitle}>Send download link + code via text</Text>
               </View>
               <Text style={styles.textInviteArrow}>›</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.shareButton} onPress={handleShareCode}>
-              <Text style={styles.shareButtonText}>📤 Share Another Way</Text>
+            <TouchableOpacity style={styles.secondaryBtn} onPress={handleShareCode}>
+              <Text style={styles.secondaryBtnText}>📤 Share Another Way</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.doneButton} onPress={() => setShowCodeModal(false)}>
@@ -609,15 +648,30 @@ export default function CareCircleScreen() {
       <Modal visible={showJoinModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
+            <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>Join a Care Circle</Text>
+
             <Text style={styles.inputLabel}>Enter Invite Code</Text>
-            <TextInput style={[styles.input, styles.codeInput]} placeholder="e.g. A1B2C3D4" value={joinCode} onChangeText={setJoinCode} autoCapitalize="characters" maxLength={8} />
+            <TextInput
+              style={[styles.input, styles.codeInput]}
+              placeholder="e.g. A1B2C3D4"
+              placeholderTextColor="rgba(255,255,255,0.35)"
+              value={joinCode}
+              onChangeText={setJoinCode}
+              autoCapitalize="characters"
+              maxLength={8}
+            />
+
             <View style={styles.modalButtons}>
               <TouchableOpacity style={styles.cancelButton} onPress={() => setShowJoinModal(false)}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.saveButton, { backgroundColor: accent }]} onPress={handleJoinCircle} disabled={saving}>
-                {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveButtonText}>Join</Text>}
+              <TouchableOpacity
+                style={[styles.primaryButton, { backgroundColor: accent }]}
+                onPress={handleJoinCircle}
+                disabled={saving}
+              >
+                {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Join</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -628,136 +682,123 @@ export default function CareCircleScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0A0A0F' },
-  content: { padding: 20 },
+  container: { flex: 1, backgroundColor: 'transparent' },
+  content: { padding: 16 },
 
-  /* Alert Banner — now inside GlassCard so strip bg/border/shadow */
-  alertBanner: { padding: 16, flexDirection: 'row', alignItems: 'center' },
-  alertBannerIcon: { fontSize: TYPE.h2, marginRight: 12 },
-  alertBannerTitle: { fontSize: 15, fontWeight: TYPE.bold, color: '#fff' },
-  alertBannerSub: { fontSize: TYPE.sm, color: '#888', marginTop: 2 },
-  alertBannerArrow: { fontSize: TYPE.h2, color: '#555', fontWeight: '300' },
+  /* Page header */
+  pageHeader: { paddingHorizontal: 20, paddingBottom: 12 },
+  pageTitle: { fontSize: 28, fontWeight: TYPE.bold, color: '#fff', marginBottom: 4 },
+  pageSubtitle: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.7)' },
 
-  /* Members */
-  membersSection: { marginBottom: 20 },
-  sectionTitle: { fontSize: TYPE.xl, fontWeight: TYPE.bold, color: '#fff', marginBottom: 15 },
-  emptyState: { alignItems: 'center', paddingVertical: 30 },
-  emptyEmoji: { fontSize: 50, marginBottom: 10 },
+  /* Section titles */
+  sectionTitle: { fontSize: 13, fontWeight: TYPE.bold, color: 'rgba(255,255,255,0.55)', marginBottom: 10, marginTop: 16, textTransform: 'uppercase', letterSpacing: 1.5 },
+
+  /* Card header (inside card) */
+  cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  cardHeaderTitle: { fontSize: 13, fontWeight: TYPE.bold, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: 1.5 },
+  inviteBtnSmall: { borderRadius: 10, paddingVertical: 7, paddingHorizontal: 14, alignItems: 'center' },
+  inviteBtnSmallText: { fontSize: 13, fontWeight: TYPE.bold, color: '#fff' },
+
+  /* Opaque card */
+  opaqueCard: { backgroundColor: 'rgba(10,18,40,0.94)', borderRadius: 18, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
+
+  /* Member rows */
+  memberRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10 },
+  memberRowLeft: { flex: 1, flexDirection: 'row', alignItems: 'center' },
+  memberRowInfo: { flex: 1, marginLeft: 12 },
+  memberRowName: { fontSize: 16, fontWeight: TYPE.semibold, color: '#fff', marginBottom: 2 },
+  memberRowRelation: { fontSize: 13, color: 'rgba(255,255,255,0.5)' },
+  memberRowActions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  rowDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginVertical: 2 },
+
+  /* Avatar */
+  avatarCircle: { width: 44, height: 44, borderRadius: 22, borderWidth: 2, backgroundColor: 'rgba(0,0,0,0.25)', alignItems: 'center', justifyContent: 'center' },
+
+  /* Icon buttons */
+  iconBtn: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  removeBtn: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.06)' },
+
+  /* Permission toggles */
+  permToggles: { flexDirection: 'row', gap: 14, paddingLeft: 56, paddingBottom: 2, marginTop: -4 },
+  permToggleItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  permToggleLabel: { fontSize: 11, color: 'rgba(255,255,255,0.4)' },
+
+  /* Pending */
+  pendingSectionLabel: { fontSize: 11, fontWeight: TYPE.bold, color: 'rgba(255,255,255,0.4)', letterSpacing: 1.5, textTransform: 'uppercase', paddingTop: 10, paddingBottom: 6 },
+  codeChip: { backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1 },
+  codeChipText: { fontSize: 12, fontWeight: TYPE.semibold, letterSpacing: 1 },
+
+  /* Sharing settings */
+  settingRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
+  settingIcon: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  settingTitle: { fontSize: 15, fontWeight: TYPE.semibold, color: '#fff', marginBottom: 2 },
+  settingDesc: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.45)' },
+
+  /* Empty states */
   emptyTitle: { fontSize: TYPE.xl, fontWeight: TYPE.bold, color: '#fff', marginBottom: 6 },
-  emptyText: { fontSize: TYPE.md, color: '#888', textAlign: 'center' },
+  emptyText: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.5)', textAlign: 'center', lineHeight: 20, paddingHorizontal: 10 },
 
-  /* Member Card — inner content; GlassCard handles outer chrome */
-  memberCard: { padding: 15 },
-  memberCardTop: { flexDirection: 'row', alignItems: 'flex-start' },
-  memberEmoji: { fontSize: 36, marginRight: 12, marginTop: 2 },
-  memberInfo: { flex: 1 },
-  memberName: { fontSize: 17, fontWeight: TYPE.semibold, color: '#fff', marginBottom: 3 },
-  memberRelationship: { fontSize: 13, color: '#A0A0A0' },
-  memberCardActions: { flexDirection: 'row', alignItems: 'center', marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)', gap: 10 },
-  messageButton: { flex: 1, backgroundColor: 'rgba(74,144,217,0.15)', borderRadius: 8, paddingVertical: 8, alignItems: 'center', borderWidth: 1 },
-  messageButtonText: { fontSize: 13, fontWeight: TYPE.semibold },
-  removeButton: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, backgroundColor: 'rgba(255,107,107,0.12)', borderWidth: 1, borderColor: 'rgba(255,107,107,0.25)' },
-  removeButtonText: { fontSize: TYPE.sm, color: '#FF6B6B', fontWeight: TYPE.medium },
-  memberToggles: { alignItems: 'flex-end', gap: 8 },
-  toggleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  toggleLabel: { fontSize: 11, color: '#A0A0A0' },
-
-  /* Pending Card — inner content */
-  pendingCard: { padding: 15, flexDirection: 'row', alignItems: 'flex-start' },
-  copyCodeButton: { backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, alignSelf: 'flex-start', borderWidth: 1 },
-  copyCodeText: { fontSize: 13, fontWeight: TYPE.semibold, letterSpacing: 1 },
-
-  /* Add Member Row — inner content */
-  addMemberRow: { padding: 14, flexDirection: 'row', alignItems: 'center' },
-  addMemberIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  addMemberText: { flex: 1, fontSize: 15, fontWeight: TYPE.semibold },
-  addMemberChevron: { fontSize: TYPE.h3, fontWeight: '300' },
-
-  /* Setting Items — inside GlassCard now */
-  settingItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)' },
-  settingInfo: { flex: 1, marginRight: 15 },
-  settingTitle: { fontSize: 15, fontWeight: TYPE.semibold, color: '#fff', marginBottom: 4 },
-  settingDescription: { fontSize: TYPE.sm, color: '#A0A0A0', lineHeight: 16 },
-
-  /* Quick Actions */
-  quickActions: { marginBottom: 20 },
-  actionButtonPrimary: { borderRadius: 12, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
-  actionButtonIcon: { fontSize: TYPE.xl, marginRight: 8 },
-  actionButtonPrimaryText: { fontSize: TYPE.lg, fontWeight: TYPE.bold },
-
-  /* Info Card — inner content */
-  infoCardInner: { alignItems: 'center' },
-  infoCardIcon: { fontSize: 40, marginBottom: 10 },
-  infoCardTitle: { fontSize: TYPE.xl, fontWeight: TYPE.bold, marginBottom: 8 },
-  infoCardDescription: { fontSize: TYPE.md, color: '#A0A0A0', textAlign: 'center' },
-
-  /* Modals — darker glass feel */
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#12121A', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 25, paddingBottom: 40, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', borderBottomWidth: 0 },
-  modalTitle: { fontSize: TYPE.xxl, fontWeight: TYPE.bold, color: '#fff', marginBottom: 20, textAlign: 'center' },
-  inputLabel: { fontSize: TYPE.md, fontWeight: TYPE.semibold, color: '#E0E0E0', marginBottom: 8, marginTop: 10 },
-  input: { backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: 14, fontSize: TYPE.lg, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', color: '#fff' },
-  codeInput: { fontSize: TYPE.h3, textAlign: 'center', letterSpacing: 4, fontWeight: TYPE.bold },
-  relGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  relChip: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.06)', flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-  relChipActive: {},
-  relEmoji: { fontSize: TYPE.lg, marginRight: 6 },
-  relLabel: { fontSize: 13, color: '#A0A0A0' },
-  relLabelActive: { color: '#fff', fontWeight: TYPE.semibold },
-  modalButtons: { flexDirection: 'row', marginTop: 25, gap: 12 },
-  cancelButton: { flex: 1, paddingVertical: 14, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center' },
-  cancelButtonText: { fontSize: TYPE.lg, color: '#A0A0A0', fontWeight: TYPE.semibold },
-  saveButton: { flex: 1, paddingVertical: 14, borderRadius: 10, alignItems: 'center' },
-  saveButtonText: { fontSize: TYPE.lg, color: '#fff', fontWeight: TYPE.bold },
-  codeLabel: { fontSize: TYPE.md, color: '#A0A0A0', textAlign: 'center', marginBottom: 10 },
-  codeBox: { backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 12, padding: 20, alignItems: 'center', marginBottom: 20, borderWidth: 2 },
-  codeText: { fontSize: TYPE.h1, fontWeight: TYPE.bold, letterSpacing: 6 },
-  textInviteButton: { borderRadius: 12, padding: 16, flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  textInviteIcon: { fontSize: TYPE.h2, marginRight: 12 },
-  textInviteTitle: { fontSize: TYPE.lg, fontWeight: TYPE.bold, color: '#fff' },
-  textInviteSubtitle: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
-  textInviteArrow: { fontSize: TYPE.h2, color: 'rgba(255,255,255,0.6)', fontWeight: '300' },
-  shareButton: { backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: 14, alignItems: 'center', marginBottom: 12 },
-  shareButtonText: { color: '#A0A0A0', fontSize: TYPE.lg, fontWeight: TYPE.semibold },
-  doneButton: { paddingVertical: 14, alignItems: 'center' },
-  doneButtonText: { fontSize: TYPE.lg, color: '#A0A0A0' },
-
-  /* ─── Member View ─── */
-
-  /* Unlinked hero */
-  memberHero: { alignItems: 'center', paddingVertical: 10 },
-  memberHeroEmoji: { fontSize: 56, marginBottom: 12 },
-  memberHeroTitle: { fontSize: TYPE.h3, fontWeight: TYPE.bold, color: '#fff', marginBottom: 8 },
-  memberHeroSub: { fontSize: TYPE.md, color: '#A0A0A0', textAlign: 'center', lineHeight: 20 },
-
-  /* Warrior hero card */
-  warriorHero: { alignItems: 'center', paddingVertical: 8 },
-  warriorHeroEmoji: { fontSize: 60, marginBottom: 10 },
-  warriorHeroName: { fontSize: TYPE.h3, fontWeight: TYPE.bold, color: '#fff', marginBottom: 6 },
-  warriorHeroSub: { fontSize: TYPE.md, color: '#A0A0A0', textAlign: 'center', lineHeight: 20, marginBottom: 12 },
-  warriorBadge: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, borderWidth: 1 },
+  /* Warrior card (member view) */
+  warriorCard: { backgroundColor: 'rgba(10,18,40,0.94)', borderRadius: 18, padding: 18, marginBottom: 16, borderLeftWidth: 5, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 10, elevation: 8 },
+  warriorCardContent: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
+  warriorName: { fontSize: TYPE.xl, fontWeight: TYPE.bold, color: '#fff', marginBottom: 2 },
+  warriorSub: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.55)', marginBottom: 6 },
+  warriorBadge: { borderRadius: 12, paddingHorizontal: 12, paddingVertical: 4, alignSelf: 'flex-start' },
   warriorBadgeText: { fontSize: TYPE.sm, fontWeight: TYPE.semibold },
+  messageBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, borderRadius: 12 },
+  messageBtnText: { fontSize: TYPE.md, fontWeight: TYPE.semibold },
 
-  /* Roster cards */
-  rosterCard: { flexDirection: 'row', alignItems: 'center', padding: 16 },
-  rosterEmoji: { fontSize: 36, marginRight: 14 },
-  rosterInfo: { flex: 1 },
-  rosterNameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 3 },
-  rosterName: { fontSize: 17, fontWeight: TYPE.semibold, color: '#fff' },
-  rosterRelationship: { fontSize: 13, color: '#A0A0A0' },
-  youBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, borderWidth: 1 },
+  /* You badge */
+  youBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
   youBadgeText: { fontSize: 11, fontWeight: TYPE.bold },
 
-  /* Group chat button */
-  groupChatButton: { flexDirection: 'row', alignItems: 'center', padding: 16 },
-  groupChatEmoji: { fontSize: 32, marginRight: 14 },
+  /* Group chat */
+  groupChatBtn: { backgroundColor: 'rgba(10,18,40,0.94)', borderRadius: 18, padding: 16, marginBottom: 16, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
   groupChatTitle: { fontSize: 16, fontWeight: TYPE.semibold, color: '#fff' },
-  groupChatSub: { fontSize: TYPE.sm, color: '#A0A0A0', marginTop: 2 },
-  groupChatArrow: { fontSize: TYPE.h2, fontWeight: '300' },
+  groupChatSub: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.5)', marginTop: 2 },
 
-  /* Message Warrior shortcut */
-  messageWarriorBtn: { flexDirection: 'row', alignItems: 'center', padding: 16 },
-  messageWarriorEmoji: { fontSize: 32, marginRight: 14 },
-  messageWarriorTitle: { fontSize: 16, fontWeight: TYPE.semibold, color: '#fff' },
-  messageWarriorSub: { fontSize: TYPE.sm, color: '#A0A0A0', marginTop: 2 },
+  /* ═══ MODALS ═══ */
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.82)', justifyContent: 'flex-end' },
+  modalContent: {
+    backgroundColor: 'rgba(20,20,32,0.95)',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: 24,
+    paddingBottom: 40,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    borderBottomWidth: 0,
+  },
+  modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.2)', alignSelf: 'center', marginBottom: 20 },
+  modalTitle: { fontSize: TYPE.xxl, fontWeight: TYPE.bold, color: '#fff', marginBottom: 20, textAlign: 'center' },
+  inputLabel: { fontSize: TYPE.md, fontWeight: TYPE.semibold, color: 'rgba(255,255,255,0.7)', marginBottom: 8, marginTop: 10 },
+  input: { backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 12, padding: 14, fontSize: TYPE.lg, borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)', color: '#fff' },
+  codeInput: { fontSize: TYPE.h3, textAlign: 'center', letterSpacing: 4, fontWeight: TYPE.bold },
+
+  /* Relationship chips */
+  relGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  relChip: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.08)', flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' },
+  relEmoji: { fontSize: TYPE.lg, marginRight: 6 },
+  relLabel: { fontSize: 13, color: 'rgba(255,255,255,0.6)' },
+  relLabelActive: { color: '#fff', fontWeight: TYPE.semibold },
+
+  /* Modal buttons */
+  modalButtons: { flexDirection: 'row', marginTop: 25, gap: 12 },
+  cancelButton: { flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.10)', alignItems: 'center' },
+  cancelButtonText: { fontSize: TYPE.lg, color: 'rgba(255,255,255,0.6)', fontWeight: TYPE.semibold },
+  primaryButton: { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
+  primaryButtonText: { fontSize: TYPE.lg, color: '#fff', fontWeight: TYPE.bold },
+
+  /* Code display modal */
+  codeLabel: { fontSize: TYPE.md, color: 'rgba(255,255,255,0.55)', textAlign: 'center', marginBottom: 12 },
+  codeBox: { backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 14, padding: 22, alignItems: 'center', marginBottom: 20, borderWidth: 2 },
+  codeText: { fontSize: TYPE.h1, fontWeight: TYPE.bold, letterSpacing: 6 },
+  textInviteButton: { borderRadius: 14, padding: 16, flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  textInviteTitle: { fontSize: TYPE.lg, fontWeight: TYPE.bold, color: '#fff' },
+  textInviteSubtitle: { fontSize: TYPE.sm, color: 'rgba(255,255,255,0.85)', marginTop: 2 },
+  textInviteArrow: { fontSize: TYPE.h2, color: 'rgba(255,255,255,0.8)', fontWeight: '300' },
+  secondaryBtn: { backgroundColor: 'rgba(255,255,255,0.10)', borderRadius: 12, padding: 14, alignItems: 'center', marginBottom: 12 },
+  secondaryBtnText: { color: 'rgba(255,255,255,0.6)', fontSize: TYPE.lg, fontWeight: TYPE.semibold },
+  doneButton: { paddingVertical: 14, alignItems: 'center' },
+  doneButtonText: { fontSize: TYPE.lg, color: 'rgba(255,255,255,0.5)' },
 });
